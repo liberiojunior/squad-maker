@@ -1,0 +1,571 @@
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+}
+
+body {
+    min-height: 100dvh;
+    background-image: url('/images/fundo.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: white;
+}
+
+.squad-navbar {
+    height: 64px;
+    min-height: 64px;
+    padding: 0;
+    background-color: #160038;
+}
+
+.navbar-brand {
+    position: absolute;
+    left: 12px;
+    padding: 0;
+    margin: 0;
+}
+
+.navbar-logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.navbar-nav {
+    gap: 35px;
+}
+
+.navbar-nav .nav-link {
+    color: white;
+    font-size: 21px;
+    font-weight: 600;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #e83bbd;
+}
+
+.login-page {
+    height: calc(100dvh - 64px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 15px;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 750px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+}
+
+.login-logo {
+    display: block;
+    width: clamp(480px, 42vw, 680px);
+    max-width: 100%;
+    margin: 0;
+}
+
+.login-subtitle {
+    margin: 0;
+    font-size: 20px;
+}
+
+.login-form {
+    width: 100%;
+    max-width: 370px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.login-form .form-control {
+    width: 100%;
+    height: 50px;
+    margin: 0;
+    padding-left: 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 18px;
+}
+
+.login-button {
+    width: 100%;
+    height: 50px;
+    background-color: #650095;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 19px;
+    font-weight: 600;
+}
+
+.login-button:hover {
+    background-color: #7c00b5;
+    color: white;
+}
+
+.google-link {
+    margin: 0;
+    color: white;
+    font-size: 18px;
+    text-decoration: none;
+}
+
+.google-link:hover {
+    color: #e83bbd;
+}
+
+.register-link {
+    margin-top: 4px;
+    color: white;
+    font-size: 18px;
+    text-decoration: none;
+}
+
+.register-link:hover {
+    color: #e83bbd;
+}
+
+.login-error {
+    width: 100%;
+    margin: 0;
+    color: #ff8b8b;
+    text-align: left;
+}
+
+.about-page {
+    min-height: calc(100dvh - 64px);
+    display: flex;
+    align-items: center;
+    padding: 35px 20px;
+}
+
+.about-page .container {
+    width: 100%;
+    max-width: 1450px;
+}
+
+.about-mascot {
+    width: 100%;
+    max-width: 650px;
+    transform: scale(1.07);
+}
+
+.about-card {
+    background-color: rgba(31, 0, 55, 0.88);
+    border-radius: 20px;
+    padding: 30px 35px;
+}
+
+.about-card h1 {
+    margin-bottom: 25px;
+    text-align: center;
+    font-size: 48px;
+    font-weight: 700;
+}
+
+.about-card p {
+    margin-bottom: 25px;
+    font-size: 18px;
+    line-height: 1.65;
+}
+
+.about-button {
+    width: 260px;
+    background-color: #650095;
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.about-button:hover {
+    background-color: #7c00b5;
+    color: white;
+}
+
+.team-page {
+    min-height: calc(100dvh - 64px);
+    display: flex;
+    align-items: center;
+    padding: 35px 20px;
+}
+
+.team-page .container {
+    max-width: 1200px;
+}
+
+.team-title {
+    margin-bottom: 35px;
+    text-align: center;
+    font-size: 46px;
+    font-weight: 700;
+}
+
+.team-card {
+    height: 100%;
+    padding: 30px;
+    background-color: rgba(31, 0, 55, 0.88);
+    border-radius: 20px;
+    text-align: center;
+}
+
+.team-photo {
+    width: 190px;
+    height: 190px;
+    margin-bottom: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.team-card h2 {
+    margin-bottom: 15px;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.team-card p {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.6;
+}
+
+.contact-page {
+    min-height: calc(100dvh - 64px);
+    display: flex;
+    align-items: center;
+    padding: 35px 20px;
+}
+
+.contact-page .container {
+    max-width: 1100px;
+}
+
+.contact-card {
+    padding: 40px;
+    background-color: rgba(31, 0, 55, 0.88);
+    border-radius: 20px;
+}
+
+.contact-info {
+    padding-right: 40px;
+}
+
+.contact-info h1 {
+    margin-bottom: 20px;
+    font-size: 46px;
+    font-weight: 700;
+}
+
+.contact-info h2 {
+    margin-top: 30px;
+    font-size: 22px;
+}
+
+.contact-info p {
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+.contact-info a {
+    color: white;
+    font-size: 18px;
+    text-decoration: none;
+}
+
+.contact-info a:hover {
+    color: #e83bbd;
+}
+
+.contact-form-title {
+    margin-bottom: 25px;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.contact-form .form-control {
+    border: none;
+    font-size: 17px;
+}
+
+.contact-form input {
+    height: 50px;
+}
+
+.contact-form textarea {
+    resize: vertical;
+}
+
+.contact-button {
+    width: 100%;
+    height: 50px;
+    background-color: #650095;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.contact-button:hover {
+    background-color: #7c00b5;
+    color: white;
+}
+
+@media (max-height: 850px) and (min-width: 768px) {
+    .login-container {
+        gap: 8px;
+    }
+
+    .login-logo {
+        width: clamp(440px, 38vw, 560px);
+    }
+
+    .login-subtitle {
+        font-size: 18px;
+    }
+
+    .login-form {
+        gap: 8px;
+    }
+
+    .login-form .form-control {
+        height: 46px;
+        font-size: 17px;
+    }
+
+    .login-button {
+        height: 46px;
+        font-size: 18px;
+    }
+
+    .google-link,
+    .register-link {
+        font-size: 17px;
+    }
+
+    .register-link {
+        margin-top: 2px;
+    }
+}
+
+@media (max-width: 1200px) and (min-width: 768px) {
+    .navbar-nav {
+        gap: 25px;
+    }
+
+    .navbar-nav .nav-link {
+        font-size: 19px;
+    }
+
+    .login-logo {
+        width: clamp(430px, 46vw, 570px);
+    }
+
+    .about-page {
+        padding: 25px 20px;
+    }
+
+    .about-mascot {
+        max-width: 560px;
+        transform: scale(1.03);
+    }
+
+    .about-card {
+        padding: 25px 30px;
+    }
+
+    .about-card h1 {
+        font-size: 42px;
+    }
+
+    .about-card p {
+        font-size: 17px;
+    }
+}
+
+.team-intro {
+    max-width: 900px;
+    margin: 0 auto 35px;
+    padding: 25px 35px;
+    background-color: rgba(31, 0, 55, 0.88);
+    border-radius: 20px;
+    text-align: center;
+}
+
+.team-intro .team-title {
+    margin-bottom: 15px;
+}
+
+.team-intro p {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+/* Media */
+
+@media (max-width: 767px) {
+    body {
+        background-attachment: scroll;
+    }
+
+    .squad-navbar {
+        height: auto;
+        min-height: 64px;
+        padding: 4px 0;
+    }
+
+    .navbar-brand {
+        position: static;
+    }
+
+    .navbar-nav {
+        gap: 4px;
+        padding: 10px 0;
+    }
+
+    .navbar-nav .nav-link {
+        font-size: 17px;
+    }
+
+    .login-page {
+        height: auto;
+        min-height: calc(100dvh - 64px);
+        align-items: flex-start;
+        padding: 20px 15px;
+    }
+
+    .login-container {
+        max-width: 420px;
+        gap: 10px;
+    }
+
+    .login-logo {
+        width: 88vw;
+        max-width: 430px;
+    }
+
+    .login-subtitle {
+        font-size: 17px;
+    }
+
+    .login-form {
+        max-width: 360px;
+    }
+
+    .login-form .form-control {
+        height: 48px;
+        font-size: 16px;
+    }
+
+    .login-button {
+        height: 48px;
+        font-size: 17px;
+    }
+
+    .google-link,
+    .register-link {
+        font-size: 16px;
+    }
+
+    .register-link {
+        margin-top: 4px;
+    }
+
+    .about-page {
+        min-height: calc(100dvh - 64px);
+        padding: 30px 15px;
+    }
+
+    .about-mascot {
+        width: 100%;
+        max-width: 400px;
+        margin-bottom: 30px;
+        transform: none;
+    }
+
+    .about-card {
+        padding: 25px 20px;
+    }
+
+    .about-card h1 {
+        font-size: 36px;
+    }
+
+    .about-card p {
+        font-size: 16px;
+        line-height: 1.6;
+    }
+
+    .about-button {
+        width: 100%;
+        max-width: 260px;
+        font-size: 18px;
+    }
+    .team-page {
+        padding: 30px 15px;
+    }
+
+    .team-title {
+        margin-bottom: 25px;
+        font-size: 36px;
+    }
+
+    .team-photo {
+        width: 150px;
+        height: 150px;
+    }
+
+    .team-card {
+        padding: 25px 20px;
+    }
+
+    .team-card h2 {
+        font-size: 25px;
+    }
+
+    .team-card p {
+        font-size: 16px;
+    }
+
+    .contact-page {
+        padding: 30px 15px;
+    }
+
+    .contact-card {
+        padding: 25px 20px;
+    }
+
+    .contact-info {
+        padding-right: 12px;
+        margin-bottom: 35px;
+    }
+
+    .contact-info h1 {
+        font-size: 36px;
+    }
+
+    .contact-form-title {
+        font-size: 26px;
+    }
+
+    .contact-form input {
+        height: 48px;
+    }
+}
