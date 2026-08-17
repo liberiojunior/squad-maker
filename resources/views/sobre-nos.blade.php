@@ -47,7 +47,7 @@
                         </p>
 
                         <div class="text-center">
-                            <a href="#" class="btn about-button">
+                            <a href="{{ route('cadastro') }}" class="btn about-button">
                                 Junte-se a essa aventura!
                             </a>
                         </div>

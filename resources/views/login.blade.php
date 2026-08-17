@@ -66,7 +66,7 @@
                 Entrar com Google
             </a>
 
-            <a href="#" class="register-link">
+            <a href="{{ route('cadastro') }}" class="register-link">
                 Ou cadastre-se gratuitamente
             </a>
 

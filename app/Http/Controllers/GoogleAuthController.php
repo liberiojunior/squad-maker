@@ -35,11 +35,10 @@ class GoogleAuthController extends Controller
         if ($user) {
             // Atualiza campos relevantes
             $user->update([
-                'nickname' => $name ?? $user->nickname,
                 'email' => $email ?? $user->email,
                 'google_id' => $user->google_id ?? $googleId,
-                'avatar' => $avatar ?? $user->avatar,
-                'email_verified_at' => $user->email_verified_at ?? \Carbon\Carbon::now(),
+                'avatar' => $user->avatar ?? $avatar,
+                'email_verified_at' => $user->email_verified_at ?? Carbon::now(),
             ]);
         } else {
             // Cria novo usuário na sua tabela tb_usuario
@@ -58,7 +57,7 @@ class GoogleAuthController extends Controller
         // Faz login do usuário no Laravel
         \Illuminate\Support\Facades\Auth::login($user, true);
 
-        return redirect()->intended('/');
+        return redirect()->route('perfil');
     }
 
     /*DEBUG
