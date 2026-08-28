@@ -1239,3 +1239,332 @@ body {
     }
 
 }
+.admin-body {
+    min-height: 100dvh;
+    margin: 0;
+    background-image: url('/images/fundo2.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: white;
+}
+
+.admin-header {
+    min-height: 72px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 30px;
+    background-color: #120038;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-logo {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+}
+
+.admin-header-title div {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-header-title strong {
+    font-size: 20px;
+}
+
+.admin-header-title span {
+    color: #aaa1b8;
+    font-size: 14px;
+}
+
+.admin-header-user {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.admin-logout-button {
+    padding: 8px 14px;
+    background-color: transparent;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 6px;
+}
+
+.admin-logout-button:hover {
+    background-color: #650095;
+    border-color: #650095;
+}
+
+.admin-content {
+    padding: 25px 30px 40px;
+}
+
+.admin-dashboard {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.admin-title {
+    margin-bottom: 20px;
+}
+
+.admin-title h1 {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.admin-title p {
+    margin: 5px 0 0;
+    color: #c3bacd;
+}
+
+.admin-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.admin-metric-card {
+    min-height: 110px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 20px;
+    background-color: rgba(24, 0, 70, 0.9);
+    border-radius: 12px;
+}
+
+.admin-metric-card i {
+    font-size: 35px;
+    color: #e83bbd;
+}
+
+.admin-metric-card div {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-metric-card span {
+    color: #c3bacd;
+    font-size: 15px;
+}
+
+.admin-metric-card strong {
+    font-size: 30px;
+}
+
+.admin-panel {
+    margin-top: 18px;
+    padding: 20px;
+    background-color: rgba(24, 0, 70, 0.9);
+    border-radius: 12px;
+}
+
+.admin-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.admin-panel-header h2 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.admin-panel-header span {
+    min-width: 36px;
+    padding: 5px 10px;
+    background-color: #650095;
+    border-radius: 20px;
+    text-align: center;
+}
+
+.admin-table {
+    margin: 0;
+    color: white;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 12px;
+    background-color: transparent;
+    color: white;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.admin-status {
+    display: inline-block;
+    padding: 4px 9px;
+    border-radius: 15px;
+    font-size: 13px;
+}
+
+.admin-status-ativo {
+    background-color: rgba(25, 135, 84, 0.35);
+}
+
+.admin-status-banido {
+    background-color: rgba(220, 53, 69, 0.35);
+}
+
+.admin-status-pendente {
+    background-color: rgba(255, 193, 7, 0.35);
+}
+
+.admin-ban-form {
+    display: grid;
+    grid-template-columns: 1fr 180px 2fr auto;
+    gap: 10px;
+}
+
+.admin-report {
+    padding: 15px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-report:last-child {
+    border-bottom: none;
+}
+
+.admin-report > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.admin-report p {
+    margin: 8px 0 0;
+    color: #d7d0df;
+}
+
+.admin-empty {
+    padding: 25px;
+    color: #aaa1b8;
+    text-align: center;
+}
+
+.admin-pagination {
+    margin-top: 20px;
+}
+
+@media (max-width: 1000px) {
+    .admin-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .admin-ban-form {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 767px) {
+    .admin-header {
+        padding: 10px 15px;
+    }
+
+    .admin-header-user > span {
+        display: none;
+    }
+
+    .admin-content {
+        padding: 20px 15px 30px;
+    }
+
+    .admin-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-ban-form {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-title h1 {
+        font-size: 28px;
+    }
+}
+
+.forgot-password-link {
+    align-self: flex-end;
+    margin-top: -3px;
+    color: #d7d0df;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.forgot-password-link:hover {
+    color: #e83bbd;
+}
+
+.password-page {
+    min-height: calc(100dvh - 64px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 15px;
+}
+
+.password-card {
+    width: 100%;
+    max-width: 450px;
+    padding: 30px 35px;
+    background-color: rgba(31, 0, 55, 0.88);
+    border-radius: 20px;
+    text-align: center;
+}
+
+.password-card h1 {
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.password-card p {
+    margin-bottom: 25px;
+    color: #d7d0df;
+}
+
+.password-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.password-form .form-control {
+    height: 50px;
+}
+
+.password-button {
+    height: 50px;
+    background-color: #650095;
+    color: white;
+    font-weight: 600;
+}
+
+.password-button:hover {
+    background-color: #7c00b5;
+    color: white;
+}
+
+.password-back {
+    display: block;
+    margin-top: 20px;
+    color: white;
+    text-decoration: none;
+}
+
+.password-back:hover {
+    color: #e83bbd;
+}

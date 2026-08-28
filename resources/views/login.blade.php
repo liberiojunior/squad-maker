@@ -31,12 +31,6 @@
                     value="{{ old('email') }}"
                 >
 
-                @error('email')
-                <span class="login-error">
-                    {{ $message }}
-                </span>
-                @enderror
-
                 <input
                     type="password"
                     name="password"
@@ -44,11 +38,24 @@
                     placeholder="senha"
                 >
 
+                @error('email')
+                <span class="login-error">
+                    {{ $message }}
+                </span>
+                @enderror
+
                 @error('password')
                 <span class="login-error">
                     {{ $message }}
                 </span>
                 @enderror
+
+                <a
+                    href="{{ route('password.request') }}"
+                    class="forgot-password-link"
+                >
+                    Esqueci minha senha
+                </a>
 
                 <button
                     type="submit"

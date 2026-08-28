@@ -7,6 +7,9 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ForgotPasswordController;
+use App\Http\Controllers\ResetPasswordController;
 
 Route::view('/', 'login')->name('login');
 
@@ -51,3 +54,43 @@ Route::get('/cadastro', [RegisterController::class, 'show'])
 
 Route::post('/cadastro', [RegisterController::class, 'store'])
     ->name('cadastro.store');
+
+Route::middleware('auth:admin')
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+
+        Route::get('/', [AdminController::class, 'dashboard'])
+            ->name('dashboard');
+
+        Route::post(
+            '/usuarios/{user}/banir',
+            [AdminController::class, 'banir']
+        )->name('usuarios.banir');
+
+        Route::patch(
+            '/usuarios/{user}/desbanir',
+            [AdminController::class, 'desbanir']
+        )->name('usuarios.desbanir');
+
+        Route::post(
+            '/logout',
+            [AdminController::class, 'logout']
+        )->name('logout');
+    });
+
+Route::get('/esqueci-senha', [ForgotPasswordController::class, 'show'])
+    ->name('password.request');
+
+Route::post('/esqueci-senha', [ForgotPasswordController::class, 'send'])
+    ->name('password.email');
+
+Route::get(
+    '/redefinir-senha/{token}',
+    [ResetPasswordController::class, 'show']
+)->name('password.reset');
+
+Route::post(
+    '/redefinir-senha',
+    [ResetPasswordController::class, 'update']
+)->name('password.update');
