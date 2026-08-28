@@ -2,10 +2,6 @@
 
 @section('content')
 
-    @php
-        $user = auth()->user();
-    @endphp
-
     @if ($errors->any())
         <div class="alert alert-danger">
             @foreach ($errors->all() as $error)
@@ -103,12 +99,32 @@
 
                     <strong>Meus Gêneros:</strong>
 
-                    <span class="profile-empty-inline">
-                    Nenhum gênero configurado.
-                </span>
+                    <div class="profile-genre-list">
 
-                    <button type="button" class="profile-small-add">
-                        +
+                        @forelse ($user->generos as $genero)
+
+                            <span class="profile-genre-tag">
+                {{ $genero->genero }}
+            </span>
+
+                        @empty
+
+                            <span class="profile-empty-inline">
+                Nenhum gênero configurado.
+            </span>
+
+                        @endforelse
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="profile-small-add"
+                        data-bs-toggle="modal"
+                        data-bs-target="#generosModal"
+                        title="Editar gêneros"
+                    >
+                        <i class="bi bi-plus-lg"></i>
                     </button>
 
                 </section>
@@ -129,39 +145,337 @@
 
         <section class="profile-section">
 
-            <h2>Meus Jogos</h2>
+            <div class="profile-section-title">
+                <h2>Meus Jogos</h2>
 
-            <div class="profile-items">
+                @if ($user->jogos->count() > 4)
+                    <button
+                        type="button"
+                        class="profile-view-all"
+                        data-bs-toggle="modal"
+                        data-bs-target="#todosJogosModal"
+                    >
+                        Ver todos ({{ $user->jogos->count() }})
+                    </button>
+                @endif
+            </div>
 
-                <div class="profile-empty-text">
-                    Nenhum jogo adicionado.
-                </div>
+            <div class="profile-games-row">
 
-                <button type="button" class="profile-add-card">
-                    +
+                @if ($user->jogos->isNotEmpty())
+                    <div class="profile-games-list">
+
+                        @foreach ($user->jogos->take(4) as $jogo)
+                            <div class="profile-game-card">
+                                <img
+                                    src="{{ $jogo->capa }}"
+                                    alt="{{ $jogo->nome }}"
+                                >
+
+                                <span>
+                            {{ $jogo->nome }}
+                        </span>
+                            </div>
+                        @endforeach
+
+                    </div>
+                @endif
+
+                <button
+                    type="button"
+                    class="profile-add-card profile-game-add"
+                    data-bs-toggle="modal"
+                    data-bs-target="#adicionarJogosModal"
+                    title="Adicionar jogos"
+                >
+                    <i class="bi bi-plus-lg"></i>
                 </button>
 
             </div>
 
         </section>
 
-        <section class="profile-section">
+    </div>
 
-            <h2>Minhas Plataformas</h2>
+    <div
+        class="modal fade"
+        id="generosModal"
+        tabindex="-1"
+        aria-hidden="true"
+    >
 
-            <div class="profile-items">
+        <div class="modal-dialog modal-dialog-centered">
 
-                <div class="profile-empty-text">
-                    Nenhuma plataforma adicionada.
-                </div>
+            <div class="modal-content profile-genres-modal">
 
-                <button type="button" class="profile-add-card">
-                    +
-                </button>
+                <form
+                    method="POST"
+                    action="{{ route('perfil.generos.update') }}"
+                >
+                    @csrf
+                    @method('PATCH')
+
+                    <div class="modal-header">
+
+                        <h2 class="modal-title">
+                            Meus Gêneros
+                        </h2>
+
+                        <button
+                            type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"
+                        ></button>
+
+                    </div>
+
+                    <div class="modal-body">
+
+                        <p class="profile-genres-description">
+                            Escolha os gêneros de jogos que mais combinam com você.
+                        </p>
+
+                        <div class="profile-genre-options">
+
+                            @foreach ($generos as $genero)
+
+                                <label class="profile-genre-option">
+
+                                    <input
+                                        type="checkbox"
+                                        name="generos[]"
+                                        value="{{ $genero->id_genero }}"
+                                        @checked(
+                                            $user->generos->contains(
+                                                'id_genero',
+                                                $genero->id_genero
+                                            )
+                                        )
+                                    >
+
+                                    <span>
+                                    {{ $genero->genero }}
+                                </span>
+
+                                </label>
+
+                            @endforeach
+
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn profile-genres-save"
+                        >
+                            Salvar
+                        </button>
+
+                    </div>
+
+                </form>
 
             </div>
 
-        </section>
+        </div>
+
+    </div>
+
+    <div
+        class="modal fade"
+        id="adicionarJogosModal"
+        tabindex="-1"
+        aria-hidden="true"
+    >
+
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+
+            <div class="modal-content profile-games-modal">
+
+                <form
+                    method="POST"
+                    action="{{ route('perfil.jogos.update') }}"
+                >
+                    @csrf
+                    @method('PATCH')
+
+
+                    <div class="modal-header">
+
+                        <h2 class="modal-title">
+                            Meus Jogos
+                        </h2>
+
+                        <button
+                            type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"
+                        ></button>
+
+                    </div>
+
+
+                    <div class="modal-body">
+
+                        <p class="profile-games-description">
+                            Escolha os jogos que você joga ou tem interesse.
+                        </p>
+
+
+                        <input
+                            type="text"
+                            id="profileGameSearch"
+                            class="form-control profile-game-search"
+                            placeholder="Buscar jogo..."
+                            autocomplete="off"
+                        >
+
+
+                        <div
+                            class="profile-game-options"
+                            id="profileGameOptions"
+                        >
+
+                            @forelse ($jogosDisponiveis as $jogo)
+
+                                <label
+                                    class="profile-game-option"
+                                    data-name="{{ strtolower($jogo->nome) }}"
+                                >
+
+                                    <input
+                                        type="checkbox"
+                                        name="jogos[]"
+                                        value="{{ $jogo->id_jogo }}"
+                                        @checked(
+                                            $user->jogos->contains(
+                                                'id_jogo',
+                                                $jogo->id_jogo
+                                            )
+                                        )
+                                    >
+
+
+                                    <div class="profile-game-option-card">
+
+                                        <img
+                                            src="{{ $jogo->capa }}"
+                                            alt="{{ $jogo->nome }}"
+                                        >
+
+                                        <span>
+                                        {{ $jogo->nome }}
+                                    </span>
+
+                                    </div>
+
+                                </label>
+
+                            @empty
+
+                                <div class="profile-games-empty">
+                                    Ainda não existem jogos cadastrados.
+                                </div>
+
+                            @endforelse
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="modal-footer">
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn profile-games-save"
+                        >
+                            Salvar
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div
+        class="modal fade"
+        id="todosJogosModal"
+        tabindex="-1"
+        aria-hidden="true"
+    >
+
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+
+            <div class="modal-content profile-games-modal">
+
+                <div class="modal-header">
+
+                    <h2 class="modal-title">
+                        Meus Jogos
+                    </h2>
+
+                    <button
+                        type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                    ></button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <div class="profile-all-games">
+
+                        @foreach ($user->jogos as $jogo)
+
+                            <div class="profile-game-card">
+
+                                <img
+                                    src="{{ $jogo->capa }}"
+                                    alt="{{ $jogo->nome }}"
+                                >
+
+                                <span>
+                                {{ $jogo->nome }}
+                            </span>
+
+                            </div>
+
+                        @endforeach
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
 
     </div>
 
@@ -200,6 +514,37 @@
                 avatarForm.requestSubmit();
             }
         });
+
+        const profileGameSearch =
+            document.getElementById('profileGameSearch');
+
+        const profileGameOptions =
+            document.querySelectorAll('.profile-game-option');
+
+        if (profileGameSearch) {
+
+            profileGameSearch.addEventListener(
+                'input',
+                function () {
+
+                    const search =
+                        this.value.toLowerCase().trim();
+
+                    profileGameOptions.forEach(
+                        function (option) {
+
+                            const name =
+                                option.dataset.name;
+
+                            option.style.display =
+                                name.includes(search)
+                                    ? ''
+                                    : 'none';
+                        }
+                    );
+                }
+            );
+        }
     </script>
 
 @endsection

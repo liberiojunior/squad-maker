@@ -30,3 +30,6 @@ Homestead.json
 auth.json
 
 .idea/
+
+/public/uploads/avatars/*
+/public/uploads/jogos/*

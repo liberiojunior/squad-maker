@@ -5,16 +5,13 @@
     <div class="admin-dashboard">
 
         <div class="admin-title">
+            <h1>Visão Geral</h1>
 
-            <div>
-                <h1>Visão Geral</h1>
-
-                <p>
-                    Acompanhe os usuários e atividades da plataforma.
-                </p>
-            </div>
-
+            <p>
+                Acompanhe os usuários e atividades da plataforma.
+            </p>
         </div>
+
 
         @if (session('success'))
             <div class="alert alert-success">
@@ -22,13 +19,17 @@
             </div>
         @endif
 
+
         @if ($errors->any())
             <div class="alert alert-danger">
+
                 @foreach ($errors->all() as $error)
                     <div>{{ $error }}</div>
                 @endforeach
+
             </div>
         @endif
+
 
         <section class="admin-metrics">
 
@@ -41,6 +42,7 @@
                 </div>
             </div>
 
+
             <div class="admin-metric-card">
                 <i class="bi bi-person-check-fill"></i>
 
@@ -50,6 +52,7 @@
                 </div>
             </div>
 
+
             <div class="admin-metric-card">
                 <i class="bi bi-person-x-fill"></i>
 
@@ -58,6 +61,7 @@
                     <strong>{{ $usuariosBanidos }}</strong>
                 </div>
             </div>
+
 
             <div class="admin-metric-card">
                 <i class="bi bi-exclamation-triangle-fill"></i>
@@ -70,11 +74,13 @@
 
         </section>
 
+
         <section class="admin-panel">
 
             <div class="admin-panel-header">
                 <h2>Usuários</h2>
             </div>
+
 
             <div class="table-responsive">
 
@@ -89,6 +95,7 @@
                         <th>Ação</th>
                     </tr>
                     </thead>
+
 
                     <tbody>
 
@@ -109,12 +116,13 @@
                             </td>
 
                             <td>
-                            <span
-                                class="admin-status admin-status-{{ $user->status_conta }}"
-                            >
-                                {{ ucfirst($user->status_conta) }}
-                            </span>
+                                <span
+                                    class="admin-status admin-status-{{ $user->status_conta }}"
+                                >
+                                    {{ ucfirst($user->status_conta) }}
+                                </span>
                             </td>
+
 
                             <td>
 
@@ -142,6 +150,7 @@
                                         class="btn btn-sm btn-danger"
                                         data-bs-toggle="collapse"
                                         data-bs-target="#banir-{{ $user->id_usuario }}"
+                                        aria-expanded="false"
                                     >
                                         Banir
                                     </button>
@@ -152,12 +161,14 @@
 
                         </tr>
 
+
                         @if ($user->status_conta !== 'banido')
 
                             <tr
                                 class="collapse"
                                 id="banir-{{ $user->id_usuario }}"
                             >
+
                                 <td colspan="5">
 
                                     <form
@@ -167,36 +178,69 @@
                                     >
                                         @csrf
 
-                                        <input
-                                            type="text"
-                                            name="motivo"
-                                            class="form-control"
-                                            placeholder="Motivo"
-                                        >
 
-                                        <label
-                                            for="data_fim_{{ $user->id_usuario }}"
-                                            class="form-label"
-                                        >
-                                            Banido até
-                                        </label>
+                                        <div class="admin-ban-field">
 
-                                        <input
-                                            type="date"
-                                            name="data_fim"
-                                            class="form-control"
-                                        >
+                                            <label
+                                                for="motivo_{{ $user->id_usuario }}"
+                                                class="form-label"
+                                            >
+                                                Motivo
+                                            </label>
 
-                                        <textarea
-                                            name="justificativa"
-                                            class="form-control"
-                                            placeholder="Justificativa"
-                                            rows="2"
-                                        ></textarea>
+                                            <input
+                                                type="text"
+                                                id="motivo_{{ $user->id_usuario }}"
+                                                name="motivo"
+                                                class="form-control"
+                                                placeholder="Informe o motivo"
+                                            >
+
+                                        </div>
+
+
+                                        <div class="admin-ban-field">
+
+                                            <label
+                                                for="data_fim_{{ $user->id_usuario }}"
+                                                class="form-label"
+                                            >
+                                                Banido até
+                                            </label>
+
+                                            <input
+                                                type="date"
+                                                id="data_fim_{{ $user->id_usuario }}"
+                                                name="data_fim"
+                                                class="form-control"
+                                            >
+
+                                        </div>
+
+
+                                        <div class="admin-ban-field">
+
+                                            <label
+                                                for="justificativa_{{ $user->id_usuario }}"
+                                                class="form-label"
+                                            >
+                                                Justificativa
+                                            </label>
+
+                                            <input
+                                                type="text"
+                                                id="justificativa_{{ $user->id_usuario }}"
+                                                name="justificativa"
+                                                class="form-control"
+                                                placeholder="Informe uma justificativa"
+                                            >
+
+                                        </div>
+
 
                                         <button
                                             type="submit"
-                                            class="btn btn-danger"
+                                            class="btn btn-danger admin-ban-confirm"
                                         >
                                             Confirmar banimento
                                         </button>
@@ -204,6 +248,7 @@
                                     </form>
 
                                 </td>
+
                             </tr>
 
                         @endif
@@ -216,27 +261,33 @@
 
             </div>
 
+
             <div class="admin-pagination">
                 {{ $usuarios->links() }}
             </div>
 
         </section>
 
+
         <section class="admin-panel">
 
             <div class="admin-panel-header">
+
                 <h2>Denúncias pendentes</h2>
 
                 <span>
                 {{ $denunciasPendentes }}
             </span>
+
             </div>
+
 
             @forelse ($denuncias as $denuncia)
 
                 <div class="admin-report">
 
                     <div>
+
                         <strong>
                             Denúncia #{{ $denuncia->id_denuncia }}
                         </strong>
@@ -244,17 +295,27 @@
                         <span>
                         {{ ucfirst($denuncia->tipo_denuncia) }}
                     </span>
+
                     </div>
+
 
                     <p>
                         <strong>Denunciante:</strong>
-                        {{ $denuncia->denunciante?->nickname ?? 'Usuário não encontrado' }}
+
+                        {{ $denuncia->denunciante?->nickname
+                            ?? 'Usuário não encontrado'
+                        }}
                     </p>
+
 
                     <p>
                         <strong>Denunciado:</strong>
-                        {{ $denuncia->denunciado?->nickname ?? 'Usuário não encontrado' }}
+
+                        {{ $denuncia->denunciado?->nickname
+                            ?? 'Usuário não encontrado'
+                        }}
                     </p>
+
 
                     <p>
                         {{ $denuncia->descricao }}

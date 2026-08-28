@@ -1,0 +1,494 @@
+@extends('layouts.admin')
+
+@section('content')
+
+    @php
+        $manualAberto =
+            session('open_form') === 'manual'
+            || $errors->has('nome')
+            || $errors->has('capa')
+            || $errors->has('dt_lancamento')
+            || $errors->has('descricao');
+
+        $steamAberto =
+            session('open_form') === 'steam'
+            || $errors->has('steam_app_id');
+    @endphp
+
+
+    <div class="admin-dashboard">
+
+        <div class="admin-title">
+            <h1>Gerenciar Jogos</h1>
+
+            <p>
+                Cadastre jogos manualmente ou importe informações pela Steam.
+            </p>
+        </div>
+
+
+        @if (session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
+
+
+        @if ($errors->any())
+            <div class="alert alert-danger">
+
+                @foreach ($errors->all() as $error)
+                    <div>{{ $error }}</div>
+                @endforeach
+
+            </div>
+        @endif
+
+
+        <section class="admin-game-actions">
+
+            <button
+                type="button"
+                class="btn admin-game-add-button {{ $manualAberto ? '' : 'collapsed' }}"
+                data-bs-toggle="collapse"
+                data-bs-target="#manualGameForm"
+                aria-expanded="{{ $manualAberto ? 'true' : 'false' }}"
+                aria-controls="manualGameForm"
+            >
+                <i class="bi bi-plus-lg"></i>
+                Cadastro manual
+            </button>
+
+
+            <button
+                type="button"
+                class="btn admin-game-steam-button {{ $steamAberto ? '' : 'collapsed' }}"
+                data-bs-toggle="collapse"
+                data-bs-target="#steamGameForm"
+                aria-expanded="{{ $steamAberto ? 'true' : 'false' }}"
+                aria-controls="steamGameForm"
+            >
+                <i class="bi bi-steam"></i>
+                Importar pela Steam
+            </button>
+
+        </section>
+
+
+        <div id="adminGameForms">
+
+            <div
+                class="collapse {{ $manualAberto ? 'show' : '' }}"
+                id="manualGameForm"
+                data-bs-parent="#adminGameForms"
+            >
+
+                <section class="admin-panel">
+
+                    <h2>Cadastrar jogo manualmente</h2>
+
+                    <form
+                        method="POST"
+                        action="{{ route('admin.jogos.manual') }}"
+                        enctype="multipart/form-data"
+                        class="admin-game-form"
+                    >
+                        @csrf
+
+
+                        <div>
+                            <label
+                                for="nome"
+                                class="form-label"
+                            >
+                                Nome
+                            </label>
+
+                            <input
+                                type="text"
+                                id="nome"
+                                name="nome"
+                                class="form-control"
+                                value="{{ old('nome') }}"
+                            >
+                        </div>
+
+
+                        <div>
+                            <label
+                                for="dt_lancamento"
+                                class="form-label"
+                            >
+                                Data de lançamento
+                            </label>
+
+                            <input
+                                type="date"
+                                id="dt_lancamento"
+                                name="dt_lancamento"
+                                class="form-control"
+                                value="{{ old('dt_lancamento') }}"
+                            >
+                        </div>
+
+
+                        <div>
+                            <label
+                                for="capa"
+                                class="form-label"
+                            >
+                                Capa
+                            </label>
+
+                            <input
+                                type="file"
+                                id="capa"
+                                name="capa"
+                                class="form-control"
+                                accept="image/png,image/jpeg,image/webp"
+                            >
+                        </div>
+
+
+                        <div class="admin-game-description">
+
+                            <label
+                                for="descricao"
+                                class="form-label"
+                            >
+                                Descrição
+                            </label>
+
+                            <textarea
+                                id="descricao"
+                                name="descricao"
+                                class="form-control"
+                                rows="4"
+                            >{{ old('descricao') }}</textarea>
+
+                        </div>
+
+
+                        <button
+                            type="submit"
+                            class="btn admin-game-save"
+                        >
+                            Cadastrar
+                        </button>
+
+                    </form>
+
+                </section>
+
+            </div>
+
+
+            <div
+                class="collapse {{ $steamAberto ? 'show' : '' }}"
+                id="steamGameForm"
+                data-bs-parent="#adminGameForms"
+            >
+
+                <section class="admin-panel">
+
+                    <h2>Importar jogo da Steam</h2>
+
+                    <p class="admin-game-help">
+                        Informe o AppID encontrado na página do jogo na Steam.
+                    </p>
+
+
+                    <form
+                        method="POST"
+                        action="{{ route('admin.jogos.steam') }}"
+                        class="admin-steam-form"
+                    >
+                        @csrf
+
+                        <input
+                            type="number"
+                            name="steam_app_id"
+                            class="form-control"
+                            placeholder="Ex.: 1245620"
+                            value="{{ old('steam_app_id') }}"
+                        >
+
+                        <button
+                            type="submit"
+                            class="btn admin-game-save"
+                        >
+                            Importar
+                        </button>
+
+                    </form>
+
+                </section>
+
+            </div>
+
+        </div>
+
+
+        <section class="admin-panel">
+
+            <form
+                method="GET"
+                action="{{ route('admin.jogos.index') }}"
+                class="admin-game-search"
+            >
+
+                <div class="admin-game-search-input">
+
+                    <button
+                        type="submit"
+                        class="admin-game-search-button"
+                        title="Buscar"
+                    >
+                        <i class="bi bi-search"></i>
+                    </button>
+
+                    <input
+                        type="text"
+                        name="q"
+                        value="{{ request('q') }}"
+                        placeholder="Buscar jogo..."
+                    >
+
+                </div>
+
+
+                <select
+                    name="origem"
+                    class="form-select"
+                    onchange="this.form.submit()"
+                >
+                    <option value="">
+                        Todas as origens
+                    </option>
+
+                    <option
+                        value="steam"
+                        @selected(request('origem') === 'steam')
+                    >
+                        Steam
+                    </option>
+
+                    <option
+                        value="manual"
+                        @selected(request('origem') === 'manual')
+                    >
+                        Manual
+                    </option>
+                </select>
+
+
+                <select
+                    name="ordem"
+                    class="form-select"
+                    onchange="this.form.submit()"
+                >
+                    <option
+                        value="az"
+                        @selected(request('ordem', 'az') === 'az')
+                    >
+                        Nome A-Z
+                    </option>
+
+                    <option
+                        value="za"
+                        @selected(request('ordem') === 'za')
+                    >
+                        Nome Z-A
+                    </option>
+
+                    <option
+                        value="recentes"
+                        @selected(request('ordem') === 'recentes')
+                    >
+                        Adicionados recentemente
+                    </option>
+                </select>
+
+            </form>
+
+
+            <div class="admin-game-grid">
+
+                @forelse ($jogos as $jogo)
+
+                    <button
+                        type="button"
+                        class="admin-game-card"
+                        data-bs-toggle="modal"
+                        data-bs-target="#jogoModal{{ $jogo->id_jogo }}"
+                    >
+
+                        <img
+                            src="{{ $jogo->capa }}"
+                            alt="{{ $jogo->nome }}"
+                        >
+
+
+                        <div class="admin-game-card-info">
+
+                            <strong>
+                                {{ $jogo->nome }}
+                            </strong>
+
+
+                            @if ($jogo->steam_app_id)
+
+                                <span class="admin-game-source steam">
+                                Steam
+                            </span>
+
+                                <small>
+                                    AppID {{ $jogo->steam_app_id }}
+                                </small>
+
+                            @else
+
+                                <span class="admin-game-source manual">
+                                Manual
+                            </span>
+
+                            @endif
+
+                        </div>
+
+                    </button>
+
+
+                    <div
+                        class="modal fade"
+                        id="jogoModal{{ $jogo->id_jogo }}"
+                        tabindex="-1"
+                        aria-hidden="true"
+                    >
+
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+
+                            <div class="modal-content admin-game-modal">
+
+                                <div class="modal-header">
+
+                                    <h2 class="modal-title">
+                                        {{ $jogo->nome }}
+                                    </h2>
+
+                                    <button
+                                        type="button"
+                                        class="btn-close btn-close-white"
+                                        data-bs-dismiss="modal"
+                                        aria-label="Fechar"
+                                    ></button>
+
+                                </div>
+
+
+                                <div class="modal-body">
+
+                                    <img
+                                        src="{{ $jogo->capa }}"
+                                        alt="{{ $jogo->nome }}"
+                                        class="admin-game-modal-cover"
+                                    >
+
+
+                                    @if ($jogo->steam_app_id)
+
+                                        <p class="admin-game-modal-source">
+                                            Steam AppID:
+                                            {{ $jogo->steam_app_id }}
+                                        </p>
+
+                                    @else
+
+                                        <p class="admin-game-modal-source">
+                                            Cadastrado manualmente
+                                        </p>
+
+                                    @endif
+
+
+                                    <div class="admin-game-modal-genres">
+
+                                        <strong>Gêneros</strong>
+
+                                        <div>
+
+                                            @forelse ($jogo->generos as $genero)
+
+                                                <span>
+                                                {{ $genero->genero }}
+                                            </span>
+
+                                            @empty
+
+                                                <span class="admin-game-no-genres">
+                                                Nenhum gênero cadastrado.
+                                            </span>
+
+                                            @endforelse
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="admin-game-modal-description">
+
+                                        <strong>Descrição</strong>
+
+                                        <p>
+                                            {{ $jogo->descricao ?: 'Nenhuma descrição cadastrada.' }}
+                                        </p>
+
+                                    </div>
+
+
+                                    <div class="admin-game-modal-date">
+
+                                        <strong>Data de lançamento</strong>
+
+                                        <p>
+                                            {{ $jogo->dt_lancamento
+                                                ? $jogo->dt_lancamento->format('d/m/Y')
+                                                : 'Não informada'
+                                            }}
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                @empty
+
+                    <div class="admin-empty">
+                        Nenhum jogo encontrado.
+                    </div>
+
+                @endforelse
+
+            </div>
+
+
+            @if ($jogos->hasPages())
+
+                <div class="admin-pagination">
+                    {{ $jogos->links('pagination::bootstrap-5') }}
+                </div>
+
+            @endif
+
+        </section>
+
+    </div>
+
+@endsection

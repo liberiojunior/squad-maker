@@ -41,4 +41,8 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    'steam' => [
+        'key' => env('STEAM_API_KEY'),
+    ],
+
 ];

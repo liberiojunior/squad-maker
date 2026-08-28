@@ -41,8 +41,12 @@
             <i class="bi bi-newspaper"></i>
         </a>
 
-        <a href="#" class="sidebar-item" title="Buscar jogos">
-            <i class="bi bi-controller"></i>
+        <a
+            href="{{ route('jogos.buscar') }}"
+            class="sidebar-item"
+            title="Buscar jogos"
+        >
+            <i class="bi bi-search"></i>
         </a>
 
         <a href="#" class="sidebar-item" title="Chat">

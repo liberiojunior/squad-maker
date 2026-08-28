@@ -44,6 +44,18 @@
         </div>
     </div>
 
+    <nav class="admin-nav">
+
+        <a href="{{ route('admin.dashboard') }}">
+            Visão Geral
+        </a>
+
+        <a href="{{ route('admin.jogos.index') }}">
+            Jogos
+        </a>
+
+    </nav>
+
     <div class="admin-header-user">
 
         <span>
