@@ -14,6 +14,21 @@ class VerificarStatusUsuario
     {
         $user = $request->user();
 
+        if ($user->status_conta === 'excluido') {
+
+            Auth::logout();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()
+                ->route('login')
+                ->with(
+                    'error',
+                    'Esta conta foi excluída.'
+                );
+        }
+
         if (! $user) {
             return $next($request);
         }

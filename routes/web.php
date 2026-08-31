@@ -13,8 +13,10 @@ use App\Http\Middleware\VerificarStatusUsuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AdminCatalogoController;
 
 // Rotas públicas
+
 Route::view('/', 'login')
     ->name('login');
 
@@ -39,6 +41,8 @@ Route::post('/cadastro', [RegisterController::class, 'store'])
     ->name('cadastro.store');
 
 
+// Login com Google
+
 Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])
     ->name('google.redirect');
 
@@ -46,11 +50,17 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
     ->name('google.callback');
 
 
-Route::get('/esqueci-senha', [ForgotPasswordController::class, 'show'])
-    ->name('password.request');
+// Recuperação de senha
 
-Route::post('/esqueci-senha', [ForgotPasswordController::class, 'send'])
-    ->name('password.email');
+Route::get(
+    '/esqueci-senha',
+    [ForgotPasswordController::class, 'show']
+)->name('password.request');
+
+Route::post(
+    '/esqueci-senha',
+    [ForgotPasswordController::class, 'send']
+)->name('password.email');
 
 Route::get(
     '/redefinir-senha/{token}',
@@ -63,17 +73,22 @@ Route::post(
 )->name('password.update');
 
 
-//Rotas de usuário autenticado
+// Rotas do usuário autenticado
+
 Route::middleware([
     'auth',
     VerificarStatusUsuario::class,
 ])->group(function () {
 
-    Route::get('/perfil', [ProfileController::class, 'show'])
-        ->name('perfil');
+    Route::get(
+        '/perfil',
+        [ProfileController::class, 'show']
+    )->name('perfil');
 
-    Route::patch('/perfil', [ProfileController::class, 'update'])
-        ->name('perfil.update');
+    Route::patch(
+        '/perfil',
+        [ProfileController::class, 'update']
+    )->name('perfil.update');
 
     Route::patch(
         '/perfil/avatar',
@@ -94,9 +109,21 @@ Route::middleware([
         '/buscar-jogos',
         [JogoController::class, 'index']
     )->name('jogos.buscar');
+
+    Route::delete(
+        '/conta',
+        [ProfileController::class, 'destroy']
+    )->name('conta.destroy');
+
+    Route::patch(
+        '/perfil/plataformas',
+        [ProfileController::class, 'updatePlataformas']
+    )->name('perfil.plataformas.update');
 });
 
-//Logout do usuário
+
+// Logout do usuário
+
 Route::post('/logout', function (Request $request) {
     Auth::logout();
 
@@ -108,15 +135,29 @@ Route::post('/logout', function (Request $request) {
     ->middleware('auth')
     ->name('logout');
 
-//Rotas administrativas
+
+// Rotas administrativas
+
 Route::middleware('auth:admin')
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
 
-        Route::get('/', [AdminController::class, 'dashboard'])
-            ->name('dashboard');
+        // Página principal do administrador
+        Route::get(
+            '/',
+            [AdminController::class, 'geral']
+        )->name('geral');
 
+
+        // Dashboard de gráficos e métricas
+        Route::get(
+            '/dashboard',
+            [AdminController::class, 'dashboard']
+        )->name('dashboard');
+
+
+        // Usuários
         Route::post(
             '/usuarios/{user}/banir',
             [AdminController::class, 'banir']
@@ -127,6 +168,13 @@ Route::middleware('auth:admin')
             [AdminController::class, 'desbanir']
         )->name('usuarios.desbanir');
 
+        Route::delete(
+            '/usuarios/{user}',
+            [AdminController::class, 'excluirUsuario']
+        )->name('usuarios.excluir');
+
+
+        // Jogos
         Route::get(
             '/jogos',
             [AdminJogoController::class, 'index']
@@ -142,12 +190,62 @@ Route::middleware('auth:admin')
             [AdminJogoController::class, 'storeSteam']
         )->name('jogos.steam');
 
+        Route::patch(
+            '/jogos/{jogo}',
+            [AdminJogoController::class, 'update']
+        )->name('jogos.update');
+
+        Route::delete(
+            '/jogos/{jogo}',
+            [AdminJogoController::class, 'destroy']
+        )->name('jogos.destroy');
+
+        // Catálogo
+
+        Route::get(
+            '/catalogo',
+            [AdminCatalogoController::class, 'index']
+        )->name('catalogo.index');
+
+        Route::post(
+            '/catalogo/plataformas',
+            [AdminCatalogoController::class, 'storePlataforma']
+        )->name('plataformas.store');
+
+        Route::patch(
+            '/catalogo/plataformas/{plataforma}',
+            [AdminCatalogoController::class, 'updatePlataforma']
+        )->name('plataformas.update');
+
+        Route::delete(
+            '/catalogo/plataformas/{plataforma}',
+            [AdminCatalogoController::class, 'destroyPlataforma']
+        )->name('plataformas.destroy');
+
+        Route::post(
+            '/catalogo/generos',
+            [AdminCatalogoController::class, 'storeGeneros']
+        )->name('generos.store');
+
+        Route::patch(
+            '/catalogo/generos/{genero}',
+            [AdminCatalogoController::class, 'updateGenero']
+        )->name('generos.update');
+
+        Route::delete(
+            '/catalogo/generos/{genero}',
+            [AdminCatalogoController::class, 'destroyGenero']
+        )->name('generos.destroy');
+
+        // Logout do administrador
         Route::post(
             '/logout',
             [AdminController::class, 'logout']
         )->name('logout');
     });
 
+
+// Página não encontrada
 
 Route::fallback(function () {
     return response()->view('errors.404', [], 404);

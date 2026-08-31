@@ -82,6 +82,16 @@
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
 
+                    <button
+                        type="button"
+                        class="dropdown-item sidebar-delete-account"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteAccountModal"
+                    >
+                        <i class="bi bi-trash3"></i>
+                        Excluir conta
+                    </button>
+
                     <button type="submit" class="dropdown-item sidebar-logout">
                         <i class="bi bi-box-arrow-left"></i>
                         Sair
@@ -99,6 +109,83 @@
 <main class="internal-content">
     @yield('content')
 </main>
+
+<div
+    class="modal fade"
+    id="deleteAccountModal"
+    tabindex="-1"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content account-delete-modal">
+
+            <form
+                method="POST"
+                action="{{ route('conta.destroy') }}"
+            >
+                @csrf
+                @method('DELETE')
+
+                <div class="modal-header">
+
+                    <h2 class="modal-title">
+                        Excluir minha conta
+                    </h2>
+
+                    <button
+                        type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                    ></button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <p>
+                        Esta ação removerá sua conta do Squad Maker.
+                    </p>
+
+                    <p>
+                        Para confirmar, digite o nome do usuário.
+                    </p>
+
+                    <input
+                        type="text"
+                        name="confirmacao"
+                        class="form-control mt-3"
+                        autocomplete="off"
+                        required
+                    >
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-danger"
+                    >
+                        Excluir minha conta
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+</div>
 
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js">

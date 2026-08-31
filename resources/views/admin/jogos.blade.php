@@ -316,47 +316,69 @@
 
                 @forelse ($jogos as $jogo)
 
-                    <button
-                        type="button"
-                        class="admin-game-card"
-                        data-bs-toggle="modal"
-                        data-bs-target="#jogoModal{{ $jogo->id_jogo }}"
-                    >
+                    <div class="admin-game-card-wrapper">
 
-                        <img
-                            src="{{ $jogo->capa }}"
-                            alt="{{ $jogo->nome }}"
+                        <button
+                            type="button"
+                            class="admin-game-card"
+                            data-bs-toggle="modal"
+                            data-bs-target="#jogoModal{{ $jogo->id_jogo }}"
                         >
 
+                            <img
+                                src="{{ $jogo->capa }}"
+                                alt="{{ $jogo->nome }}"
+                            >
 
-                        <div class="admin-game-card-info">
+                            <div class="admin-game-card-info">
 
-                            <strong>
-                                {{ $jogo->nome }}
-                            </strong>
+                                <strong>
+                                    {{ $jogo->nome }}
+                                </strong>
+
+                                @if ($jogo->steam_app_id)
+
+                                    <span class="admin-game-source steam">
+                    Steam
+                </span>
+
+                                    <small>
+                                        AppID {{ $jogo->steam_app_id }}
+                                    </small>
+
+                                @else
+
+                                    <span class="admin-game-source manual">
+                    Manual
+                </span>
+
+                                @endif
+
+                            </div>
+
+                        </button>
 
 
-                            @if ($jogo->steam_app_id)
+                        <form
+                            method="POST"
+                            action="{{ route('admin.jogos.destroy', $jogo) }}"
+                            class="admin-game-delete-form"
+                            onsubmit="return confirm('Deseja realmente excluir este jogo?')"
+                        >
+                            @csrf
+                            @method('DELETE')
 
-                                <span class="admin-game-source steam">
-                                Steam
-                            </span>
+                            <button
+                                type="submit"
+                                class="admin-game-delete"
+                                title="Excluir"
+                            >
+                                <i class="bi bi-x-lg"></i>
+                            </button>
 
-                                <small>
-                                    AppID {{ $jogo->steam_app_id }}
-                                </small>
+                        </form>
 
-                            @else
-
-                                <span class="admin-game-source manual">
-                                Manual
-                            </span>
-
-                            @endif
-
-                        </div>
-
-                    </button>
+                    </div>
 
 
                     <div
@@ -457,6 +479,152 @@
                                                 : 'Não informada'
                                             }}
                                         </p>
+
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        class="btn admin-game-edit-button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#editarJogo{{ $jogo->id_jogo }}"
+                                    >
+                                        Editar
+                                    </button>
+
+
+                                    <div
+                                        class="collapse admin-game-edit-area"
+                                        id="editarJogo{{ $jogo->id_jogo }}"
+                                    >
+
+                                        <form
+                                            method="POST"
+                                            action="{{ route('admin.jogos.update', $jogo) }}"
+                                            enctype="multipart/form-data"
+                                            class="admin-game-edit-form"
+                                        >
+                                            @csrf
+                                            @method('PATCH')
+
+
+                                            <div>
+                                                <label class="form-label">
+                                                    Nome
+                                                </label>
+
+                                                <input
+                                                    type="text"
+                                                    name="nome"
+                                                    class="form-control"
+                                                    value="{{ $jogo->nome }}"
+                                                >
+                                            </div>
+
+
+                                            <div>
+                                                <label class="form-label">
+                                                    Data de lançamento
+                                                </label>
+
+                                                <input
+                                                    type="date"
+                                                    name="dt_lancamento"
+                                                    class="form-control"
+                                                    value="{{ $jogo->dt_lancamento?->format('Y-m-d') }}"
+                                                >
+                                            </div>
+
+
+                                            @if ($jogo->steam_app_id)
+
+                                                <div>
+                                                    <label class="form-label">
+                                                        Steam AppID
+                                                    </label>
+
+                                                    <input
+                                                        type="text"
+                                                        class="form-control"
+                                                        value="{{ $jogo->steam_app_id }}"
+                                                        readonly
+                                                    >
+                                                </div>
+
+                                            @endif
+
+
+                                            <div>
+                                                <label class="form-label">
+                                                    Nova capa
+                                                </label>
+
+                                                <input
+                                                    type="file"
+                                                    name="capa"
+                                                    class="form-control"
+                                                    accept="image/png,image/jpeg,image/webp"
+                                                >
+                                            </div>
+
+
+                                            <div class="admin-game-edit-description">
+
+                                                <label class="form-label">
+                                                    Descrição
+                                                </label>
+
+                                                <textarea
+                                                    name="descricao"
+                                                    class="form-control"
+                                                    rows="4"
+                                                >{{ $jogo->descricao }}</textarea>
+
+                                            </div>
+
+
+                                            <div class="admin-game-edit-genres">
+
+                                                <label class="form-label">
+                                                    Gêneros
+                                                </label>
+
+                                                <div>
+
+                                                    @foreach ($generosDisponiveis as $genero)
+
+                                                        <label>
+
+                                                            <input
+                                                                type="checkbox"
+                                                                name="generos[]"
+                                                                value="{{ $genero->id_genero }}"
+                                                                @checked(
+                                                                    $jogo->generos->contains(
+                                                                        'id_genero',
+                                                                        $genero->id_genero
+                                                                    )
+                                                                )
+                                                            >
+
+                                                            {{ $genero->genero }}
+
+                                                        </label>
+
+                                                    @endforeach
+
+                                                </div>
+
+                                            </div>
+
+
+                                            <button
+                                                type="submit"
+                                                class="btn admin-game-save"
+                                            >
+                                                Salvar alterações
+                                            </button>
+
+                                        </form>
 
                                     </div>
 

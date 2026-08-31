@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Genero;
 use App\Models\Jogo;
 use App\Services\SteamService;
 use Illuminate\Http\Request;
-use App\Models\Genero;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class AdminJogoController extends Controller
 {
@@ -17,19 +20,19 @@ class AdminJogoController extends Controller
             $query->where(
                 'nome',
                 'like',
-                '%' . $request->q . '%'
+                '%' . trim($request->input('q')) . '%'
             );
         }
 
-        if ($request->origem === 'steam') {
+        if ($request->input('origem') === 'steam') {
             $query->whereNotNull('steam_app_id');
         }
 
-        if ($request->origem === 'manual') {
+        if ($request->input('origem') === 'manual') {
             $query->whereNull('steam_app_id');
         }
 
-        switch ($request->ordem) {
+        switch ($request->input('ordem')) {
             case 'za':
                 $query->orderBy('nome', 'desc');
                 break;
@@ -47,44 +50,61 @@ class AdminJogoController extends Controller
             ->paginate(12)
             ->withQueryString();
 
+        $generosDisponiveis = Genero::orderBy('genero')->get();
+
         return view('admin.jogos', [
             'jogos' => $jogos,
+            'generosDisponiveis' => $generosDisponiveis,
         ]);
     }
 
     public function storeManual(Request $request)
     {
         $data = $request->validate([
-            'nome' => ['required', 'string', 'max:150'],
+            'nome' => [
+                'required',
+                'string',
+                'max:150',
+            ],
+
             'capa' => [
                 'required',
                 'image',
                 'mimes:jpg,jpeg,png,webp',
                 'max:5120',
             ],
-            'dt_lancamento' => ['required', 'date'],
-            'descricao' => ['nullable', 'string'],
+
+            'dt_lancamento' => [
+                'required',
+                'date',
+            ],
+
+            'descricao' => [
+                'nullable',
+                'string',
+            ],
         ], [
-            'nome.required' => 'Informe o nome do jogo.',
-            'capa.required' => 'Escolha uma capa.',
-            'capa.image' => 'O arquivo selecionado deve ser uma imagem.',
-            'dt_lancamento.required' => 'Informe a data de lançamento.',
+            'nome.required' =>
+                'Informe o nome do jogo.',
+
+            'capa.required' =>
+                'Escolha uma capa.',
+
+            'capa.image' =>
+                'O arquivo selecionado deve ser uma imagem.',
+
+            'dt_lancamento.required' =>
+                'Informe a data de lançamento.',
         ]);
 
-        $file = $request->file('capa');
-
-        $fileName = 'jogo_' . time()
-            . '.' . $file->getClientOriginalExtension();
-
-        $file->move(
-            public_path('uploads/jogos'),
-            $fileName
+        $capa = $this->salvarCapaLocal(
+            $request->file('capa')
         );
 
         Jogo::create([
             'steam_app_id' => null,
             'nome' => $data['nome'],
-            'capa' => '/uploads/jogos/' . $fileName,
+            'capa' => $capa,
             'dt_lancamento' => $data['dt_lancamento'],
             'qtd_jogadores' => null,
             'descricao' => $data['descricao'] ?? null,
@@ -107,9 +127,14 @@ class AdminJogoController extends Controller
                 'unique:tb_jogo,steam_app_id',
             ],
         ], [
-            'steam_app_id.required' => 'Informe o AppID da Steam.',
-            'steam_app_id.integer' => 'O AppID deve ser um número.',
-            'steam_app_id.unique' => 'Este jogo já foi cadastrado.',
+            'steam_app_id.required' =>
+                'Informe o AppID da Steam.',
+
+            'steam_app_id.integer' =>
+                'O AppID deve ser um número.',
+
+            'steam_app_id.unique' =>
+                'Este jogo já foi cadastrado.',
         ]);
 
         $appId = (int) $data['steam_app_id'];
@@ -118,24 +143,26 @@ class AdminJogoController extends Controller
 
         if (! $detalhes) {
             return back()->withErrors([
-                'steam_app_id' => 'Não foi possível encontrar este jogo na Steam.',
+                'steam_app_id' =>
+                    'Não foi possível encontrar este jogo na Steam.',
             ]);
         }
 
         if (($detalhes['type'] ?? null) !== 'game') {
             return back()->withErrors([
-                'steam_app_id' => 'O AppID informado não pertence a um jogo.',
+                'steam_app_id' =>
+                    'O AppID informado não pertence a um jogo.',
             ]);
         }
 
-        // dd($detalhes['release_date'] ?? null);
         $dataLancamento = $this->dataLancamentoSteam(
             $detalhes['release_date']['date'] ?? null
         );
 
         if (! $dataLancamento) {
             return back()->withErrors([
-                'steam_app_id' => 'Não foi possível identificar a data de lançamento deste jogo.',
+                'steam_app_id' =>
+                    'Não foi possível identificar a data de lançamento deste jogo.',
             ]);
         }
 
@@ -145,13 +172,13 @@ class AdminJogoController extends Controller
             'capa' => $detalhes['header_image'],
             'dt_lancamento' => $dataLancamento,
             'qtd_jogadores' => null,
-            'descricao' => $detalhes['short_description'] ?? null,
+            'descricao' =>
+                $detalhes['short_description'] ?? null,
         ]);
 
         $generosIds = [];
 
         foreach ($detalhes['genres'] ?? [] as $generoSteam) {
-
             $nome = $generoSteam['description'] ?? null;
 
             if (! $nome) {
@@ -165,21 +192,149 @@ class AdminJogoController extends Controller
             $generosIds[] = $genero->id_genero;
         }
 
-        $jogo->generos()->sync(array_unique($generosIds));
+        $jogo->generos()->sync(
+            array_unique($generosIds)
+        );
 
         return back()->with([
-            'success' => 'Jogo importado da Steam com sucesso.',
+            'success' =>
+                'Jogo importado da Steam com sucesso.',
+
             'open_form' => 'steam',
         ]);
     }
 
-    private function dataLancamentoSteam(?string $data): ?string
+    public function update(
+        Request $request,
+        Jogo $jogo
+    ) {
+        $data = $request->validate([
+            'nome' => [
+                'required',
+                'string',
+                'max:150',
+            ],
+
+            'dt_lancamento' => [
+                'required',
+                'date',
+            ],
+
+            'descricao' => [
+                'nullable',
+                'string',
+            ],
+
+            'capa' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120',
+            ],
+
+            'generos' => [
+                'nullable',
+                'array',
+            ],
+
+            'generos.*' => [
+                'integer',
+                'exists:tb_genero,id_genero',
+            ],
+        ]);
+
+        $jogo->nome = $data['nome'];
+        $jogo->dt_lancamento = $data['dt_lancamento'];
+        $jogo->descricao = $data['descricao'] ?? null;
+
+        if ($request->hasFile('capa')) {
+            $capaAnterior = $jogo->capa;
+
+            $jogo->capa = $this->salvarCapaLocal(
+                $request->file('capa')
+            );
+
+            $this->excluirCapaLocal($capaAnterior);
+        }
+
+        $jogo->save();
+
+        $jogo->generos()->sync(
+            $data['generos'] ?? []
+        );
+
+        return back()->with(
+            'success',
+            'Jogo atualizado.'
+        );
+    }
+
+    public function destroy(Jogo $jogo)
     {
+        $capa = $jogo->capa;
+
+        DB::transaction(function () use ($jogo) {
+            $jogo->generos()->detach();
+            $jogo->usuarios()->detach();
+
+            $jogo->delete();
+        });
+
+        $this->excluirCapaLocal($capa);
+
+        return back()->with(
+            'success',
+            'Jogo excluído.'
+        );
+    }
+
+    private function salvarCapaLocal(
+        UploadedFile $file
+    ): string {
+        $fileName =
+            'jogo_'
+            . uniqid()
+            . '.'
+            . $file->getClientOriginalExtension();
+
+        $file->move(
+            public_path('uploads/jogos'),
+            $fileName
+        );
+
+        return '/uploads/jogos/' . $fileName;
+    }
+
+    private function excluirCapaLocal(
+        ?string $capa
+    ): void {
+        if (
+            ! $capa
+            || ! str_starts_with(
+                $capa,
+                '/uploads/jogos/'
+            )
+        ) {
+            return;
+        }
+
+        File::delete(
+            public_path(
+                ltrim($capa, '/')
+            )
+        );
+    }
+
+    private function dataLancamentoSteam(
+        ?string $data
+    ): ?string {
         if (! $data) {
             return null;
         }
 
-        $data = mb_strtolower(trim($data));
+        $data = mb_strtolower(
+            trim($data)
+        );
 
         $data = str_replace(
             ['/', ',', '.', ' de '],
@@ -189,41 +344,50 @@ class AdminJogoController extends Controller
 
         $meses = [
             'jan' => '01',
-            'fev' => '02',
-            'mar' => '03',
-            'abr' => '04',
-            'mai' => '05',
-            'jun' => '06',
-            'jul' => '07',
-            'ago' => '08',
-            'set' => '09',
-            'out' => '10',
-            'nov' => '11',
-            'dez' => '12',
 
-            'jan' => '01',
             'feb' => '02',
+            'fev' => '02',
+
             'mar' => '03',
+
             'apr' => '04',
+            'abr' => '04',
+
             'may' => '05',
+            'mai' => '05',
+
             'jun' => '06',
             'jul' => '07',
+
             'aug' => '08',
+            'ago' => '08',
+
             'sep' => '09',
+            'set' => '09',
+
             'oct' => '10',
+            'out' => '10',
+
             'nov' => '11',
+
             'dec' => '12',
+            'dez' => '12',
         ];
 
         foreach ($meses as $mes => $numero) {
             $data = preg_replace(
-                '/\b' . preg_quote($mes, '/') . '\b/u',
+                '/\b'
+                . preg_quote($mes, '/')
+                . '\b/u',
                 $numero,
                 $data
             );
         }
 
-        $partes = preg_split('/\s+/', trim($data));
+        $partes = preg_split(
+            '/\s+/',
+            trim($data)
+        );
 
         if (count($partes) !== 3) {
             return null;
@@ -247,7 +411,13 @@ class AdminJogoController extends Controller
             return null;
         }
 
-        if (! checkdate((int) $mes, (int) $dia, (int) $ano)) {
+        if (
+            ! checkdate(
+                (int) $mes,
+                (int) $dia,
+                (int) $ano
+            )
+        ) {
             return null;
         }
 

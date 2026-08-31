@@ -21,6 +21,7 @@ body {
     color: white;
 }
 
+
 /* Navbar */
 
 .squad-navbar {
@@ -56,6 +57,7 @@ body {
 .navbar-nav .nav-link:hover {
     color: #e83bbd;
 }
+
 
 /* Login */
 
@@ -152,6 +154,7 @@ body {
     text-align: left;
 }
 
+
 /* Sobre nós */
 
 .about-page {
@@ -203,6 +206,7 @@ body {
     background-color: #7c00b5;
     color: white;
 }
+
 
 /* Equipe */
 
@@ -270,6 +274,7 @@ body {
     font-size: 17px;
     line-height: 1.6;
 }
+
 
 /* Contato */
 
@@ -358,6 +363,7 @@ body {
     background-color: #7c00b5;
     color: white;
 }
+
 
 /* Cadastro */
 
@@ -457,6 +463,7 @@ body {
     color: #e83bbd;
 }
 
+
 /* Recuperação de senha */
 
 .forgot-password-link {
@@ -530,6 +537,7 @@ body {
 .password-back:hover {
     color: #e83bbd;
 }
+
 
 /* Área interna */
 
@@ -647,11 +655,37 @@ body {
     color: white;
 }
 
+.sidebar-delete-account {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #ff707d;
+    border-radius: 5px;
+}
+
+.sidebar-delete-account:hover,
+.sidebar-delete-account:focus {
+    background-color: #650095;
+    color: white;
+}
+
+.account-delete-modal {
+    background-color: #180046;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.account-delete-modal .modal-header,
+.account-delete-modal .modal-footer {
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
 .internal-content {
     min-height: 100dvh;
     margin-left: 72px;
     padding: 18px 30px;
 }
+
 
 /* Perfil */
 
@@ -727,12 +761,6 @@ body {
     padding: 22px 70px 22px 22px;
     background-color: rgba(24, 0, 70, 0.88);
     border-radius: 12px;
-}
-
-.profile-info-card h1 {
-    margin: 0;
-    font-size: 38px;
-    font-weight: 700;
 }
 
 .profile-name-input {
@@ -831,6 +859,37 @@ body {
     font-size: 16px;
 }
 
+.profile-empty-inline {
+    color: #aaa1b8;
+}
+
+.profile-small-add {
+    width: 34px;
+    height: 34px;
+    margin-left: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background-color: rgba(255, 255, 255, 0.18);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 25px;
+    line-height: 1;
+}
+
+.profile-small-add:hover {
+    background-color: #650095;
+}
+
+.profile-small-add i {
+    line-height: 1;
+}
+
+
+/* Modal de gêneros */
+
 .profile-genres-modal {
     background-color: #180046;
     color: white;
@@ -892,27 +951,8 @@ body {
     color: white;
 }
 
-.profile-empty-inline {
-    color: #aaa1b8;
-}
 
-.profile-small-add {
-    width: 34px;
-    height: 34px;
-    margin-left: auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: rgba(255, 255, 255, 0.18);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 25px;
-}
-
-.profile-small-add:hover {
-    background-color: #650095;
-}
+/* Seções do perfil */
 
 .profile-section {
     margin-top: 12px;
@@ -925,63 +965,6 @@ body {
     margin: 0 0 12px;
     font-size: 25px;
     font-weight: 700;
-}
-
-.profile-feed {
-    min-height: 210px;
-}
-
-.profile-empty-content {
-    min-height: 140px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #aaa1b8;
-    font-size: 17px;
-}
-
-.profile-items {
-    min-height: 100px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.profile-empty-text {
-    color: #aaa1b8;
-    font-size: 17px;
-}
-
-.profile-add-card {
-    width: 90px;
-    height: 90px;
-    margin-left: auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: rgba(255, 255, 255, 0.24);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 48px;
-}
-
-.profile-add-card:hover {
-    background-color: #650095;
-}
-
-.profile-add-card,
-.profile-small-add {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0;
-    line-height: 1;
-}
-
-.profile-add-card i,
-.profile-small-add i {
-    line-height: 1;
 }
 
 .profile-section-title {
@@ -1008,6 +991,47 @@ body {
     color: #e83bbd;
 }
 
+
+/* Feed */
+
+.profile-feed {
+    min-height: 210px;
+}
+
+.profile-feed-empty {
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #aaa1b8;
+}
+
+.profile-feed-empty i {
+    margin-bottom: 8px;
+    font-size: 34px;
+}
+
+.profile-feed-empty p {
+    margin: 0;
+}
+
+
+/* Jogos do perfil */
+
+.profile-games-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.profile-games-list {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 15px;
+}
+
 .profile-game-card {
     min-width: 0;
 }
@@ -1030,6 +1054,29 @@ body {
     white-space: nowrap;
 }
 
+.profile-add-card {
+    width: 90px;
+    height: 90px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background-color: rgba(255, 255, 255, 0.24);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 48px;
+    line-height: 1;
+}
+
+.profile-add-card:hover {
+    background-color: #650095;
+}
+
+.profile-add-card i {
+    line-height: 1;
+}
+
 .profile-game-add {
     width: 100px;
     height: 100px;
@@ -1038,6 +1085,13 @@ body {
     flex: 0 0 100px;
     aspect-ratio: 1 / 1;
 }
+
+.profile-game-add i {
+    font-size: 42px;
+}
+
+
+/* Modal de jogos */
 
 .profile-games-modal {
     background-color: #180046;
@@ -1055,8 +1109,8 @@ body {
 }
 
 .profile-game-search {
-    margin-bottom: 20px;
     height: 46px;
+    margin-bottom: 20px;
 }
 
 .profile-game-options {
@@ -1098,8 +1152,7 @@ body {
     white-space: nowrap;
 }
 
-.profile-game-option input:checked
-+ .profile-game-option-card {
+.profile-game-option input:checked + .profile-game-option-card {
     border-color: #e83bbd;
     background-color: rgba(101, 0, 149, 0.45);
 }
@@ -1127,23 +1180,88 @@ body {
     text-align: center;
 }
 
-.profile-games-row {
+
+/* Plataformas */
+
+.profile-platforms-list {
     display: flex;
-    align-items: flex-start;
-    gap: 15px;
+    flex-wrap: wrap;
+    gap: 14px;
 }
 
-.profile-games-list {
-    flex: 1;
+.profile-platform-card,
+.profile-platform-add {
+    width: 80px;
+}
+
+.profile-platform-card img {
+    display: block;
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.profile-platform-card span {
+    display: block;
+    margin-top: 5px;
+    overflow: hidden;
+    color: #d7d0df;
+    font-size: 12px;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-platform-add {
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.profile-platform-add i {
+    font-size: 32px;
+}
+
+.profile-platform-options {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 15px;
 }
 
-.profile-game-add i {
-    font-size: 42px;
-    line-height: 1;
+.profile-platform-option {
+    cursor: pointer;
 }
+
+.profile-platform-option input {
+    display: none;
+}
+
+.profile-platform-option > div {
+    padding: 10px;
+    text-align: center;
+    border: 2px solid transparent;
+    border-radius: 10px;
+}
+
+.profile-platform-option img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.profile-platform-option span {
+    display: block;
+    margin-top: 6px;
+}
+
+.profile-platform-option input:checked + div {
+    background-color: rgba(101, 0, 149, 0.45);
+    border-color: #e83bbd;
+}
+
 
 /* Busca de jogos */
 
@@ -1151,6 +1269,14 @@ body {
     width: 100%;
     max-width: 1120px;
     margin: 0 auto;
+}
+
+.game-search-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
 }
 
 .game-search-bar {
@@ -1163,6 +1289,12 @@ body {
     background-color: white;
     border-radius: 5px;
     overflow: hidden;
+}
+
+.game-search-controls .game-search-bar {
+    flex: 1;
+    max-width: 720px;
+    margin: 0;
 }
 
 .game-search-submit {
@@ -1182,36 +1314,6 @@ body {
     background-color: #eeeeee;
 }
 
-.game-online-unavailable {
-    color: #aaa1b8;
-}
-
-.game-pagination {
-    display: flex;
-    justify-content: center;
-    margin-top: 30px;
-}
-
-.game-pagination .pagination {
-    margin-bottom: 0;
-}
-
-.game-pagination .page-link {
-    background-color: #21004d;
-    color: white;
-    border-color: rgba(255, 255, 255, 0.15);
-}
-
-.game-pagination .page-item.active .page-link {
-    background-color: #650095;
-    border-color: #650095;
-}
-
-.game-pagination .page-link:hover {
-    background-color: #7c00b5;
-    color: white;
-}
-
 .game-search-bar input {
     flex: 1;
     height: 100%;
@@ -1225,6 +1327,15 @@ body {
 
 .game-search-bar input::placeholder {
     color: #8e8e8e;
+}
+
+.game-sort-select {
+    width: 210px;
+    height: 64px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: 600;
 }
 
 .game-search-panel {
@@ -1250,12 +1361,9 @@ body {
 }
 
 .game-search-cover {
-    display: block;
     width: 100%;
     aspect-ratio: 460 / 215;
     object-fit: cover;
-    border-radius: 5px;
-    transition: transform 0.15s;
 }
 
 .game-search-card:hover .game-search-cover {
@@ -1289,6 +1397,10 @@ body {
     border-radius: 50%;
 }
 
+.game-online-unavailable {
+    color: #aaa1b8;
+}
+
 .game-search-empty {
     padding: 50px;
     color: #aaa1b8;
@@ -1296,28 +1408,32 @@ body {
     font-size: 18px;
 }
 
-.game-search-controls {
+.game-pagination {
     display: flex;
     justify-content: center;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 28px;
+    margin-top: 30px;
 }
 
-.game-search-controls .game-search-bar {
-    flex: 1;
-    max-width: 720px;
-    margin: 0;
+.game-pagination .pagination {
+    margin-bottom: 0;
 }
 
-.game-sort-select {
-    width: 210px;
-    height: 64px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    font-weight: 600;
+.game-pagination .page-link {
+    background-color: #21004d;
+    color: white;
+    border-color: rgba(255, 255, 255, 0.15);
 }
+
+.game-pagination .page-item.active .page-link {
+    background-color: #650095;
+    border-color: #650095;
+}
+
+.game-pagination .page-link:hover {
+    background-color: #7c00b5;
+    color: white;
+}
+
 
 /* Administrador */
 
@@ -1333,8 +1449,8 @@ body {
 
 .admin-header {
     min-height: 72px;
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 20px;
     padding: 10px 30px;
@@ -1369,6 +1485,7 @@ body {
 }
 
 .admin-header-user {
+    justify-self: end;
     display: flex;
     align-items: center;
     gap: 18px;
@@ -1387,6 +1504,53 @@ body {
     border-color: #650095;
 }
 
+
+/* Menu do admin */
+
+.admin-nav-wrapper {
+    justify-self: center;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.admin-nav {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+.admin-nav.collapse {
+    display: flex;
+}
+
+.admin-nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.admin-nav a:hover,
+.admin-nav a.active {
+    color: #e83bbd;
+}
+
+.admin-nav-toggle {
+    display: none;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    background-color: #650095;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+
+/* Conteúdo do admin */
+
 .admin-content {
     padding: 25px 30px 40px;
 }
@@ -1395,6 +1559,10 @@ body {
     width: 100%;
     max-width: 1400px;
     margin: 0 auto;
+}
+
+.admin-dashboard-empty {
+    min-height: 350px;
 }
 
 .admin-title {
@@ -1411,6 +1579,171 @@ body {
     margin: 5px 0 0;
     color: #c3bacd;
 }
+
+.admin-panel {
+    margin-top: 18px;
+    padding: 20px;
+    background-color: rgba(24, 0, 70, 0.9);
+    border-radius: 12px;
+}
+
+.admin-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.admin-panel-header h2 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.admin-panel-header span {
+    min-width: 36px;
+    padding: 5px 10px;
+    background-color: #650095;
+    border-radius: 20px;
+    text-align: center;
+}
+
+
+/* Catálogo */
+
+.admin-catalog-create-platform {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 160px;
+    gap: 15px;
+    align-items: end;
+    margin-bottom: 24px;
+}
+
+.admin-catalog-create-platform .btn {
+    height: 38px;
+}
+
+.admin-catalog-platforms {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.admin-catalog-card {
+    min-width: 0;
+    height: 100%;
+    padding: 16px;
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.admin-catalog-platform {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.admin-catalog-platform img {
+    width: 58px;
+    height: 58px;
+    flex-shrink: 0;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.admin-catalog-platform strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-catalog-platform-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-catalog-platform-form .form-label {
+    margin-bottom: 5px;
+}
+
+.admin-catalog-platform-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.admin-catalog-platform-actions form {
+    margin: 0;
+}
+
+.admin-catalog-platform-actions .btn {
+    min-width: 90px;
+}
+
+.admin-catalog-platform-delete {
+    margin: 0;
+}
+
+.admin-catalog-create-genres {
+    margin-bottom: 24px;
+}
+
+.admin-catalog-create-genres .admin-game-help {
+    display: block;
+    margin-top: 6px;
+}
+
+.admin-catalog-genres {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.admin-catalog-genre {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background-color: rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+}
+
+.admin-catalog-genre-form {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.admin-catalog-genre-form .form-control {
+    min-width: 0;
+    height: 38px;
+}
+
+.admin-catalog-genre-delete {
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.admin-catalog-genre-button {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+}
+
+
+/* Métricas do admin */
 
 .admin-metrics {
     display: grid;
@@ -1448,31 +1781,15 @@ body {
     font-size: 30px;
 }
 
-.admin-panel {
-    margin-top: 18px;
-    padding: 20px;
-    background-color: rgba(24, 0, 70, 0.9);
-    border-radius: 12px;
+
+/* Usuários do admin */
+
+.admin-users-table-wrapper {
+    overflow: visible;
 }
 
-.admin-panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.admin-panel-header h2 {
-    margin: 0;
-    font-size: 24px;
-}
-
-.admin-panel-header span {
-    min-width: 36px;
-    padding: 5px 10px;
-    background-color: #650095;
-    border-radius: 20px;
-    text-align: center;
+.admin-user-actions-menu {
+    z-index: 2000;
 }
 
 .admin-table {
@@ -1485,6 +1802,48 @@ body {
     padding: 12px;
     background-color: transparent;
     color: white;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.admin-user-actions {
+    background-color: #650095;
+    color: white;
+    border: none;
+}
+
+.admin-user-actions:hover,
+.admin-user-actions:focus {
+    background-color: #7c00b5;
+    color: white;
+}
+
+.admin-user-actions-menu {
+    z-index: 2000;
+    background-color: #21004d;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.admin-user-actions-menu .dropdown-item {
+    color: white;
+}
+
+.admin-user-actions-menu .dropdown-item:hover {
+    background-color: #650095;
+    color: white;
+}
+
+.admin-user-actions-menu .text-danger {
+    color: #ff707d !important;
+}
+
+.admin-delete-modal {
+    background-color: #180046;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.admin-delete-modal .modal-header,
+.admin-delete-modal .modal-footer {
     border-color: rgba(255, 255, 255, 0.12);
 }
 
@@ -1506,6 +1865,9 @@ body {
 .admin-status-pendente {
     background-color: rgba(255, 193, 7, 0.35);
 }
+
+
+/* Banimento */
 
 .admin-ban-form {
     display: grid;
@@ -1532,10 +1894,13 @@ body {
 }
 
 .admin-ban-confirm {
-    height: 46px;
     width: 100%;
+    height: 46px;
     font-weight: 600;
 }
+
+
+/* Denúncias */
 
 .admin-report {
     padding: 15px 0;
@@ -1567,21 +1932,8 @@ body {
     margin-top: 20px;
 }
 
-.admin-nav {
-    display: flex;
-    align-items: center;
-    gap: 25px;
-}
 
-.admin-nav a {
-    color: white;
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.admin-nav a:hover {
-    color: #e83bbd;
-}
+/* Cadastro de jogos */
 
 .admin-game-actions {
     display: flex;
@@ -1607,7 +1959,7 @@ body {
 .admin-game-form {
     margin-top: 18px;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 15px;
 }
 
@@ -1628,6 +1980,9 @@ body {
     display: flex;
     gap: 10px;
 }
+
+
+/* Busca dos jogos do admin */
 
 .admin-game-search {
     display: grid;
@@ -1653,22 +2008,60 @@ body {
     outline: none;
 }
 
+.admin-game-search-button {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 0;
+    background-color: transparent;
+    color: #222;
+    border: none;
+    outline: none;
+    font-size: 20px;
+}
+
+.admin-game-search-button:hover {
+    background-color: #eeeeee;
+}
+
+.admin-game-search-button i {
+    margin: 0;
+    line-height: 1;
+}
+
+
+/* Jogos do admin */
+
 .admin-game-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.admin-game-card-wrapper {
+    position: relative;
+    width: 100%;
 }
 
 .admin-game-card {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
     overflow: hidden;
     background-color: rgba(255, 255, 255, 0.07);
-    border-radius: 8px;
-    width: 100%;
-    padding: 0;
     color: white;
     border: none;
+    border-radius: 8px;
     text-align: left;
     cursor: pointer;
+}
+
+.admin-game-card:hover {
+    background-color: rgba(255, 255, 255, 0.12);
 }
 
 .admin-game-card img {
@@ -1676,16 +2069,21 @@ body {
     width: 100%;
     aspect-ratio: 460 / 215;
     object-fit: cover;
+    flex-shrink: 0;
 }
 
 .admin-game-card-info {
+    height: 108px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    align-items: flex-start;
+    gap: 7px;
     padding: 12px;
 }
 
-.admin-game-card-info strong {
+.admin-game-card-info strong,
+.admin-game-card-info small {
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1710,9 +2108,38 @@ body {
     background-color: rgba(108, 117, 125, 0.5);
 }
 
-.admin-game-card:hover {
-    background-color: rgba(255, 255, 255, 0.12);
+
+/* Excluir jogo */
+
+.admin-game-delete {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background-color: rgba(220, 53, 69, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    opacity: 0;
+    font-size: 16px;
+    transition: opacity 0.15s;
 }
+
+.admin-game-card-wrapper:hover .admin-game-delete {
+    opacity: 1;
+}
+
+.admin-game-delete:hover {
+    background-color: #dc3545;
+}
+
+
+/* Detalhes do jogo */
 
 .admin-game-modal {
     background-color: #180046;
@@ -1770,29 +2197,47 @@ body {
     color: #d7d0df;
 }
 
-.admin-game-search-button {
-    width: 44px;
-    height: 44px;
+
+/* Editar jogo */
+
+.admin-game-edit-button {
+    margin-top: 20px;
+    background-color: #650095;
+    color: white;
+}
+
+.admin-game-edit-button:hover {
+    background-color: #7c00b5;
+    color: white;
+}
+
+.admin-game-edit-area {
+    margin-top: 20px;
+}
+
+.admin-game-edit-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.admin-game-edit-description,
+.admin-game-edit-genres {
+    grid-column: 1 / -1;
+}
+
+.admin-game-edit-genres > div {
     display: flex;
-    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.admin-game-edit-genres label {
+    display: flex;
     align-items: center;
-    flex-shrink: 0;
-    padding: 0;
-    background-color: transparent;
-    color: #222;
-    border: none;
-    outline: none;
-    font-size: 20px;
+    gap: 5px;
 }
 
-.admin-game-search-button:hover {
-    background-color: #eeeeee;
-}
-
-.admin-game-search-button i {
-    margin: 0;
-    line-height: 1;
-}
 
 /* Páginas de erro */
 
@@ -1848,6 +2293,7 @@ body {
     background-color: #7c00b5;
     color: white;
 }
+
 
 /* Responsividade */
 
@@ -1913,10 +2359,6 @@ body {
         font-size: 32px;
     }
 
-    .profile-info-card h1 {
-        font-size: 32px;
-    }
-
     .profile-bio {
         min-height: 75px;
         margin-top: 25px;
@@ -1937,21 +2379,13 @@ body {
         min-height: 135px;
     }
 
-    .profile-empty-content {
-        min-height: 75px;
-    }
-
-    .profile-items {
-        min-height: 65px;
-    }
-
     .profile-add-card {
         width: 62px;
         height: 62px;
         font-size: 36px;
     }
-
 }
+
 
 @media (max-width: 1200px) and (min-width: 768px) {
 
@@ -1988,7 +2422,11 @@ body {
         font-size: 17px;
     }
 
+    .admin-nav {
+        gap: 15px;
+    }
 }
+
 
 @media (max-width: 1000px) {
 
@@ -1996,16 +2434,8 @@ body {
         grid-template-columns: 1fr 1fr;
     }
 
-    .admin-ban-confirm {
-        width: 100%;
-    }
-
     .admin-game-search {
         grid-template-columns: 1fr 1fr;
-    }
-
-    .admin-game-grid {
-        grid-template-columns: repeat(2, 1fr);
     }
 
     .admin-game-form {
@@ -2032,7 +2462,21 @@ body {
         flex: 0 0 90px;
     }
 
+    .admin-catalog-create-platform {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .admin-catalog-create-platform .btn {
+        width: 160px;
+        grid-column: 1 / -1;
+    }
+
+    .admin-catalog-platforms,
+    .admin-catalog-genres {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
+
 
 @media (max-width: 900px) and (min-width: 768px) {
 
@@ -2049,7 +2493,6 @@ body {
         min-height: 165px;
     }
 
-    .profile-info-card h1,
     .profile-name-input {
         font-size: 30px;
     }
@@ -2059,13 +2502,25 @@ body {
         font-size: 16px;
     }
 
+    .admin-header {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .admin-header-title span {
+        display: none;
+    }
 }
+
 
 @media (max-width: 767px) {
 
     body {
         background-attachment: scroll;
     }
+
+
+    /* Navbar no celular */
 
     .squad-navbar {
         height: auto;
@@ -2085,6 +2540,9 @@ body {
     .navbar-nav .nav-link {
         font-size: 17px;
     }
+
+
+    /* Login no celular */
 
     .login-page {
         height: auto;
@@ -2130,6 +2588,9 @@ body {
         margin-top: 4px;
     }
 
+
+    /* Sobre nós no celular */
+
     .about-page {
         min-height: calc(100dvh - 64px);
         padding: 30px 15px;
@@ -2161,13 +2622,16 @@ body {
         font-size: 18px;
     }
 
+
+    /* Equipe no celular */
+
     .team-page {
         padding: 30px 15px;
     }
 
     .team-intro {
-        padding: 20px;
         margin-bottom: 25px;
+        padding: 20px;
     }
 
     .team-intro p {
@@ -2196,6 +2660,9 @@ body {
         font-size: 16px;
     }
 
+
+    /* Contato no celular */
+
     .contact-page {
         padding: 30px 15px;
     }
@@ -2220,6 +2687,33 @@ body {
     .contact-form input {
         height: 48px;
     }
+
+
+    /* Cadastro no celular */
+
+    .register-page {
+        align-items: flex-start;
+        padding: 20px 15px;
+    }
+
+    .register-logo {
+        max-width: 360px;
+    }
+
+    .register-card {
+        padding: 25px 20px;
+    }
+
+    .register-card h1 {
+        font-size: 30px;
+    }
+
+    .register-subtitle {
+        font-size: 16px;
+    }
+
+
+    /* Área interna no celular */
 
     .internal-body {
         background-attachment: scroll;
@@ -2259,6 +2753,9 @@ body {
         padding: 18px 15px 85px;
     }
 
+
+    /* Perfil no celular */
+
     .profile-top {
         display: flex;
         flex-direction: column;
@@ -2288,7 +2785,6 @@ body {
         padding: 20px 55px 20px 20px;
     }
 
-    .profile-info-card h1,
     .profile-name-input {
         font-size: 28px;
     }
@@ -2307,69 +2803,40 @@ body {
         font-size: 21px;
     }
 
-    .profile-items {
-        flex-wrap: wrap;
-    }
-
     .profile-add-card {
         width: 70px;
         height: 70px;
-        margin-left: 0;
         font-size: 38px;
     }
 
-    .register-page {
-        align-items: flex-start;
-        padding: 20px 15px;
-    }
 
-    .register-logo {
-        max-width: 360px;
-    }
-
-    .register-card {
-        padding: 25px 20px;
-    }
-
-    .register-card h1 {
-        font-size: 30px;
-    }
-
-    .register-subtitle {
-        font-size: 16px;
-    }
-
-    .admin-ban-form {
-        grid-template-columns: 1fr;
-    }
-
-    .admin-header {
-        padding: 10px 15px;
-    }
-
-    .admin-header-user > span {
-        display: none;
-    }
-
-    .admin-content {
-        padding: 20px 15px 30px;
-    }
-
-    .admin-metrics {
-        grid-template-columns: 1fr;
-    }
-
-    .admin-title h1 {
-        font-size: 28px;
-    }
+    /* Busca de jogos no celular */
 
     .game-search-page {
         padding-bottom: 20px;
     }
 
+    .game-search-controls {
+        flex-direction: column;
+    }
+
+    .game-search-controls .game-search-bar,
+    .game-sort-select {
+        width: 100%;
+        max-width: 100%;
+    }
+
     .game-search-bar {
         height: 54px;
         margin-bottom: 20px;
+    }
+
+    .game-search-controls .game-search-bar {
+        margin-bottom: 0;
+    }
+
+    .game-sort-select {
+        height: 50px;
     }
 
     .game-search-bar input {
@@ -2395,8 +2862,150 @@ body {
         height: 11px;
     }
 
-    .admin-nav {
+
+    /* Admin no celular */
+
+    .admin-header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px 15px;
+    }
+
+    .admin-header-title {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .admin-header-title strong {
+        font-size: 17px;
+    }
+
+    .admin-header-title span {
+        font-size: 12px;
+    }
+
+    .admin-logo {
+        width: 44px;
+        height: 44px;
+    }
+
+    .admin-header-user {
+        display: flex;
+        gap: 8px;
+    }
+
+    .admin-header-user > span {
         display: none;
+    }
+
+    .admin-logout-button {
+        padding: 7px 10px;
+        font-size: 13px;
+    }
+
+    .admin-nav-wrapper {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-nav-toggle {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 2px;
+    }
+
+    .admin-nav.collapse {
+        display: none;
+    }
+
+    .admin-nav.collapse.show {
+        display: flex;
+    }
+
+    .admin-nav {
+        position: static;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        margin-top: 6px;
+        padding: 7px;
+        background-color: #21004d;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+    }
+
+    .admin-nav a {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 5px;
+    }
+
+    .admin-nav a:hover,
+    .admin-nav a.active {
+        background-color: #650095;
+        color: white;
+    }
+
+    .admin-content {
+        padding: 18px 12px 30px;
+    }
+
+    .admin-title {
+        margin-bottom: 15px;
+    }
+
+    .admin-title h1 {
+        font-size: 27px;
+    }
+
+    .admin-title p {
+        font-size: 14px;
+    }
+
+    .admin-metrics {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .admin-metric-card {
+        min-height: 90px;
+        padding: 15px;
+    }
+
+    .admin-metric-card i {
+        font-size: 28px;
+    }
+
+    .admin-metric-card strong {
+        font-size: 25px;
+    }
+
+    .admin-panel {
+        padding: 15px;
+    }
+
+    .admin-table {
+        min-width: 700px;
+    }
+
+    .admin-users-table-wrapper {
+        width: 100%;
+
+        overflow-x: auto;
+    }
+
+    .admin-table {
+        min-width: 700px;
+    }
+
+    .admin-ban-form {
+        grid-template-columns: 1fr;
     }
 
     .admin-game-actions {
@@ -2411,24 +3020,67 @@ body {
     }
 
     .admin-game-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .admin-game-card-info {
+        padding: 9px;
+    }
+
+    .admin-game-card-info strong {
+        font-size: 13px;
+    }
+
+    .admin-game-card-info small {
+        font-size: 11px;
+    }
+
+    .admin-game-source {
+        padding: 2px 7px;
+        font-size: 10px;
+    }
+
+    .admin-game-edit-form {
         grid-template-columns: 1fr;
     }
 
-    .game-search-controls {
-        flex-direction: column;
+    .admin-game-edit-description,
+    .admin-game-edit-genres {
+        grid-column: auto;
     }
 
-    .game-search-controls .game-search-bar,
-    .game-sort-select {
+    .admin-game-delete {
+        opacity: 1;
+    }
+
+    .admin-catalog-create-platform {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-catalog-create-platform .btn {
         width: 100%;
-        max-width: 100%;
+        grid-column: auto;
     }
 
-    .game-sort-select {
-        height: 50px;
+    .admin-catalog-platforms,
+    .admin-catalog-genres {
+        grid-template-columns: 1fr;
     }
 
+    .admin-catalog-platform-actions {
+        flex-wrap: wrap;
+    }
+
+    .admin-catalog-platform-actions .btn {
+        min-width: 85px;
+    }
+
+    .admin-catalog-create-genres .input-group {
+        flex-wrap: nowrap;
+    }
 }
+
 
 @media (max-width: 600px) {
 
@@ -2451,4 +3103,26 @@ body {
         flex: 0 0 80px;
     }
 
+    .profile-platform-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .admin-game-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-catalog-genre {
+        gap: 6px;
+        padding: 7px;
+    }
+
+    .admin-catalog-genre-form {
+        gap: 6px;
+    }
+
+    .admin-catalog-genre-button {
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
+    }
 }

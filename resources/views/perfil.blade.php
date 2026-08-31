@@ -2,17 +2,32 @@
 
 @section('content')
 
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            @foreach ($errors->all() as $error)
-                <div>{{ $error }}</div>
-            @endforeach
+    {{-- Mensagens --}}
+
+    @if (session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
         </div>
     @endif
 
+    @if ($errors->any())
+        <div class="alert alert-danger">
+
+            @foreach ($errors->all() as $error)
+                <div>{{ $error }}</div>
+            @endforeach
+
+        </div>
+    @endif
+
+
     <div class="profile-page">
 
+        {{-- Informações principais do perfil --}}
+
         <div class="profile-top">
+
+            {{-- Avatar --}}
 
             <div class="profile-avatar-area">
 
@@ -25,7 +40,10 @@
                     @csrf
                     @method('PATCH')
 
-                    <label for="avatarInput" class="profile-avatar-wrapper">
+                    <label
+                        for="avatarInput"
+                        class="profile-avatar-wrapper"
+                    >
 
                         <img
                             src="{{ $user->avatar ?: asset('images/icone.png') }}"
@@ -34,9 +52,9 @@
                         >
 
                         <span class="profile-avatar-overlay">
-                <i class="bi bi-camera-fill"></i>
-                Alterar foto
-            </span>
+                            <i class="bi bi-camera-fill"></i>
+                            Alterar foto
+                        </span>
 
                     </label>
 
@@ -51,6 +69,9 @@
                 </form>
 
             </div>
+
+
+            {{-- Nome, bio e gêneros --}}
 
             <div class="profile-main-info">
 
@@ -80,7 +101,10 @@
                             id="profileEditButton"
                             title="Editar perfil"
                         >
-                            <i class="bi bi-pencil-fill" id="profileEditIcon"></i>
+                            <i
+                                class="bi bi-pencil-fill"
+                                id="profileEditIcon"
+                            ></i>
                         </button>
 
                         <textarea
@@ -95,23 +119,26 @@
 
                 </section>
 
+
                 <section class="profile-genres-card">
 
-                    <strong>Meus Gêneros:</strong>
+                    <strong>
+                        Meus Gêneros:
+                    </strong>
 
                     <div class="profile-genre-list">
 
                         @forelse ($user->generos as $genero)
 
                             <span class="profile-genre-tag">
-                {{ $genero->genero }}
-            </span>
+                                {{ $genero->genero }}
+                            </span>
 
                         @empty
 
                             <span class="profile-empty-inline">
-                Nenhum gênero configurado.
-            </span>
+                                Nenhum gênero configurado.
+                            </span>
 
                         @endforelse
 
@@ -133,22 +160,38 @@
 
         </div>
 
+
+        {{-- Feed --}}
+
         <section class="profile-section profile-feed">
 
-            <h2>Feed do Usuário</h2>
+            <div class="profile-section-title">
+                <h2>Feed do Usuário</h2>
+            </div>
 
-            <div class="profile-empty-content">
-                Você ainda não possui publicações.
+            <div class="profile-feed-empty">
+
+                <i class="bi bi-images"></i>
+
+                <p>
+                    Nenhuma publicação ainda.
+                </p>
+
             </div>
 
         </section>
 
+
+        {{-- Jogos --}}
+
         <section class="profile-section">
 
             <div class="profile-section-title">
+
                 <h2>Meus Jogos</h2>
 
                 @if ($user->jogos->count() > 4)
+
                     <button
                         type="button"
                         class="profile-view-all"
@@ -157,29 +200,39 @@
                     >
                         Ver todos ({{ $user->jogos->count() }})
                     </button>
+
                 @endif
+
             </div>
+
 
             <div class="profile-games-row">
 
                 @if ($user->jogos->isNotEmpty())
+
                     <div class="profile-games-list">
 
                         @foreach ($user->jogos->take(4) as $jogo)
+
                             <div class="profile-game-card">
+
                                 <img
                                     src="{{ $jogo->capa }}"
                                     alt="{{ $jogo->nome }}"
                                 >
 
                                 <span>
-                            {{ $jogo->nome }}
-                        </span>
+                                    {{ $jogo->nome }}
+                                </span>
+
                             </div>
+
                         @endforeach
 
                     </div>
+
                 @endif
+
 
                 <button
                     type="button"
@@ -195,7 +248,54 @@
 
         </section>
 
+
+        {{-- Plataformas --}}
+
+        <section class="profile-section">
+
+            <div class="profile-section-title">
+                <h2>Minhas Plataformas</h2>
+            </div>
+
+
+            <div class="profile-platforms-list">
+
+                @foreach ($user->plataformas as $plataforma)
+
+                    <div class="profile-platform-card">
+
+                        <img
+                            src="{{ $plataforma->icone }}"
+                            alt="{{ $plataforma->nome }}"
+                        >
+
+                        <span>
+                            {{ $plataforma->nome }}
+                        </span>
+
+                    </div>
+
+                @endforeach
+
+
+                <button
+                    type="button"
+                    class="profile-add-card profile-platform-add"
+                    data-bs-toggle="modal"
+                    data-bs-target="#plataformasModal"
+                    title="Adicionar plataformas"
+                >
+                    <i class="bi bi-plus-lg"></i>
+                </button>
+
+            </div>
+
+        </section>
+
     </div>
+
+
+    {{-- Modal de gêneros --}}
 
     <div
         class="modal fade"
@@ -215,6 +315,7 @@
                     @csrf
                     @method('PATCH')
 
+
                     <div class="modal-header">
 
                         <h2 class="modal-title">
@@ -225,15 +326,18 @@
                             type="button"
                             class="btn-close btn-close-white"
                             data-bs-dismiss="modal"
+                            aria-label="Fechar"
                         ></button>
 
                     </div>
+
 
                     <div class="modal-body">
 
                         <p class="profile-genres-description">
                             Escolha os gêneros de jogos que mais combinam com você.
                         </p>
+
 
                         <div class="profile-genre-options">
 
@@ -254,8 +358,8 @@
                                     >
 
                                     <span>
-                                    {{ $genero->genero }}
-                                </span>
+                                        {{ $genero->genero }}
+                                    </span>
 
                                 </label>
 
@@ -264,6 +368,7 @@
                         </div>
 
                     </div>
+
 
                     <div class="modal-footer">
 
@@ -291,6 +396,9 @@
         </div>
 
     </div>
+
+
+    {{-- Modal para adicionar jogos --}}
 
     <div
         class="modal fade"
@@ -321,6 +429,7 @@
                             type="button"
                             class="btn-close btn-close-white"
                             data-bs-dismiss="modal"
+                            aria-label="Fechar"
                         ></button>
 
                     </div>
@@ -375,8 +484,8 @@
                                         >
 
                                         <span>
-                                        {{ $jogo->nome }}
-                                    </span>
+                                            {{ $jogo->nome }}
+                                        </span>
 
                                     </div>
 
@@ -422,6 +531,9 @@
 
     </div>
 
+
+    {{-- Modal com todos os jogos --}}
+
     <div
         class="modal fade"
         id="todosJogosModal"
@@ -443,6 +555,7 @@
                         type="button"
                         class="btn-close btn-close-white"
                         data-bs-dismiss="modal"
+                        aria-label="Fechar"
                     ></button>
 
                 </div>
@@ -462,8 +575,8 @@
                                 >
 
                                 <span>
-                                {{ $jogo->nome }}
-                            </span>
+                                    {{ $jogo->nome }}
+                                </span>
 
                             </div>
 
@@ -479,6 +592,127 @@
 
     </div>
 
+
+    {{-- Modal de plataformas --}}
+
+    <div
+        class="modal fade"
+        id="plataformasModal"
+        tabindex="-1"
+        aria-hidden="true"
+    >
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content profile-games-modal">
+
+                <form
+                    method="POST"
+                    action="{{ route('perfil.plataformas.update') }}"
+                >
+                    @csrf
+                    @method('PATCH')
+
+
+                    <div class="modal-header">
+
+                        <h2 class="modal-title">
+                            Minhas Plataformas
+                        </h2>
+
+                        <button
+                            type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"
+                            aria-label="Fechar"
+                        ></button>
+
+                    </div>
+
+
+                    <div class="modal-body">
+
+                        <p class="profile-games-description">
+                            Escolha as plataformas em que você joga.
+                        </p>
+
+
+                        <div class="profile-platform-options">
+
+                            @forelse ($plataformasDisponiveis as $plataforma)
+
+                                <label class="profile-platform-option">
+
+                                    <input
+                                        type="checkbox"
+                                        name="plataformas[]"
+                                        value="{{ $plataforma->id_plataforma }}"
+                                        @checked(
+                                            $user->plataformas->contains(
+                                                'id_plataforma',
+                                                $plataforma->id_plataforma
+                                            )
+                                        )
+                                    >
+
+                                    <div>
+
+                                        <img
+                                            src="{{ $plataforma->icone }}"
+                                            alt="{{ $plataforma->nome }}"
+                                        >
+
+                                        <span>
+                                            {{ $plataforma->nome }}
+                                        </span>
+
+                                    </div>
+
+                                </label>
+
+                            @empty
+
+                                <div class="profile-games-empty">
+                                    Ainda não existem plataformas cadastradas.
+                                </div>
+
+                            @endforelse
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="modal-footer">
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn profile-games-save"
+                        >
+                            Salvar
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {{-- JavaScript do perfil --}}
+
     <script>
         const profileForm = document.getElementById('profileForm');
         const nicknameInput = document.getElementById('nicknameInput');
@@ -491,8 +725,13 @@
 
         let editingProfile = false;
 
+
+        // Editar nome e bio
+
         profileEditButton.addEventListener('click', function () {
+
             if (!editingProfile) {
+
                 editingProfile = true;
 
                 nicknameInput.removeAttribute('readonly');
@@ -504,22 +743,35 @@
                 profileEditIcon.classList.add('bi-check-lg');
 
                 profileEditButton.title = 'Salvar alterações';
+
             } else {
+
                 profileForm.requestSubmit();
+
             }
+
         });
 
+
+        // Alterar avatar
+
         avatarInput.addEventListener('change', function () {
+
             if (avatarInput.files.length > 0) {
                 avatarForm.requestSubmit();
             }
+
         });
+
+
+        // Buscar jogos dentro do modal
 
         const profileGameSearch =
             document.getElementById('profileGameSearch');
 
         const profileGameOptions =
             document.querySelectorAll('.profile-game-option');
+
 
         if (profileGameSearch) {
 
@@ -540,11 +792,15 @@
                                 name.includes(search)
                                     ? ''
                                     : 'none';
+
                         }
                     );
+
                 }
             );
+
         }
+
     </script>
 
 @endsection

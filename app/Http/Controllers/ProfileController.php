@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Genero;
 use App\Models\Jogo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Plataforma;
 
 class ProfileController extends Controller
 {
@@ -15,16 +17,18 @@ class ProfileController extends Controller
         $user->load([
             'generos',
             'jogos',
+            'plataformas',
         ]);
 
         $generos = Genero::orderBy('genero')->get();
-
         $jogosDisponiveis = Jogo::orderBy('nome')->get();
+        $plataformasDisponiveis = Plataforma::orderBy('nome')->get();
 
         return view('perfil', [
             'user' => $user,
             'generos' => $generos,
             'jogosDisponiveis' => $jogosDisponiveis,
+            'plataformasDisponiveis' => $plataformasDisponiveis,
         ]);
     }
 
@@ -141,5 +145,88 @@ class ProfileController extends Controller
         return redirect()
             ->route('perfil')
             ->with('success', 'Jogos atualizados.');
+    }
+
+    public function destroy(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'confirmacao' => ['required', 'string'],
+        ]);
+
+        if ($request->confirmacao !== $user->nickname) {
+            return back()->withErrors([
+                'confirmacao' =>
+                    'O nome digitado não corresponde ao seu usuário.',
+            ]);
+        }
+
+        $user->excluirConta();
+
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()
+            ->route('login')
+            ->with('success', 'Sua conta foi excluída.');
+    }
+
+    public function updatePlataformas(Request $request)
+    {
+        $data = $request->validate([
+            'plataformas' => [
+                'nullable',
+                'array',
+            ],
+
+            'plataformas.*' => [
+                'integer',
+                'exists:tb_plataforma,id_plataforma',
+            ],
+        ]);
+
+        $user = $request->user();
+
+        $selecionadas =
+            $data['plataformas'] ?? [];
+
+        $atuais = $user->plataformas()
+            ->pluck('tb_plataforma.id_plataforma')
+            ->toArray();
+
+        $adicionar = array_diff(
+            $selecionadas,
+            $atuais
+        );
+
+        $remover = array_diff(
+            $atuais,
+            $selecionadas
+        );
+
+        foreach ($adicionar as $idPlataforma) {
+
+            $user->plataformas()->attach(
+                $idPlataforma,
+                [
+                    'data_adicao' => now(),
+                ]
+            );
+        }
+
+        if (! empty($remover)) {
+            $user->plataformas()
+                ->detach($remover);
+        }
+
+        return redirect()
+            ->route('perfil')
+            ->with(
+                'success',
+                'Plataformas atualizadas.'
+            );
     }
 }

@@ -11,9 +11,13 @@ use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
-    public function dashboard()
+    public function geral()
     {
-        $totalUsuarios = User::count();
+        $totalUsuarios = User::where(
+            'status_conta',
+            '!=',
+            'excluido'
+        )->count();
 
         $usuariosAtivos = User::where(
             'status_conta',
@@ -30,10 +34,13 @@ class AdminController extends Controller
             'pendente'
         )->count();
 
-        $usuarios = User::orderBy(
-            'data_criacao',
-            'desc'
-        )->paginate(10);
+        $usuarios = User::where(
+            'status_conta',
+            '!=',
+            'excluido'
+        )
+            ->orderBy('data_criacao', 'desc')
+            ->paginate(10);
 
         $denuncias = Denuncia::with([
             'denunciante',
@@ -44,7 +51,7 @@ class AdminController extends Controller
             ->limit(5)
             ->get();
 
-        return view('admin.dashboard', [
+        return view('admin.geral', [
             'totalUsuarios' => $totalUsuarios,
             'usuariosAtivos' => $usuariosAtivos,
             'usuariosBanidos' => $usuariosBanidos,
@@ -54,28 +61,63 @@ class AdminController extends Controller
         ]);
     }
 
+    public function dashboard()
+    {
+        return view('admin.dashboard');
+    }
+
     public function banir(Request $request, User $user)
     {
+        if ($user->status_conta === 'excluido') {
+            return back()->withErrors([
+                'usuario' => 'Este usuário já foi excluído.',
+            ]);
+        }
+
         $data = $request->validate([
-            'motivo' => ['required', 'string', 'max:500'],
-            'justificativa' => ['required', 'string', 'max:2000'],
-            'data_fim' => ['required', 'date', 'after:today'],
+            'motivo' => [
+                'required',
+                'string',
+                'max:500',
+            ],
+
+            'justificativa' => [
+                'required',
+                'string',
+                'max:2000',
+            ],
+
+            'data_fim' => [
+                'required',
+                'date',
+                'after:today',
+            ],
         ], [
-            'motivo.required' => 'Informe o motivo do banimento.',
-            'justificativa.required' => 'Informe uma justificativa.',
-            'data_fim.required' => 'Informe quando o banimento termina.',
-            'data_fim.after' => 'A data final deve ser posterior a hoje.',
+            'motivo.required' =>
+                'Informe o motivo do banimento.',
+
+            'justificativa.required' =>
+                'Informe uma justificativa.',
+
+            'data_fim.required' =>
+                'Informe quando o banimento termina.',
+
+            'data_fim.after' =>
+                'A data final deve ser posterior a hoje.',
         ]);
 
         DB::transaction(function () use ($data, $user) {
+
             Banimento::create([
                 'motivo' => $data['motivo'],
                 'data_inicio' => now(),
                 'data_fim' => $data['data_fim'],
                 'justificativa' => $data['justificativa'],
                 'status_banimento' => 'ativo',
-                'id_administrador' => Auth::guard('admin')->id(),
-                'id_usuario_banido' => $user->id_usuario,
+                'id_administrador' =>
+                    Auth::guard('admin')->id(),
+                'id_usuario_banido' =>
+                    $user->id_usuario,
             ]);
 
             $user->update([
@@ -91,13 +133,26 @@ class AdminController extends Controller
 
     public function desbanir(User $user)
     {
+        if ($user->status_conta === 'excluido') {
+            return back()->withErrors([
+                'usuario' => 'Este usuário já foi excluído.',
+            ]);
+        }
+
         DB::transaction(function () use ($user) {
+
             $banimento = Banimento::where(
                 'id_usuario_banido',
                 $user->id_usuario
             )
-                ->where('status_banimento', 'ativo')
-                ->orderBy('data_inicio', 'desc')
+                ->where(
+                    'status_banimento',
+                    'ativo'
+                )
+                ->orderBy(
+                    'data_inicio',
+                    'desc'
+                )
                 ->first();
 
             if ($banimento) {
@@ -115,6 +170,38 @@ class AdminController extends Controller
         return back()->with(
             'success',
             'Usuário desbanido com sucesso.'
+        );
+    }
+
+    public function excluirUsuario(
+        Request $request,
+        User $user
+    ) {
+        if ($user->status_conta === 'excluido') {
+            return back()->withErrors([
+                'usuario' => 'Este usuário já foi excluído.',
+            ]);
+        }
+
+        $data = $request->validate([
+            'confirmacao' => [
+                'required',
+                'string',
+            ],
+        ]);
+
+        if ($data['confirmacao'] !== $user->nickname) {
+            return back()->withErrors([
+                'confirmacao' =>
+                    'O nome digitado não corresponde ao usuário.',
+            ]);
+        }
+
+        $user->excluirConta();
+
+        return back()->with(
+            'success',
+            'Usuário excluído com sucesso.'
         );
     }
 

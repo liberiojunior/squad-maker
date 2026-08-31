@@ -33,3 +33,6 @@ auth.json
 
 /public/uploads/avatars/*
 /public/uploads/jogos/*
+
+/public/uploads/plataformas/*
+!/public/uploads/plataformas/.gitkeep
