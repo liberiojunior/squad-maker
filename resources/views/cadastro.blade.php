@@ -24,6 +24,7 @@
                     method="POST"
                     action="{{ route('cadastro.store') }}"
                     class="register-form"
+                    autocomplete="off"
                 >
                     @csrf
 
@@ -39,6 +40,7 @@
                             class="form-control"
                             maxlength="80"
                             value="{{ old('nickname') }}"
+                            required
                         >
 
                         @error('nickname')
@@ -47,6 +49,7 @@
                         </span>
                         @enderror
                     </div>
+
 
                     <div>
                         <label for="email" class="form-label">
@@ -59,6 +62,8 @@
                             name="email"
                             class="form-control"
                             value="{{ old('email') }}"
+                            autocomplete="off"
+                            required
                         >
 
                         @error('email')
@@ -67,6 +72,32 @@
                         </span>
                         @enderror
                     </div>
+
+
+                    <div>
+                        <label for="cpf" class="form-label">
+                            CPF
+                        </label>
+
+                        <input
+                            type="text"
+                            id="cpf"
+                            name="cpf"
+                            class="form-control"
+                            maxlength="14"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            placeholder="000.000.000-00"
+                            required
+                        >
+
+                        @error('cpf')
+                        <span class="register-error">
+                            {{ $message }}
+                        </span>
+                        @enderror
+                    </div>
+
 
                     <div>
                         <label for="password" class="form-label">
@@ -78,6 +109,8 @@
                             id="password"
                             name="password"
                             class="form-control"
+                            autocomplete="new-password"
+                            required
                         >
 
                         @error('password')
@@ -86,6 +119,7 @@
                         </span>
                         @enderror
                     </div>
+
 
                     <div>
                         <label for="password_confirmation" class="form-label">
@@ -97,32 +131,45 @@
                             id="password_confirmation"
                             name="password_confirmation"
                             class="form-control"
+                            autocomplete="new-password"
+                            required
                         >
                     </div>
 
+
                     <div class="form-check register-age">
+
                         <input
                             type="checkbox"
-                            id="maior_idade"
-                            name="maior_idade"
+                            id="termos"
+                            name="termos"
                             value="1"
                             class="form-check-input"
-                            {{ old('maior_idade') ? 'checked' : '' }}
+                            {{ old('termos') ? 'checked' : '' }}
                         >
 
                         <label
-                            for="maior_idade"
+                            for="termos"
                             class="form-check-label"
                         >
-                            Declaro que tenho 18 anos ou mais.
+                            Li e aceito os
+                            <a
+                                href="{{ route('termos') }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Termos de Uso e Política de Privacidade
+                            </a>.
                         </label>
+
                     </div>
 
-                    @error('maior_idade')
+                    @error('termos')
                     <span class="register-error">
                         {{ $message }}
                     </span>
                     @enderror
+
 
                     <button
                         type="submit"

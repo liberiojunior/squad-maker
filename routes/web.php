@@ -38,7 +38,11 @@ Route::get('/cadastro', [RegisterController::class, 'show'])
     ->name('cadastro');
 
 Route::post('/cadastro', [RegisterController::class, 'store'])
+    ->middleware('throttle:5,1')
     ->name('cadastro.store');
+
+Route::view('/termos', 'termos')
+    ->name('termos');
 
 
 // Login com Google

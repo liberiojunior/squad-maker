@@ -2,21 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use Laravel\Socialite\Facades\Socialite;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
 
 class GoogleAuthController extends Controller
 {
     public function redirect()
     {
-        return Socialite::driver('google')->redirect();
+        return Socialite::driver('google')
+            ->redirect();
     }
 
-    public function callback()
+    public function callback(Request $request)
     {
         $googleUser = Socialite::driver('google')->user();
 
@@ -25,52 +27,53 @@ class GoogleAuthController extends Controller
         $email = $googleUser->getEmail();
         $avatar = $googleUser->getAvatar();
 
-        // Procura por google_id primeiro, depois por email
-        $user = User::where('google_id', $googleId)->first();
+        $user = User::where(
+            'google_id',
+            $googleId
+        )->first();
 
         if (! $user && $email) {
-            $user = User::where('email', $email)->first();
+            $user = User::where(
+                'email',
+                $email
+            )->first();
         }
 
         if ($user) {
-            // Atualiza campos relevantes
             $user->update([
                 'email' => $email ?? $user->email,
                 'google_id' => $user->google_id ?? $googleId,
                 'avatar' => $user->avatar ?? $avatar,
-                'email_verified_at' => $user->email_verified_at ?? Carbon::now(),
+                'email_verified_at' => $user->email_verified_at
+                    ?? Carbon::now(),
             ]);
         } else {
-            // Cria novo usuário na sua tabela tb_usuario
             $user = User::create([
                 'nickname' => $name ?? 'Usuário Google',
+
                 'email' => $email,
-                'senha' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(16)),
+
+                'senha' => Hash::make(
+                    Str::random(32)
+                ),
+
                 'google_id' => $googleId,
+
                 'avatar' => $avatar,
-                'email_verified_at' => \Carbon\Carbon::now(),
-                'data_criacao' => \Carbon\Carbon::now(),
+
+                'email_verified_at' => Carbon::now(),
+
+                'data_criacao' => Carbon::now(),
+
                 'status_conta' => 'ativo',
             ]);
         }
 
-        // Faz login do usuário no Laravel
-        \Illuminate\Support\Facades\Auth::login($user, true);
+        Auth::login($user, true);
 
-        return redirect()->route('perfil');
+        $request->session()->regenerate();
+
+        return redirect()
+            ->route('perfil');
     }
-
-    /*DEBUG
-    public function callback()
-    {
-        $googleUser = Socialite::driver('google')->user();
-
-        dd([
-            'id' => $googleUser->getId(),
-            'name' => $googleUser->getName(),
-            'email' => $googleUser->getEmail(),
-            'avatar' => $googleUser->getAvatar(),
-            'raw' => $googleUser->user ?? null,
-        ]);
-    }*/
 }

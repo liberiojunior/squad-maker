@@ -45,4 +45,9 @@ return [
         'key' => env('STEAM_API_KEY'),
     ],
 
+    'apicpf' => [
+        'key' => env('APICPF_API_KEY'),
+        'base_url' => env('APICPF_BASE_URL', 'https://apicpf.com'),
+    ],
+
 ];
