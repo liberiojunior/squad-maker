@@ -1,5 +1,15 @@
 /* Geral */
 
+.alert {
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.alert-hide {
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+}
+
 * {
     box-sizing: border-box;
 }
@@ -20,7 +30,6 @@ body {
     background-attachment: fixed;
     color: white;
 }
-
 
 /* Navbar */
 
@@ -57,7 +66,6 @@ body {
 .navbar-nav .nav-link:hover {
     color: #e83bbd;
 }
-
 
 /* Login */
 
@@ -154,7 +162,6 @@ body {
     text-align: left;
 }
 
-
 /* Sobre nós */
 
 .about-page {
@@ -206,7 +213,6 @@ body {
     background-color: #7c00b5;
     color: white;
 }
-
 
 /* Equipe */
 
@@ -274,7 +280,6 @@ body {
     font-size: 17px;
     line-height: 1.6;
 }
-
 
 /* Contato */
 
@@ -363,7 +368,6 @@ body {
     background-color: #7c00b5;
     color: white;
 }
-
 
 /* Cadastro */
 
@@ -466,6 +470,274 @@ body {
     color: #e83bbd;
 }
 
+/* Escolha de jogos do cadastro */
+
+.game-setup-page {
+    min-height: calc(100vh - 58px);
+    padding: 45px 20px;
+    background-image: url("/images/fundo2.jpg");
+    background-position: center;
+    background-size: cover;
+}
+
+.game-setup-container {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+    padding: 30px;
+    background-color: rgba(31, 0, 78, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+}
+
+.game-setup-header {
+    margin-bottom: 26px;
+    text-align: center;
+}
+
+.game-setup-step {
+    color: #ec3bbd;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.game-setup-header h1 {
+    margin: 5px 0 6px;
+    color: white;
+    font-size: 34px;
+}
+
+.game-setup-header p {
+    margin: 0;
+    color: #cfc7d8;
+}
+
+.game-setup-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 26px;
+}
+
+.game-setup-search {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 15px;
+    background-color: white;
+    border-radius: 7px;
+}
+
+.game-setup-search i {
+    color: #1f1430;
+    font-size: 20px;
+}
+
+.game-setup-search input {
+    width: 100%;
+    height: 48px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+}
+
+.game-setup-count {
+    min-width: 170px;
+    color: #d7d0df;
+    font-size: 14px;
+    text-align: right;
+}
+
+.game-setup-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.game-setup-card {
+    min-width: 0;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 2px solid transparent;
+    border-radius: 9px;
+    transition: border-color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+.game-setup-card:hover {
+    transform: translateY(-2px);
+    background-color: rgba(255, 255, 255, 0.09);
+}
+
+.game-setup-card.selected {
+    border-color: #ec3bbd;
+}
+
+.game-setup-select {
+    display: block;
+    cursor: pointer;
+}
+
+.game-setup-checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.game-setup-cover {
+    position: relative;
+}
+
+.game-setup-cover img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 460 / 215;
+    object-fit: cover;
+}
+
+.game-setup-check {
+    position: absolute;
+    top: 9px;
+    right: 9px;
+    width: 28px;
+    height: 28px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background-color: #ec3bbd;
+    color: white;
+    border-radius: 50%;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+.game-setup-card.selected .game-setup-check {
+    display: flex;
+}
+
+.game-setup-select strong {
+    display: block;
+    padding: 10px 12px;
+    overflow: hidden;
+    color: white;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.game-setup-level {
+    padding: 2px 12px 14px;
+}
+
+.game-setup-level-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.game-setup-level-header span {
+    color: #aaa1b8;
+}
+
+.game-level-name {
+    color: #a6a0ad;
+}
+
+.game-level-range-wrap {
+    --level-color: #aaa1b8;
+    --level-percent: 0%;
+    position: relative;
+    width: 100%;
+    padding: 9px 0;
+    overflow: visible;
+}
+
+.game-level-range {
+    width: 100%;
+    height: 6px;
+    appearance: none;
+    margin: 0;
+    background: linear-gradient(
+        to right,
+        var(--level-color) 0%,
+        var(--level-color) var(--level-percent),
+        rgba(255, 255, 255, 0.18) var(--level-percent),
+        rgba(255, 255, 255, 0.18) 100%
+    );
+    border-radius: 20px;
+    outline: none;
+    cursor: pointer;
+}
+
+.game-level-range::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+    appearance: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.game-level-range::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.game-level-star {
+    position: absolute;
+    top: 50%;
+    left: var(--level-percent);
+    z-index: 2;
+    color: var(--level-color);
+    font-size: 24px;
+    line-height: 1;
+    transform: translate(-50%, -50%);
+    -webkit-text-stroke: 0.5px white;
+    text-shadow: 0.5px 0 white,
+    -0.5px 0 white,
+    0 0.5px white,
+    0 -0.5px white,
+    0 2px 3px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+.game-level-extremes {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    color: #8f8799;
+    font-size: 11px;
+}
+
+.game-setup-empty {
+    padding: 45px 20px;
+    color: #aaa1b8;
+    text-align: center;
+}
+
+.game-setup-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 28px;
+}
+
+.game-setup-continue {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background-color: #8200b8;
+    color: white;
+    border: none;
+}
+
+.game-setup-continue:hover {
+    background-color: #9b00d8;
+    color: white;
+}
 
 /* Recuperação de senha */
 
@@ -541,12 +813,12 @@ body {
     color: #e83bbd;
 }
 
-
 /* Área interna */
 
 .internal-body {
     min-height: 100dvh;
     margin: 0;
+    background-color: #090511;
     background-image: url("/images/fundo2.jpg");
     background-size: cover;
     background-position: center;
@@ -689,7 +961,6 @@ body {
     padding: 18px 30px;
 }
 
-
 /* Perfil */
 
 .profile-page {
@@ -724,9 +995,9 @@ body {
 .profile-avatar {
     width: 100%;
     height: 100%;
+    border: 3px solid rgba(255, 255, 255, 0.15);
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid rgba(255, 255, 255, 0.15);
 }
 
 .profile-avatar-overlay {
@@ -857,8 +1128,8 @@ body {
 .profile-genre-tag {
     padding: 5px 14px;
     background-color: rgba(6, 0, 55, 0.65);
-    border-radius: 18px;
     color: #d7d0df;
+    border-radius: 18px;
     font-size: 16px;
 }
 
@@ -889,7 +1160,6 @@ body {
 .profile-small-add i {
     line-height: 1;
 }
-
 
 /* Modal de gêneros */
 
@@ -954,7 +1224,6 @@ body {
     color: white;
 }
 
-
 /* Seções do perfil */
 
 .profile-section {
@@ -994,7 +1263,6 @@ body {
     color: #e83bbd;
 }
 
-
 /* Feed */
 
 .profile-feed {
@@ -1019,7 +1287,6 @@ body {
     margin: 0;
 }
 
-
 /* Jogos do perfil */
 
 .profile-games-row {
@@ -1039,6 +1306,11 @@ body {
     min-width: 0;
 }
 
+.profile-game-cover {
+    position: relative;
+    box-shadow: 0 5px 6px -5px rgba(0, 0, 0, 0.9);
+}
+
 .profile-game-card img {
     display: block;
     width: 100%;
@@ -1049,12 +1321,36 @@ body {
 
 .profile-game-card span {
     display: block;
-    margin-top: 6px;
+    margin-top: 7px;
     overflow: hidden;
     color: #d7d0df;
     font-size: 14px;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.profile-game-detail {
+    width: 100%;
+    padding: 0;
+    appearance: none;
+    background: transparent;
+    color: inherit;
+    border: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.profile-game-detail:focus {
+    outline: none;
+}
+
+.profile-game-detail .profile-game-cover img {
+    transition: transform 0.2s ease;
+}
+
+.profile-game-detail:hover .profile-game-cover img {
+    transform: scale(1.02);
 }
 
 .profile-add-card {
@@ -1087,14 +1383,14 @@ body {
     margin-left: 0;
     flex: 0 0 100px;
     aspect-ratio: 1 / 1;
+    align-self: center;
 }
 
 .profile-game-add i {
     font-size: 42px;
 }
 
-
-/* Modal de jogos */
+/* Gerenciador de jogos */
 
 .profile-games-modal {
     background-color: #180046;
@@ -1107,62 +1403,246 @@ body {
     border-color: rgba(255, 255, 255, 0.12);
 }
 
-.profile-games-description {
-    color: #c3bacd;
+.profile-modal-subtitle {
+    margin: 4px 0 0;
+    color: #aaa1b8;
+    font-size: 14px;
+}
+
+.profile-game-manager-body {
+    position: relative;
+    min-height: 340px;
+}
+
+.profile-game-manager-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
 .profile-game-search {
     height: 46px;
-    margin-bottom: 20px;
+    margin: 0;
 }
 
-.profile-game-options {
+.profile-game-manager-count {
+    flex-shrink: 0;
+    color: #c3bacd;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.profile-game-search-results {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    max-height: 420px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    max-height: 350px;
+    padding-right: 4px;
+    overflow-x: hidden;
     overflow-y: auto;
 }
 
-.profile-game-option {
+.profile-game-search-empty {
+    grid-column: 1 / -1;
+    padding: 45px 20px;
+    color: #aaa1b8;
+    text-align: center;
+}
+
+.profile-game-search-item {
+    min-width: 0;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 2px solid transparent;
+    border-radius: 8px;
+}
+
+.profile-game-search-item.selected {
+    background-color: rgba(101, 0, 149, 0.2);
+    border-color: #e83bbd;
+}
+
+.profile-game-search-card {
+    width: 100%;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 135px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 7px;
+    background: transparent;
+    color: white;
+    border: none;
+    text-align: left;
     cursor: pointer;
 }
 
-.profile-game-option input {
-    display: none;
+.profile-game-search-card:hover {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
-.profile-game-option-card {
-    padding: 5px;
-    border: 2px solid transparent;
-    border-radius: 7px;
-}
-
-.profile-game-option-card img {
+.profile-game-search-card img {
     display: block;
-    width: 100%;
+    width: 135px;
     aspect-ratio: 460 / 215;
     object-fit: cover;
     border-radius: 5px;
 }
 
-.profile-game-option-card span {
-    display: block;
-    margin-top: 6px;
+.profile-game-search-info {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.profile-game-search-info strong,
+.profile-game-search-info span {
     overflow: hidden;
-    color: white;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.profile-game-option input:checked + .profile-game-option-card {
-    border-color: #e83bbd;
-    background-color: rgba(101, 0, 149, 0.45);
+.profile-game-search-info strong {
+    font-size: 14px;
+}
+
+.profile-game-search-level {
+    color: #eaa7d8;
+    font-size: 12px;
+}
+
+.profile-game-search-add {
+    color: #aaa1b8;
+    font-size: 12px;
+}
+
+.profile-level-popup {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    background-color: rgba(9, 5, 17, 0.78);
+    border-radius: 0 0 8px 8px;
+}
+
+.profile-level-popup[hidden] {
+    display: none;
+}
+
+.profile-level-popup-card {
+    position: relative;
+    width: min(470px, 100%);
+    padding: 22px;
+    background-color: #18003d;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 12px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.profile-level-popup-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background-color: transparent;
+    color: #d7d0df;
+    border: none;
+    border-radius: 50%;
+    font-size: 18px;
+}
+
+.profile-level-popup-close:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+.profile-level-popup-game,
+.profile-level-detail-game {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.profile-level-popup-game {
+    padding-right: 35px;
+    margin-bottom: 22px;
+}
+
+.profile-level-popup-game img,
+.profile-level-detail-game img {
+    width: 160px;
+    flex-shrink: 0;
+    aspect-ratio: 460 / 215;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.profile-level-popup-game > div {
+    min-width: 0;
+}
+
+.profile-level-popup-game span {
+    display: block;
+    margin-bottom: 3px;
+    color: #aaa1b8;
+    font-size: 13px;
+}
+
+.profile-level-popup-game strong,
+.profile-level-detail-game strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-level-popup-current,
+.profile-level-edit-current {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin: 22px 0 18px;
+}
+
+.profile-level-popup-current span,
+.profile-level-edit-current span {
+    color: #aaa1b8;
+    font-size: 14px;
+}
+
+.profile-level-popup-current strong,
+.profile-level-edit-current strong {
+    color: #aaa1b8;
+    font-size: 16px;
+}
+
+.profile-level-popup-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.profile-level-popup-actions .btn-danger {
+    margin-right: auto;
 }
 
 .profile-games-save {
     background-color: #650095;
     color: white;
+    border: none;
 }
 
 .profile-games-save:hover {
@@ -1170,10 +1650,149 @@ body {
     color: white;
 }
 
-.profile-all-games {
+.profile-games-save:disabled {
+    background-color: #4c2863;
+    color: #c9c1d0;
+    cursor: not-allowed;
+}
+
+.profile-game-manager-footer {
+    align-items: center;
+}
+
+.profile-modal-status {
+    margin-right: auto;
+    color: #aaa1b8;
+    font-size: 13px;
+}
+
+.profile-modal-status.success {
+    color: #7ee29a;
+}
+
+.profile-modal-status.error {
+    color: #ff9ca7;
+}
+
+.profile-level-detail-game {
+    margin-bottom: 22px;
+}
+
+.profile-level-detail-error {
+    margin-top: 16px;
+    padding: 9px 12px;
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #ffb2ba;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+/* Organização dos jogos */
+
+.profile-order-list {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    max-height: 560px;
+    padding: 2px;
+    overflow-y: auto;
+}
+
+.profile-order-item {
+    min-width: 0;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    cursor: grab;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.profile-order-item:hover {
+    transform: translateY(-2px);
+}
+
+.profile-order-item.dragging {
+    opacity: 0.35;
+    cursor: grabbing;
+}
+
+.profile-order-cover {
+    position: relative;
+    overflow: hidden;
+    border-radius: 7px;
+    box-shadow: 0 5px 7px -5px rgba(0, 0, 0, 0.9);
+}
+
+.profile-order-game-button {
+    width: 100%;
+    display: block;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.profile-order-game-button img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 460 / 215;
+    object-fit: cover;
+    border-radius: 7px;
+    transition: transform 0.2s ease;
+}
+
+.profile-order-game-button:hover img {
+    transform: scale(1.025);
+}
+
+.profile-order-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background-color: rgba(220, 53, 69, 0.92);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    opacity: 0;
+    font-size: 15px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.profile-order-item:hover .profile-order-remove,
+.profile-order-remove:focus {
+    opacity: 1;
+}
+
+.profile-order-remove:hover {
+    background-color: #dc3545;
+}
+
+.profile-order-title {
+    width: 100%;
+    display: block;
+    margin-top: 8px;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+    color: #d7d0df;
+    border: none;
+    font-size: 14px;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.profile-order-title:hover {
+    color: #e83bbd;
 }
 
 .profile-games-empty {
@@ -1182,7 +1801,6 @@ body {
     color: #aaa1b8;
     text-align: center;
 }
-
 
 /* Plataformas */
 
@@ -1264,7 +1882,6 @@ body {
     background-color: rgba(101, 0, 149, 0.45);
     border-color: #e83bbd;
 }
-
 
 /* Busca de jogos */
 
@@ -1355,6 +1972,7 @@ body {
 
 .game-search-card {
     width: 100%;
+    min-width: 0;
     padding: 0;
     background-color: transparent;
     color: white;
@@ -1363,19 +1981,30 @@ body {
     cursor: pointer;
 }
 
+.game-search-cover-box {
+    position: relative;
+    box-shadow: 0 5px 6px -5px rgba(0, 0, 0, 0.9);
+}
+
 .game-search-cover {
+    display: block;
     width: 100%;
     aspect-ratio: 460 / 215;
     object-fit: cover;
+    border-radius: 6px;
+    transition: transform 0.2s ease;
 }
 
 .game-search-card:hover .game-search-cover {
     transform: scale(1.025);
 }
 
+.game-search-content {
+    padding-top: 8px;
+}
+
 .game-search-name {
     display: block;
-    margin-top: 8px;
     overflow: hidden;
     font-size: 16px;
     font-weight: 600;
@@ -1411,41 +2040,113 @@ body {
     font-size: 18px;
 }
 
+/* Paginação */
+
+.squad-pagination,
+.admin-pagination,
 .game-pagination {
+    width: 100%;
+    margin-top: 30px;
+    text-align: center;
+}
+
+.squad-pagination nav,
+.admin-pagination nav,
+.game-pagination nav {
+    width: 100%;
+}
+
+.squad-pagination nav > .d-sm-flex,
+.admin-pagination nav > .d-sm-flex,
+.game-pagination nav > .d-sm-flex {
+    flex-direction: column;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 10px;
+}
+
+.squad-pagination nav > .d-sm-flex > div,
+.admin-pagination nav > .d-sm-flex > div,
+.game-pagination nav > .d-sm-flex > div {
+    width: auto;
+}
+
+.squad-pagination .small,
+.squad-pagination .text-muted,
+.admin-pagination .small,
+.admin-pagination .text-muted,
+.game-pagination .small,
+.game-pagination .text-muted {
+    margin: 0;
+    color: #d7d0df !important;
+    text-align: center;
+}
+
+.squad-pagination .small .fw-semibold,
+.admin-pagination .small .fw-semibold,
+.game-pagination .small .fw-semibold {
+    margin: 0 3px;
+}
+
+.squad-pagination .pagination,
+.admin-pagination .pagination,
+.game-pagination .pagination {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+}
+
+.squad-pagination .page-link,
+.admin-pagination .page-link,
+.game-pagination .page-link {
+    min-width: 40px;
+    height: 40px;
     display: flex;
     justify-content: center;
-    margin-top: 30px;
-}
-
-.game-pagination .pagination {
-    margin-bottom: 0;
-}
-
-.game-pagination .page-link {
+    align-items: center;
+    padding: 0 12px;
     background-color: #21004d;
     color: white;
-    border-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 7px !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
 }
 
+.squad-pagination .page-link:hover,
+.admin-pagination .page-link:hover,
+.game-pagination .page-link:hover {
+    background-color: #650095;
+    color: white;
+    border-color: #7c00b5;
+}
+
+.squad-pagination .page-item.active .page-link,
+.admin-pagination .page-item.active .page-link,
 .game-pagination .page-item.active .page-link {
     background-color: #650095;
-    border-color: #650095;
-}
-
-.game-pagination .page-link:hover {
-    background-color: #7c00b5;
     color: white;
+    border-color: #e83bbd;
 }
 
+.squad-pagination .page-item.disabled .page-link,
+.admin-pagination .page-item.disabled .page-link,
+.game-pagination .page-item.disabled .page-link {
+    background-color: rgba(33, 0, 77, 0.55);
+    color: #777080;
+    border-color: rgba(255, 255, 255, 0.08);
+}
 
 /* Administrador */
 
 .admin-body {
     min-height: 100dvh;
     margin: 0;
+    background-color: #090511;
     background-image: url("/images/fundo2.jpg");
     background-size: cover;
     background-position: center;
+    background-repeat: no-repeat;
     background-attachment: fixed;
     color: white;
 }
@@ -1507,7 +2208,6 @@ body {
     border-color: #650095;
 }
 
-
 /* Menu do admin */
 
 .admin-nav-wrapper {
@@ -1550,7 +2250,6 @@ body {
     border-radius: 6px;
     font-weight: 600;
 }
-
 
 /* Conteúdo do admin */
 
@@ -1609,7 +2308,6 @@ body {
     border-radius: 20px;
     text-align: center;
 }
-
 
 /* Catálogo */
 
@@ -1745,7 +2443,6 @@ body {
     padding: 0;
 }
 
-
 /* Métricas do admin */
 
 .admin-metrics {
@@ -1784,15 +2481,10 @@ body {
     font-size: 30px;
 }
 
-
 /* Usuários do admin */
 
 .admin-users-table-wrapper {
     overflow: visible;
-}
-
-.admin-user-actions-menu {
-    z-index: 2000;
 }
 
 .admin-table {
@@ -1869,7 +2561,6 @@ body {
     background-color: rgba(255, 193, 7, 0.35);
 }
 
-
 /* Banimento */
 
 .admin-ban-form {
@@ -1902,7 +2593,6 @@ body {
     font-weight: 600;
 }
 
-
 /* Denúncias */
 
 .admin-report {
@@ -1930,11 +2620,6 @@ body {
     color: #aaa1b8;
     text-align: center;
 }
-
-.admin-pagination {
-    margin-top: 20px;
-}
-
 
 /* Cadastro de jogos */
 
@@ -1979,11 +2664,121 @@ body {
 }
 
 .admin-steam-form {
-    max-width: 500px;
-    display: flex;
+    width: 100%;
+    max-width: 720px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 130px;
     gap: 10px;
 }
 
+.admin-steam-loading {
+    max-width: 720px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    color: #d7d0df;
+    font-size: 14px;
+}
+
+.admin-steam-loading[hidden] {
+    display: none;
+}
+
+.admin-steam-loading .spinner-border {
+    width: 16px;
+    height: 16px;
+    color: #e83bbd;
+}
+
+.admin-steam-form .admin-game-save:disabled {
+    background-color: #4c2863;
+    color: #c9c1d0;
+    cursor: not-allowed;
+    opacity: 0.85;
+}
+
+.game-setup-card {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.06);
+    color: white;
+    border: 2px solid transparent;
+    border-radius: 9px;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+.game-setup-card-info {
+    min-height: 70px;
+    padding: 10px 12px;
+}
+
+.game-setup-card-info strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.game-setup-level-badge {
+    display: inline-block;
+    margin-top: 7px;
+    padding: 3px 8px;
+    background-color: rgba(236, 59, 189, 0.16);
+    color: #f0b1df;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.game-level-modal {
+    background-color: #18003d;
+    color: white;
+}
+
+.game-level-modal-game {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.game-level-modal-game img {
+    width: 145px;
+    aspect-ratio: 460 / 215;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.game-level-modal-current {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.game-level-modal-current span {
+    color: #aaa1b8;
+}
+
+.game-level-points {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    color: #8f8799;
+    font-size: 11px;
+}
+
+.game-level-error {
+    margin-top: 16px;
+    padding: 9px 12px;
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #ffb2ba;
+    border-radius: 6px;
+    font-size: 13px;
+}
 
 /* Busca dos jogos do admin */
 
@@ -2035,7 +2830,6 @@ body {
     line-height: 1;
 }
 
-
 /* Jogos do admin */
 
 .admin-game-grid {
@@ -2072,16 +2866,16 @@ body {
     width: 100%;
     aspect-ratio: 460 / 215;
     object-fit: cover;
-    flex-shrink: 0;
 }
 
 .admin-game-card-info {
-    height: 108px;
+    height: 110px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 7px;
-    padding: 12px;
+    padding: 12px 12px 16px;
+    box-shadow: inset 0 -5px 5px -5px rgba(0, 0, 0, 0.9);
 }
 
 .admin-game-card-info strong,
@@ -2111,7 +2905,6 @@ body {
     background-color: rgba(108, 117, 125, 0.5);
 }
 
-
 /* Excluir jogo */
 
 .admin-game-delete {
@@ -2140,7 +2933,6 @@ body {
 .admin-game-delete:hover {
     background-color: #dc3545;
 }
-
 
 /* Detalhes do jogo */
 
@@ -2200,7 +2992,6 @@ body {
     color: #d7d0df;
 }
 
-
 /* Editar jogo */
 
 .admin-game-edit-button {
@@ -2240,7 +3031,6 @@ body {
     align-items: center;
     gap: 5px;
 }
-
 
 /* Páginas de erro */
 
@@ -2296,7 +3086,6 @@ body {
     background-color: #7c00b5;
     color: white;
 }
-
 
 /* Responsividade */
 
@@ -2389,7 +3178,6 @@ body {
     }
 }
 
-
 @media (max-width: 1200px) and (min-width: 768px) {
 
     .navbar-nav {
@@ -2430,7 +3218,6 @@ body {
     }
 }
 
-
 @media (max-width: 1000px) {
 
     .admin-ban-form {
@@ -2443,11 +3230,6 @@ body {
 
     .admin-game-form {
         grid-template-columns: 1fr 1fr;
-    }
-
-    .profile-game-options,
-    .profile-all-games {
-        grid-template-columns: repeat(2, 1fr);
     }
 
     .profile-games-row {
@@ -2479,7 +3261,6 @@ body {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
-
 
 @media (max-width: 900px) and (min-width: 768px) {
 
@@ -2513,8 +3294,11 @@ body {
     .admin-header-title span {
         display: none;
     }
-}
 
+    .game-setup-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
 
 @media (max-width: 767px) {
 
@@ -2522,9 +3306,7 @@ body {
         background-attachment: scroll;
     }
 
-
     /* Navbar no celular */
-
     .squad-navbar {
         height: auto;
         min-height: 64px;
@@ -2544,9 +3326,7 @@ body {
         font-size: 17px;
     }
 
-
     /* Login no celular */
-
     .login-page {
         height: auto;
         min-height: calc(100dvh - 64px);
@@ -2591,9 +3371,7 @@ body {
         margin-top: 4px;
     }
 
-
     /* Sobre nós no celular */
-
     .about-page {
         min-height: calc(100dvh - 64px);
         padding: 30px 15px;
@@ -2625,9 +3403,7 @@ body {
         font-size: 18px;
     }
 
-
     /* Equipe no celular */
-
     .team-page {
         padding: 30px 15px;
     }
@@ -2663,9 +3439,7 @@ body {
         font-size: 16px;
     }
 
-
     /* Contato no celular */
-
     .contact-page {
         padding: 30px 15px;
     }
@@ -2691,9 +3465,7 @@ body {
         height: 48px;
     }
 
-
     /* Cadastro no celular */
-
     .register-page {
         align-items: flex-start;
         padding: 20px 15px;
@@ -2715,9 +3487,7 @@ body {
         font-size: 16px;
     }
 
-
     /* Área interna no celular */
-
     .internal-body {
         background-attachment: scroll;
     }
@@ -2756,9 +3526,7 @@ body {
         padding: 18px 15px 85px;
     }
 
-
     /* Perfil no celular */
-
     .profile-top {
         display: flex;
         flex-direction: column;
@@ -2812,9 +3580,7 @@ body {
         font-size: 38px;
     }
 
-
     /* Busca de jogos no celular */
-
     .game-search-page {
         padding-bottom: 20px;
     }
@@ -2865,9 +3631,7 @@ body {
         height: 11px;
     }
 
-
     /* Admin no celular */
-
     .admin-header {
         display: flex;
         flex-wrap: wrap;
@@ -2993,13 +3757,8 @@ body {
         padding: 15px;
     }
 
-    .admin-table {
-        min-width: 700px;
-    }
-
     .admin-users-table-wrapper {
         width: 100%;
-
         overflow-x: auto;
     }
 
@@ -3084,15 +3843,9 @@ body {
     }
 }
 
-
 @media (max-width: 600px) {
 
     .game-search-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .profile-game-options,
-    .profile-all-games {
         grid-template-columns: 1fr;
     }
 
@@ -3127,5 +3880,135 @@ body {
         width: 36px;
         height: 36px;
         flex-basis: 36px;
+    }
+
+    .game-setup-page {
+        padding: 20px 12px;
+    }
+
+    .game-setup-container {
+        padding: 20px 14px;
+    }
+
+    .game-setup-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .game-setup-count {
+        min-width: 0;
+        text-align: left;
+    }
+
+    .game-setup-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .game-setup-header h1 {
+        font-size: 28px;
+    }
+
+    .game-setup-footer {
+        justify-content: stretch;
+    }
+
+    .game-setup-continue {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 1100px) and (min-width: 768px) {
+    .profile-order-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+/* Ajustes do gerenciador de jogos */
+
+@media (max-width: 767px) {
+    .profile-game-manager-top {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .profile-game-manager-count {
+        white-space: normal;
+    }
+
+    .profile-game-search-results {
+        grid-template-columns: 1fr;
+        max-height: 320px;
+    }
+
+    .profile-game-manager-body {
+        min-height: 410px;
+    }
+
+    .profile-level-popup {
+        padding: 14px;
+    }
+
+    .profile-level-popup-card {
+        padding: 20px 16px;
+    }
+
+    .profile-level-popup-game img,
+    .profile-level-detail-game img {
+        width: 125px;
+    }
+
+    .profile-level-popup-actions {
+        flex-wrap: wrap;
+    }
+
+    .profile-order-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        max-height: 480px;
+    }
+
+    .profile-order-remove {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-game-search-card {
+        grid-template-columns: 110px minmax(0, 1fr);
+    }
+
+    .profile-game-search-card img {
+        width: 110px;
+    }
+
+    .profile-level-popup-game,
+    .profile-level-detail-game {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .profile-level-popup-game {
+        padding-right: 35px;
+    }
+
+    .profile-level-popup-game img,
+    .profile-level-detail-game img {
+        width: 100%;
+        max-width: 220px;
+    }
+
+    .profile-level-popup-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .profile-level-popup-actions .btn-danger {
+        margin-right: 0;
+    }
+
+    .profile-order-list {
+        grid-template-columns: 1fr;
     }
 }

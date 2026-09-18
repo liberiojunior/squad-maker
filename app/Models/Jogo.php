@@ -42,6 +42,10 @@ class Jogo extends Model
             'tb_jogo_usuario',
             'id_jogo',
             'id_usuario'
-        )->withPivot('data_adicao');
+        )->withPivot([
+            'data_adicao',
+            'nivel_proficiencia',
+            'ordem_perfil',
+        ]);
     }
 }

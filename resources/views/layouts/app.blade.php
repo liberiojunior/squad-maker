@@ -2,7 +2,11 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Squad Maker</title>
 
@@ -11,7 +15,15 @@
         rel="stylesheet"
     >
 
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ asset('css/app.css') }}"
+    >
 </head>
 
 <body>
@@ -19,7 +31,10 @@
 <nav class="navbar navbar-expand-md navbar-dark squad-navbar">
     <div class="container-fluid position-relative px-3">
 
-        <a class="navbar-brand" href="{{ route('login') }}">
+        <a
+            class="navbar-brand"
+            href="{{ route('login') }}"
+        >
             <img
                 src="{{ asset('images/icone.png') }}"
                 alt="Squad Maker"
@@ -32,6 +47,9 @@
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#mainNavbar"
+            aria-controls="mainNavbar"
+            aria-expanded="false"
+            aria-label="Abrir navegação"
         >
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -42,19 +60,28 @@
         >
             <ul class="navbar-nav text-center">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('sobre-nos') }}">
+                    <a
+                        class="nav-link"
+                        href="{{ route('sobre-nos') }}"
+                    >
                         Sobre Nós
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('equipe') }}">
+                    <a
+                        class="nav-link"
+                        href="{{ route('equipe') }}"
+                    >
                         A Equipe
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('contato') }}">
+                    <a
+                        class="nav-link"
+                        href="{{ route('contato') }}"
+                    >
                         Contato
                     </a>
                 </li>
@@ -67,8 +94,10 @@
 @yield('content')
 
 <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js">
-</script>
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+></script>
+
+<script src="{{ asset('js/app.js') }}"></script>
 
 </body>
 </html>

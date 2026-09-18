@@ -32,46 +32,50 @@ class GoogleAuthController extends Controller
             $googleId
         )->first();
 
-        if (! $user && $email) {
+        if (!$user && $email) {
             $user = User::where(
                 'email',
                 $email
             )->first();
         }
 
+        $novoUsuario = !$user;
+
         if ($user) {
             $user->update([
                 'email' => $email ?? $user->email,
                 'google_id' => $user->google_id ?? $googleId,
                 'avatar' => $user->avatar ?? $avatar,
-                'email_verified_at' => $user->email_verified_at
+                'email_verified_at' =>
+                    $user->email_verified_at
                     ?? Carbon::now(),
             ]);
         } else {
             $user = User::create([
                 'nickname' => $name ?? 'Usuário Google',
-
                 'email' => $email,
-
                 'senha' => Hash::make(
-                    Str::random(32)
+                    Str::random(16)
                 ),
-
                 'google_id' => $googleId,
-
                 'avatar' => $avatar,
-
                 'email_verified_at' => Carbon::now(),
-
                 'data_criacao' => Carbon::now(),
-
                 'status_conta' => 'ativo',
             ]);
         }
 
-        Auth::login($user, true);
+        Auth::login(
+            $user,
+            true
+        );
 
         $request->session()->regenerate();
+
+        if ($novoUsuario) {
+            return redirect()
+                ->route('cadastro.jogos');
+        }
 
         return redirect()
             ->route('perfil');

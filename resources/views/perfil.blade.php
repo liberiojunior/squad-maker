@@ -1,8 +1,31 @@
 @extends('layouts.internal')
 
 @section('content')
-
-    {{-- Mensagens --}}
+    @php
+        $jogosPerfil = $user->jogos
+            ->map(function ($jogo) {
+                return [
+                    'id' => (int) $jogo->id_jogo,
+                    'nome' => $jogo->nome,
+                    'capa' => $jogo->capa,
+                    'nivel' => $jogo->pivot->nivel_proficiencia
+                        ? (int) $jogo->pivot->nivel_proficiencia
+                        : null,
+                    'ordem' => $jogo->pivot->ordem_perfil
+                        ? (int) $jogo->pivot->ordem_perfil
+                        : null,
+                    'update_url' => route(
+                        'perfil.jogos.nivel.update',
+                        $jogo
+                    ),
+                    'remove_url' => route(
+                        'perfil.jogos.remove',
+                        $jogo
+                    ),
+                ];
+            })
+            ->values();
+    @endphp
 
     @if (session('success'))
         <div class="alert alert-success">
@@ -12,25 +35,22 @@
 
     @if ($errors->any())
         <div class="alert alert-danger">
-
             @foreach ($errors->all() as $error)
                 <div>{{ $error }}</div>
             @endforeach
-
         </div>
     @endif
 
-
-    <div class="profile-page">
-
-        {{-- Informações principais do perfil --}}
-
+    <div
+        class="profile-page"
+        id="profilePage"
+        data-csrf="{{ csrf_token() }}"
+        data-game-search-url="{{ route('perfil.jogos.buscar') }}"
+        data-games-update-url="{{ route('perfil.jogos.update') }}"
+        data-games-order-url="{{ route('perfil.jogos.ordem.update') }}"
+    >
         <div class="profile-top">
-
-            {{-- Avatar --}}
-
             <div class="profile-avatar-area">
-
                 <form
                     method="POST"
                     action="{{ route('perfil.avatar.update') }}"
@@ -44,7 +64,6 @@
                         for="avatarInput"
                         class="profile-avatar-wrapper"
                     >
-
                         <img
                             src="{{ $user->avatar ?: asset('images/icone.png') }}"
                             alt="{{ $user->nickname }}"
@@ -55,7 +74,6 @@
                             <i class="bi bi-camera-fill"></i>
                             Alterar foto
                         </span>
-
                     </label>
 
                     <input
@@ -65,18 +83,11 @@
                         accept="image/png,image/jpeg,image/webp"
                         hidden
                     >
-
                 </form>
-
             </div>
 
-
-            {{-- Nome, bio e gêneros --}}
-
             <div class="profile-main-info">
-
                 <section class="profile-info-card">
-
                     <form
                         method="POST"
                         action="{{ route('perfil.update') }}"
@@ -114,34 +125,22 @@
                             readonly
                             placeholder="Você ainda não adicionou uma bio."
                         >{{ old('bio', $user->bio) }}</textarea>
-
                     </form>
-
                 </section>
 
-
                 <section class="profile-genres-card">
-
-                    <strong>
-                        Meus Gêneros:
-                    </strong>
+                    <strong>Meus Gêneros:</strong>
 
                     <div class="profile-genre-list">
-
                         @forelse ($user->generos as $genero)
-
                             <span class="profile-genre-tag">
                                 {{ $genero->genero }}
                             </span>
-
                         @empty
-
                             <span class="profile-empty-inline">
                                 Nenhum gênero configurado.
                             </span>
-
                         @endforelse
-
                     </div>
 
                     <button
@@ -153,130 +152,100 @@
                     >
                         <i class="bi bi-plus-lg"></i>
                     </button>
-
                 </section>
-
             </div>
-
         </div>
 
-
-        {{-- Feed --}}
-
         <section class="profile-section profile-feed">
-
             <div class="profile-section-title">
                 <h2>Feed do Usuário</h2>
             </div>
 
             <div class="profile-feed-empty">
-
                 <i class="bi bi-images"></i>
-
-                <p>
-                    Nenhuma publicação ainda.
-                </p>
-
+                <p>Nenhuma publicação ainda.</p>
             </div>
-
         </section>
 
-
-        {{-- Jogos --}}
-
         <section class="profile-section">
-
             <div class="profile-section-title">
-
                 <h2>Meus Jogos</h2>
 
-                @if ($user->jogos->count() > 4)
-
+                @if ($user->jogos->isNotEmpty())
                     <button
                         type="button"
                         class="profile-view-all"
+                        id="profileViewAllButton"
+                        data-total-games="{{ $user->jogos->count() }}"
                         data-bs-toggle="modal"
                         data-bs-target="#todosJogosModal"
+                        hidden
                     >
                         Ver todos ({{ $user->jogos->count() }})
                     </button>
-
                 @endif
-
             </div>
 
-
             <div class="profile-games-row">
-
                 @if ($user->jogos->isNotEmpty())
-
-                    <div class="profile-games-list">
-
+                    <div
+                        class="profile-games-list"
+                        id="profileGamesList"
+                    >
                         @foreach ($user->jogos->take(4) as $jogo)
-
-                            <div class="profile-game-card">
-
-                                <img
-                                    src="{{ $jogo->capa }}"
-                                    alt="{{ $jogo->nome }}"
-                                >
+                            <button
+                                type="button"
+                                class="profile-game-card profile-game-detail"
+                                data-profile-game-detail
+                                data-game-id="{{ $jogo->id_jogo }}"
+                                data-name="{{ $jogo->nome }}"
+                                data-cover="{{ $jogo->capa }}"
+                                data-level="{{ $jogo->pivot->nivel_proficiencia ?? '' }}"
+                                data-update-url="{{ route('perfil.jogos.nivel.update', $jogo) }}"
+                            >
+                                <div class="profile-game-cover">
+                                    <img
+                                        src="{{ $jogo->capa }}"
+                                        alt="{{ $jogo->nome }}"
+                                    >
+                                </div>
 
                                 <span>
                                     {{ $jogo->nome }}
                                 </span>
-
-                            </div>
-
+                            </button>
                         @endforeach
-
                     </div>
-
                 @endif
-
 
                 <button
                     type="button"
                     class="profile-add-card profile-game-add"
                     data-bs-toggle="modal"
                     data-bs-target="#adicionarJogosModal"
-                    title="Adicionar jogos"
+                    title="Gerenciar jogos"
                 >
                     <i class="bi bi-plus-lg"></i>
                 </button>
-
             </div>
-
         </section>
 
-
-        {{-- Plataformas --}}
-
         <section class="profile-section">
-
             <div class="profile-section-title">
                 <h2>Minhas Plataformas</h2>
             </div>
 
-
             <div class="profile-platforms-list">
-
                 @foreach ($user->plataformas as $plataforma)
-
                     <div class="profile-platform-card">
-
                         <img
                             src="{{ $plataforma->icone }}"
                             alt="{{ $plataforma->nome }}"
                         >
 
-                        <span>
-                            {{ $plataforma->nome }}
-                        </span>
-
+                        <span>{{ $plataforma->nome }}</span>
                     </div>
-
                 @endforeach
-
 
                 <button
                     type="button"
@@ -287,15 +256,14 @@
                 >
                     <i class="bi bi-plus-lg"></i>
                 </button>
-
             </div>
-
         </section>
 
+        <script
+            type="application/json"
+            id="profileGamesState"
+        >@json($jogosPerfil)</script>
     </div>
-
-
-    {{-- Modal de gêneros --}}
 
     <div
         class="modal fade"
@@ -303,11 +271,8 @@
         tabindex="-1"
         aria-hidden="true"
     >
-
         <div class="modal-dialog modal-dialog-centered">
-
             <div class="modal-content profile-genres-modal">
-
                 <form
                     method="POST"
                     action="{{ route('perfil.generos.update') }}"
@@ -315,12 +280,8 @@
                     @csrf
                     @method('PATCH')
 
-
                     <div class="modal-header">
-
-                        <h2 class="modal-title">
-                            Meus Gêneros
-                        </h2>
+                        <h2 class="modal-title">Meus Gêneros</h2>
 
                         <button
                             type="button"
@@ -328,23 +289,16 @@
                             data-bs-dismiss="modal"
                             aria-label="Fechar"
                         ></button>
-
                     </div>
 
-
                     <div class="modal-body">
-
                         <p class="profile-genres-description">
                             Escolha os gêneros de jogos que mais combinam com você.
                         </p>
 
-
                         <div class="profile-genre-options">
-
                             @foreach ($generos as $genero)
-
                                 <label class="profile-genre-option">
-
                                     <input
                                         type="checkbox"
                                         name="generos[]"
@@ -357,21 +311,13 @@
                                         )
                                     >
 
-                                    <span>
-                                        {{ $genero->genero }}
-                                    </span>
-
+                                    <span>{{ $genero->genero }}</span>
                                 </label>
-
                             @endforeach
-
                         </div>
-
                     </div>
 
-
                     <div class="modal-footer">
-
                         <button
                             type="button"
                             class="btn btn-secondary"
@@ -386,19 +332,11 @@
                         >
                             Salvar
                         </button>
-
                     </div>
-
                 </form>
-
             </div>
-
         </div>
-
     </div>
-
-
-    {{-- Modal para adicionar jogos --}}
 
     <div
         class="modal fade"
@@ -406,42 +344,27 @@
         tabindex="-1"
         aria-hidden="true"
     >
-
         <div class="modal-dialog modal-dialog-centered modal-lg">
-
             <div class="modal-content profile-games-modal">
+                <div class="modal-header">
+                    <div>
+                        <h2 class="modal-title">Meus Jogos</h2>
 
-                <form
-                    method="POST"
-                    action="{{ route('perfil.jogos.update') }}"
-                >
-                    @csrf
-                    @method('PATCH')
-
-
-                    <div class="modal-header">
-
-                        <h2 class="modal-title">
-                            Meus Jogos
-                        </h2>
-
-                        <button
-                            type="button"
-                            class="btn-close btn-close-white"
-                            data-bs-dismiss="modal"
-                            aria-label="Fechar"
-                        ></button>
-
+                        <p class="profile-modal-subtitle">
+                            Pesquise, adicione ou remova jogos do seu perfil.
+                        </p>
                     </div>
 
+                    <button
+                        type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                        aria-label="Fechar"
+                    ></button>
+                </div>
 
-                    <div class="modal-body">
-
-                        <p class="profile-games-description">
-                            Escolha os jogos que você joga ou tem interesse.
-                        </p>
-
-
+                <div class="modal-body profile-game-manager-body">
+                    <div class="profile-game-manager-top">
                         <input
                             type="text"
                             id="profileGameSearch"
@@ -450,89 +373,134 @@
                             autocomplete="off"
                         >
 
+                        <span
+                            class="profile-game-manager-count"
+                            id="profileGameManagerCount"
+                        ></span>
+                    </div>
 
-                        <div
-                            class="profile-game-options"
-                            id="profileGameOptions"
-                        >
+                    <div
+                        class="profile-game-search-results"
+                        id="profileGameSearchResults"
+                    >
+                        <div class="profile-game-search-empty">
+                            Digite pelo menos 2 letras para pesquisar.
+                        </div>
+                    </div>
 
-                            @forelse ($jogosDisponiveis as $jogo)
+                    <div
+                        class="profile-level-popup"
+                        id="profileLevelPopup"
+                        hidden
+                    >
+                        <div class="profile-level-popup-card">
+                            <button
+                                type="button"
+                                class="profile-level-popup-close"
+                                id="profileLevelPopupClose"
+                                aria-label="Fechar"
+                            >
+                                <i class="bi bi-x-lg"></i>
+                            </button>
 
-                                <label
-                                    class="profile-game-option"
-                                    data-name="{{ strtolower($jogo->nome) }}"
+                            <div class="profile-level-popup-game">
+                                <img
+                                    src=""
+                                    alt=""
+                                    id="profileLevelGameCover"
                                 >
 
-                                    <input
-                                        type="checkbox"
-                                        name="jogos[]"
-                                        value="{{ $jogo->id_jogo }}"
-                                        @checked(
-                                            $user->jogos->contains(
-                                                'id_jogo',
-                                                $jogo->id_jogo
-                                            )
-                                        )
-                                    >
-
-
-                                    <div class="profile-game-option-card">
-
-                                        <img
-                                            src="{{ $jogo->capa }}"
-                                            alt="{{ $jogo->nome }}"
-                                        >
-
-                                        <span>
-                                            {{ $jogo->nome }}
-                                        </span>
-
-                                    </div>
-
-                                </label>
-
-                            @empty
-
-                                <div class="profile-games-empty">
-                                    Ainda não existem jogos cadastrados.
+                                <div>
+                                    <span>Nível em</span>
+                                    <strong id="profileLevelGameName"></strong>
                                 </div>
+                            </div>
 
-                            @endforelse
+                            <div class="profile-level-popup-current">
+                                <span>Seu nível</span>
 
+                                <strong id="profileLevelName">
+                                    Iniciante
+                                </strong>
+                            </div>
+
+                            <div class="game-level-range-wrap">
+                                <input
+                                    type="range"
+                                    min="1"
+                                    max="5"
+                                    step="1"
+                                    value="1"
+                                    class="game-level-range"
+                                    id="profileLevelRange"
+                                >
+
+                                <i class="bi bi-star-fill game-level-star"></i>
+                            </div>
+
+                            <div class="game-level-points">
+                                <span>1</span>
+                                <span>2</span>
+                                <span>3</span>
+                                <span>4</span>
+                                <span>5</span>
+                            </div>
+
+                            <div class="profile-level-popup-actions">
+                                <button
+                                    type="button"
+                                    class="btn btn-danger"
+                                    id="profileLevelRemove"
+                                    hidden
+                                >
+                                    Remover jogo
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    id="profileLevelCancel"
+                                >
+                                    Cancelar
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="btn profile-games-save"
+                                    id="profileLevelConfirm"
+                                >
+                                    Confirmar
+                                </button>
+                            </div>
                         </div>
-
                     </div>
+                </div>
 
+                <div class="modal-footer profile-game-manager-footer">
+                    <span
+                        class="profile-modal-status"
+                        id="profileGamesSaveStatus"
+                    ></span>
 
-                    <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Fechar
+                    </button>
 
-                        <button
-                            type="button"
-                            class="btn btn-secondary"
-                            data-bs-dismiss="modal"
-                        >
-                            Cancelar
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="btn profile-games-save"
-                        >
-                            Salvar
-                        </button>
-
-                    </div>
-
-                </form>
-
+                    <button
+                        type="button"
+                        class="btn profile-games-save"
+                        id="profileGamesSave"
+                    >
+                        Salvar alterações
+                    </button>
+                </div>
             </div>
-
         </div>
-
     </div>
-
-
-    {{-- Modal com todos os jogos --}}
 
     <div
         class="modal fade"
@@ -540,15 +508,118 @@
         tabindex="-1"
         aria-hidden="true"
     >
-
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-
+        <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content profile-games-modal">
-
                 <div class="modal-header">
+                    <div>
+                        <h2 class="modal-title">Meus Jogos</h2>
 
+                        <p class="profile-modal-subtitle">
+                            Arraste os cards para escolher quais jogos aparecem primeiro no perfil.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                        aria-label="Fechar"
+                    ></button>
+                </div>
+
+                <div class="modal-body">
+                    <div
+                        class="profile-order-list"
+                        id="profileOrderList"
+                    >
+                        @forelse ($user->jogos as $jogo)
+                            <div
+                                class="profile-order-item"
+                                data-game-id="{{ $jogo->id_jogo }}"
+                                data-remove-url="{{ route('perfil.jogos.remove', $jogo) }}"
+                                draggable="true"
+                            >
+                                <div class="profile-order-cover">
+                                    <button
+                                        type="button"
+                                        class="profile-order-game-button"
+                                        data-profile-game-detail
+                                        data-game-id="{{ $jogo->id_jogo }}"
+                                        data-name="{{ $jogo->nome }}"
+                                        data-cover="{{ $jogo->capa }}"
+                                        data-level="{{ $jogo->pivot->nivel_proficiencia ?? '' }}"
+                                        data-update-url="{{ route('perfil.jogos.nivel.update', $jogo) }}"
+                                        title="Editar nível"
+                                    >
+                                        <img
+                                            src="{{ $jogo->capa }}"
+                                            alt="{{ $jogo->nome }}"
+                                        >
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="profile-order-remove"
+                                        data-order-remove
+                                        title="Remover jogo"
+                                        aria-label="Remover {{ $jogo->nome }}"
+                                    >
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="profile-order-title"
+                                    data-profile-game-detail
+                                    data-game-id="{{ $jogo->id_jogo }}"
+                                    data-name="{{ $jogo->nome }}"
+                                    data-cover="{{ $jogo->capa }}"
+                                    data-level="{{ $jogo->pivot->nivel_proficiencia ?? '' }}"
+                                    data-update-url="{{ route('perfil.jogos.nivel.update', $jogo) }}"
+                                    title="Editar nível"
+                                >
+                                    {{ $jogo->nome }}
+                                </button>
+                            </div>
+                        @empty
+                            <div class="profile-games-empty">
+                                Você ainda não adicionou jogos.
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <span
+                        class="profile-modal-status"
+                        id="profileOrderStatus"
+                    ></span>
+
+                    <button
+                        type="button"
+                        class="btn profile-games-save"
+                        id="profileOrderSave"
+                        @disabled($user->jogos->isEmpty())
+                    >
+                        Salvar ordem
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div
+        class="modal fade"
+        id="perfilJogoNivelModal"
+        tabindex="-1"
+        aria-hidden="true"
+    >
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content profile-games-modal">
+                <div class="modal-header">
                     <h2 class="modal-title">
-                        Meus Jogos
+                        Nível de proficiência
                     </h2>
 
                     <button
@@ -557,43 +628,76 @@
                         data-bs-dismiss="modal"
                         aria-label="Fechar"
                     ></button>
-
                 </div>
-
 
                 <div class="modal-body">
+                    <div class="profile-level-detail-game">
+                        <img
+                            src=""
+                            alt=""
+                            id="profileDetailGameCover"
+                        >
 
-                    <div class="profile-all-games">
-
-                        @foreach ($user->jogos as $jogo)
-
-                            <div class="profile-game-card">
-
-                                <img
-                                    src="{{ $jogo->capa }}"
-                                    alt="{{ $jogo->nome }}"
-                                >
-
-                                <span>
-                                    {{ $jogo->nome }}
-                                </span>
-
-                            </div>
-
-                        @endforeach
-
+                        <strong id="profileDetailGameName"></strong>
                     </div>
 
+                    <div class="profile-level-edit-current">
+                        <span>Seu nível</span>
+
+                        <strong id="profileDetailLevelName">
+                            Iniciante
+                        </strong>
+                    </div>
+
+                    <div class="game-level-range-wrap">
+                        <input
+                            type="range"
+                            min="1"
+                            max="5"
+                            step="1"
+                            value="1"
+                            class="game-level-range"
+                            id="profileDetailLevelRange"
+                        >
+
+                        <i class="bi bi-star-fill game-level-star"></i>
+                    </div>
+
+                    <div class="game-level-points">
+                        <span>1</span>
+                        <span>2</span>
+                        <span>3</span>
+                        <span>4</span>
+                        <span>5</span>
+                    </div>
+
+                    <div
+                        class="profile-level-detail-error"
+                        id="profileDetailLevelError"
+                        hidden
+                    ></div>
                 </div>
 
+                <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn profile-games-save"
+                        id="profileDetailLevelSave"
+                    >
+                        Salvar nível
+                    </button>
+                </div>
             </div>
-
         </div>
-
     </div>
-
-
-    {{-- Modal de plataformas --}}
 
     <div
         class="modal fade"
@@ -601,11 +705,8 @@
         tabindex="-1"
         aria-hidden="true"
     >
-
         <div class="modal-dialog modal-dialog-centered">
-
             <div class="modal-content profile-games-modal">
-
                 <form
                     method="POST"
                     action="{{ route('perfil.plataformas.update') }}"
@@ -613,9 +714,7 @@
                     @csrf
                     @method('PATCH')
 
-
                     <div class="modal-header">
-
                         <h2 class="modal-title">
                             Minhas Plataformas
                         </h2>
@@ -626,23 +725,16 @@
                             data-bs-dismiss="modal"
                             aria-label="Fechar"
                         ></button>
-
                     </div>
 
-
                     <div class="modal-body">
-
                         <p class="profile-games-description">
                             Escolha as plataformas em que você joga.
                         </p>
 
-
                         <div class="profile-platform-options">
-
                             @forelse ($plataformasDisponiveis as $plataforma)
-
                                 <label class="profile-platform-option">
-
                                     <input
                                         type="checkbox"
                                         name="plataformas[]"
@@ -656,35 +748,23 @@
                                     >
 
                                     <div>
-
                                         <img
                                             src="{{ $plataforma->icone }}"
                                             alt="{{ $plataforma->nome }}"
                                         >
 
-                                        <span>
-                                            {{ $plataforma->nome }}
-                                        </span>
-
+                                        <span>{{ $plataforma->nome }}</span>
                                     </div>
-
                                 </label>
-
                             @empty
-
                                 <div class="profile-games-empty">
                                     Ainda não existem plataformas cadastradas.
                                 </div>
-
                             @endforelse
-
                         </div>
-
                     </div>
 
-
                     <div class="modal-footer">
-
                         <button
                             type="button"
                             class="btn btn-secondary"
@@ -699,108 +779,9 @@
                         >
                             Salvar
                         </button>
-
                     </div>
-
                 </form>
-
             </div>
-
         </div>
-
     </div>
-
-
-    {{-- JavaScript do perfil --}}
-
-    <script>
-        const profileForm = document.getElementById('profileForm');
-        const nicknameInput = document.getElementById('nicknameInput');
-        const bioInput = document.getElementById('bioInput');
-        const profileEditButton = document.getElementById('profileEditButton');
-        const profileEditIcon = document.getElementById('profileEditIcon');
-
-        const avatarForm = document.getElementById('avatarForm');
-        const avatarInput = document.getElementById('avatarInput');
-
-        let editingProfile = false;
-
-
-        // Editar nome e bio
-
-        profileEditButton.addEventListener('click', function () {
-
-            if (!editingProfile) {
-
-                editingProfile = true;
-
-                nicknameInput.removeAttribute('readonly');
-                bioInput.removeAttribute('readonly');
-
-                nicknameInput.focus();
-
-                profileEditIcon.classList.remove('bi-pencil-fill');
-                profileEditIcon.classList.add('bi-check-lg');
-
-                profileEditButton.title = 'Salvar alterações';
-
-            } else {
-
-                profileForm.requestSubmit();
-
-            }
-
-        });
-
-
-        // Alterar avatar
-
-        avatarInput.addEventListener('change', function () {
-
-            if (avatarInput.files.length > 0) {
-                avatarForm.requestSubmit();
-            }
-
-        });
-
-
-        // Buscar jogos dentro do modal
-
-        const profileGameSearch =
-            document.getElementById('profileGameSearch');
-
-        const profileGameOptions =
-            document.querySelectorAll('.profile-game-option');
-
-
-        if (profileGameSearch) {
-
-            profileGameSearch.addEventListener(
-                'input',
-                function () {
-
-                    const search =
-                        this.value.toLowerCase().trim();
-
-                    profileGameOptions.forEach(
-                        function (option) {
-
-                            const name =
-                                option.dataset.name;
-
-                            option.style.display =
-                                name.includes(search)
-                                    ? ''
-                                    : 'none';
-
-                        }
-                    );
-
-                }
-            );
-
-        }
-
-    </script>
-
 @endsection

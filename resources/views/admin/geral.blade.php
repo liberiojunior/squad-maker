@@ -428,7 +428,7 @@
 
             @if ($usuarios->hasPages())
 
-                <div class="admin-pagination">
+                <div class="squad-pagination">
                     {{ $usuarios->links('pagination::bootstrap-5') }}
                 </div>
 

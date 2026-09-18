@@ -16,7 +16,7 @@ class RegisterController extends Controller
 {
     public function show()
     {
-        return view('cadastro');
+        return view('register.cadastro');
     }
 
     public function store(
@@ -150,11 +150,10 @@ class RegisterController extends Controller
         $user->status_conta = 'ativo';
 
         $user->save();
-
         Auth::login($user);
 
         $request->session()->regenerate();
 
-        return redirect()->route('perfil');
+        return redirect()->route('cadastro.jogos');
     }
 }

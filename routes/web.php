@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminCatalogoController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminJogoController;
 use App\Http\Controllers\ForgotPasswordController;
@@ -8,12 +9,12 @@ use App\Http\Controllers\JogoController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\RegisterJogosController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Middleware\VerificarStatusUsuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AdminCatalogoController;
 
 // Rotas públicas
 
@@ -22,7 +23,6 @@ Route::view('/', 'login')
 
 Route::post('/login', [LoginController::class, 'store'])
     ->name('login.submit');
-
 
 Route::view('/sobre-nos', 'sobre-nos')
     ->name('sobre-nos');
@@ -33,7 +33,6 @@ Route::view('/equipe', 'equipe')
 Route::view('/contato', 'contato')
     ->name('contato');
 
-
 Route::get('/cadastro', [RegisterController::class, 'show'])
     ->name('cadastro');
 
@@ -41,9 +40,8 @@ Route::post('/cadastro', [RegisterController::class, 'store'])
     ->middleware('throttle:5,1')
     ->name('cadastro.store');
 
-Route::view('/termos', 'termos')
+Route::view('/termos', 'register.termos')
     ->name('termos');
-
 
 // Login com Google
 
@@ -52,7 +50,6 @@ Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])
 
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
     ->name('google.callback');
-
 
 // Recuperação de senha
 
@@ -76,13 +73,36 @@ Route::post(
     [ResetPasswordController::class, 'update']
 )->name('password.update');
 
-
 // Rotas do usuário autenticado
 
 Route::middleware([
     'auth',
     VerificarStatusUsuario::class,
 ])->group(function () {
+
+    // Etapa de jogos do cadastro
+
+    Route::get(
+        '/cadastro/jogos',
+        [RegisterJogosController::class, 'show']
+    )->name('cadastro.jogos');
+
+    Route::post(
+        '/cadastro/jogos/selecionar',
+        [RegisterJogosController::class, 'selectGame']
+    )->name('cadastro.jogos.selecionar');
+
+    Route::delete(
+        '/cadastro/jogos/{jogo}/selecionar',
+        [RegisterJogosController::class, 'removeGame']
+    )->name('cadastro.jogos.remover');
+
+    Route::post(
+        '/cadastro/jogos',
+        [RegisterJogosController::class, 'store']
+    )->name('cadastro.jogos.store');
+
+    // Perfil
 
     Route::get(
         '/perfil',
@@ -104,10 +124,35 @@ Route::middleware([
         [ProfileController::class, 'updateGeneros']
     )->name('perfil.generos.update');
 
+    Route::get(
+        '/perfil/jogos/buscar',
+        [ProfileController::class, 'buscarJogos']
+    )->name('perfil.jogos.buscar');
+
     Route::patch(
         '/perfil/jogos',
         [ProfileController::class, 'updateJogos']
     )->name('perfil.jogos.update');
+
+    Route::patch(
+        '/perfil/jogos/ordem',
+        [ProfileController::class, 'updateOrdemJogos']
+    )->name('perfil.jogos.ordem.update');
+
+    Route::patch(
+        '/perfil/jogos/{jogo}/nivel',
+        [ProfileController::class, 'updateNivelJogo']
+    )->name('perfil.jogos.nivel.update');
+
+    Route::delete(
+        '/perfil/jogos/{jogo}',
+        [ProfileController::class, 'removeJogo']
+    )->name('perfil.jogos.remove');
+
+    Route::patch(
+        '/perfil/plataformas',
+        [ProfileController::class, 'updatePlataformas']
+    )->name('perfil.plataformas.update');
 
     Route::get(
         '/buscar-jogos',
@@ -118,13 +163,7 @@ Route::middleware([
         '/conta',
         [ProfileController::class, 'destroy']
     )->name('conta.destroy');
-
-    Route::patch(
-        '/perfil/plataformas',
-        [ProfileController::class, 'updatePlataformas']
-    )->name('perfil.plataformas.update');
 });
-
 
 // Logout do usuário
 
@@ -139,7 +178,6 @@ Route::post('/logout', function (Request $request) {
     ->middleware('auth')
     ->name('logout');
 
-
 // Rotas administrativas
 
 Route::middleware('auth:admin')
@@ -147,21 +185,16 @@ Route::middleware('auth:admin')
     ->name('admin.')
     ->group(function () {
 
-        // Página principal do administrador
         Route::get(
             '/',
             [AdminController::class, 'geral']
         )->name('geral');
 
-
-        // Dashboard de gráficos e métricas
         Route::get(
             '/dashboard',
             [AdminController::class, 'dashboard']
         )->name('dashboard');
 
-
-        // Usuários
         Route::post(
             '/usuarios/{user}/banir',
             [AdminController::class, 'banir']
@@ -177,8 +210,6 @@ Route::middleware('auth:admin')
             [AdminController::class, 'excluirUsuario']
         )->name('usuarios.excluir');
 
-
-        // Jogos
         Route::get(
             '/jogos',
             [AdminJogoController::class, 'index']
@@ -203,8 +234,6 @@ Route::middleware('auth:admin')
             '/jogos/{jogo}',
             [AdminJogoController::class, 'destroy']
         )->name('jogos.destroy');
-
-        // Catálogo
 
         Route::get(
             '/catalogo',
@@ -241,13 +270,11 @@ Route::middleware('auth:admin')
             [AdminCatalogoController::class, 'destroyGenero']
         )->name('generos.destroy');
 
-        // Logout do administrador
         Route::post(
             '/logout',
             [AdminController::class, 'logout']
         )->name('logout');
     });
-
 
 // Página não encontrada
 

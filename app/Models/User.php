@@ -67,19 +67,23 @@ class User extends Authenticatable
             'tb_jogo_usuario',
             'id_usuario',
             'id_jogo'
-        )->withPivot('data_adicao');
+        )->withPivot([
+            'data_adicao',
+            'nivel_proficiencia',
+            'ordem_perfil',
+        ]);
     }
 
     public function excluirConta(): void
     {
-        $this->nickname = 'Usuário excluído #'.$this->id_usuario;
+        $this->nickname = 'Usuário excluído #' . $this->id_usuario;
 
         $this->email =
             'excluido_'
-            .$this->id_usuario
-            .'_'
-            .time()
-            .'@squadmaker.local';
+            . $this->id_usuario
+            . '_'
+            . time()
+            . '@squadmaker.local';
 
         $this->senha = Hash::make(Str::random(40));
 

@@ -117,91 +117,107 @@ class AdminJogoController extends Controller
     }
 
     public function storeSteam(
-        Request $request,
+        Request      $request,
         SteamService $steam
-    ) {
+    )
+    {
         $data = $request->validate([
-            'steam_app_id' => [
+            'steam_app_ids' => [
                 'required',
-                'integer',
-                'unique:tb_jogo,steam_app_id',
+                'string',
+                'max:500',
             ],
         ], [
-            'steam_app_id.required' =>
-                'Informe o AppID da Steam.',
-
-            'steam_app_id.integer' =>
-                'O AppID deve ser um número.',
-
-            'steam_app_id.unique' =>
-                'Este jogo já foi cadastrado.',
+            'steam_app_ids.required' =>
+                'Informe pelo menos um AppID da Steam.',
         ]);
 
-        $appId = (int) $data['steam_app_id'];
-
-        $detalhes = $steam->buscarDetalhesJogo($appId);
-
-        if (! $detalhes) {
-            return back()->withErrors([
-                'steam_app_id' =>
-                    'Não foi possível encontrar este jogo na Steam.',
-            ]);
-        }
-
-        if (($detalhes['type'] ?? null) !== 'game') {
-            return back()->withErrors([
-                'steam_app_id' =>
-                    'O AppID informado não pertence a um jogo.',
-            ]);
-        }
-
-        $dataLancamento = $this->dataLancamentoSteam(
-            $detalhes['release_date']['date'] ?? null
+        $entradas = preg_split(
+            '/\s*[;,]\s*/',
+            trim($data['steam_app_ids']),
+            -1,
+            PREG_SPLIT_NO_EMPTY
         );
 
-        if (! $dataLancamento) {
-            return back()->withErrors([
-                'steam_app_id' =>
-                    'Não foi possível identificar a data de lançamento deste jogo.',
-            ]);
-        }
+        $appIds = [];
+        $invalidos = [];
 
-        $jogo = Jogo::create([
-            'steam_app_id' => $appId,
-            'nome' => $detalhes['name'],
-            'capa' => $detalhes['header_image'],
-            'dt_lancamento' => $dataLancamento,
-            'qtd_jogadores' => null,
-            'descricao' =>
-                $detalhes['short_description'] ?? null,
-        ]);
+        foreach ($entradas as $entrada) {
+            $entrada = trim($entrada);
 
-        $generosIds = [];
-
-        foreach ($detalhes['genres'] ?? [] as $generoSteam) {
-            $nome = $generoSteam['description'] ?? null;
-
-            if (! $nome) {
+            if (!ctype_digit($entrada)) {
+                $invalidos[] = $entrada;
                 continue;
             }
 
-            $genero = Genero::firstOrCreate([
-                'genero' => $nome,
-            ]);
-
-            $generosIds[] = $genero->id_genero;
+            $appIds[] = (int)$entrada;
         }
 
-        $jogo->generos()->sync(
-            array_unique($generosIds)
+        if (!empty($invalidos)) {
+            return back()
+                ->withErrors([
+                    'steam_app_ids' =>
+                        'Foram encontrados AppIDs inválidos: '
+                        . implode(', ', $invalidos),
+                ])
+                ->withInput()
+                ->with('open_form', 'steam');
+        }
+
+        $appIds = array_values(
+            array_unique($appIds)
         );
 
-        return back()->with([
-            'success' =>
-                'Jogo importado da Steam com sucesso.',
+        if (count($appIds) > 20) {
+            return back()
+                ->withErrors([
+                    'steam_app_ids' =>
+                        'Importe no máximo 20 jogos por vez.',
+                ])
+                ->withInput()
+                ->with('open_form', 'steam');
+        }
 
-            'open_form' => 'steam',
-        ]);
+        $importados = 0;
+        $falhas = [];
+
+        foreach ($appIds as $appId) {
+            $resultado = $this->importarJogoSteam(
+                $appId,
+                $steam
+            );
+
+            if ($resultado['success']) {
+                $importados++;
+                continue;
+            }
+
+            $falhas[] =
+                'AppID '
+                . $appId
+                . ': '
+                . $resultado['message'];
+        }
+
+        $response = back()
+            ->with('open_form', 'steam');
+
+        if ($importados > 0) {
+            $response->with(
+                'success',
+                $importados
+                . ' jogo(s) importado(s) da Steam com sucesso.'
+            );
+        }
+
+        if (!empty($falhas)) {
+            $response->withErrors([
+                'steam_app_ids' =>
+                    implode(' | ', $falhas),
+            ]);
+        }
+
+        return $response;
     }
 
     public function update(
@@ -323,6 +339,110 @@ class AdminJogoController extends Controller
                 ltrim($capa, '/')
             )
         );
+    }
+
+    private function importarJogoSteam(
+        int          $appId,
+        SteamService $steam
+    ): array
+    {
+        $jogoExistente = Jogo::where(
+            'steam_app_id',
+            $appId
+        )->exists();
+
+        if ($jogoExistente) {
+            return [
+                'success' => false,
+                'message' => 'este jogo já está cadastrado.',
+            ];
+        }
+
+        $detalhes = $steam->buscarDetalhesJogo(
+            $appId
+        );
+
+        if (!$detalhes) {
+            return [
+                'success' => false,
+                'message' =>
+                    'não foi possível obter os dados na Steam.',
+            ];
+        }
+
+        if (($detalhes['type'] ?? null) !== 'game') {
+            return [
+                'success' => false,
+                'message' =>
+                    'o AppID não pertence a um jogo.',
+            ];
+        }
+
+        $dataLancamento =
+            $this->dataLancamentoSteam(
+                $detalhes['release_date']['date']
+                ?? null
+            );
+
+        if (!$dataLancamento) {
+            return [
+                'success' => false,
+                'message' =>
+                    'não foi possível identificar a data de lançamento.',
+            ];
+        }
+
+        $jogo = DB::transaction(
+            function () use (
+                $appId,
+                $detalhes,
+                $dataLancamento
+            ) {
+                $jogo = Jogo::create([
+                    'steam_app_id' => $appId,
+                    'nome' => $detalhes['name'],
+                    'capa' => $detalhes['header_image'],
+                    'dt_lancamento' => $dataLancamento,
+                    'qtd_jogadores' => null,
+                    'descricao' =>
+                        $detalhes['short_description']
+                        ?? null,
+                ]);
+
+                $generosIds = [];
+
+                foreach (
+                    $detalhes['genres'] ?? []
+                    as $generoSteam
+                ) {
+                    $nome =
+                        $generoSteam['description']
+                        ?? null;
+
+                    if (!$nome) {
+                        continue;
+                    }
+
+                    $genero = Genero::firstOrCreate([
+                        'genero' => $nome,
+                    ]);
+
+                    $generosIds[] =
+                        $genero->id_genero;
+                }
+
+                $jogo->generos()->sync(
+                    array_unique($generosIds)
+                );
+
+                return $jogo;
+            }
+        );
+
+        return [
+            'success' => true,
+            'message' => $jogo->nome,
+        ];
     }
 
     private function dataLancamentoSteam(

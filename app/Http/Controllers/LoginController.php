@@ -54,6 +54,6 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->route('perfil');
+        return redirect()->route('register');
     }
 }
