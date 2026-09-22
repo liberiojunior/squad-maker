@@ -239,340 +239,625 @@
             </div>
         </div>
         <section class="admin-panel">
+            @php
+                $ordemAdmin =
+                    request(
+                        'ordem',
+                        'az'
+                    );
+
+                $origemAdmin =
+                    request('origem');
+
+                $generosAdminAtivos =
+                    $generosSelecionados ?? [];
+
+                $modosAdminAtivos =
+                    $modosSelecionados ?? [];
+
+                $quantidadeFiltrosAdmin =
+                    count($generosAdminAtivos)
+                    + count($modosAdminAtivos)
+                    + (
+                        $origemAdmin
+                            ? 1
+                            : 0
+                    )
+                    + (
+                        $ordemAdmin !== 'az'
+                            ? 1
+                            : 0
+                    );
+
+                $filtrosAdminAbertos =
+                    $quantidadeFiltrosAdmin > 0;
+            @endphp
+
             <form
                 method="GET"
                 action="{{ route('admin.jogos.index') }}"
-                class="admin-game-search"
+                class="
+                    catalog-search-form
+                    admin-catalog-search-form
+                "
+                id="adminGameSearchForm"
             >
-                <div class="admin-game-search-input">
-                    <button
-                        type="submit"
-                        class="admin-game-search-button"
-                        title="Buscar"
+                <div class="catalog-search-toolbar">
+                    <div
+                        class="
+                            catalog-search-bar
+                            admin-game-search-input
+                        "
                     >
-                        <i class="bi bi-search"></i>
-                    </button>
-                    <input
-                        type="text"
-                        name="q"
-                        value="{{ request('q') }}"
-                        placeholder="Buscar jogo..."
-                    >
-                </div>
-                <select
-                    name="origem"
-                    class="form-select"
-                    onchange="this.form.submit()"
-                >
-                    <option value="">
-                        Todas as origens
-                    </option>
-                    <option
-                        value="steam"
-                        @selected(request('origem') === 'steam')
-                    >
-                        Steam
-                    </option>
-                    <option
-                        value="manual"
-                        @selected(request('origem') === 'manual')
-                    >
-                        Manual
-                    </option>
-                </select>
-                <select
-                    name="ordem"
-                    class="form-select"
-                    onchange="this.form.submit()"
-                >
-                    <option
-                        value="az"
-                        @selected(request('ordem', 'az') === 'az')
-                    >
-                        Nome A-Z
-                    </option>
-                    <option
-                        value="za"
-                        @selected(request('ordem') === 'za')
-                    >
-                        Nome Z-A
-                    </option>
-                    <option
-                        value="recentes"
-                        @selected(request('ordem') === 'recentes')
-                    >
-                        Adicionados recentemente
-                    </option>
-                </select>
-            </form>
-            <div class="admin-game-grid">
-                @forelse ($jogos as $jogo)
-                    <div class="admin-game-card-wrapper">
                         <button
-                            type="button"
-                            class="admin-game-card"
-                            data-bs-toggle="modal"
-                            data-bs-target="#jogoModal{{ $jogo->id_jogo }}"
+                            type="submit"
+                            class="admin-game-search-button"
+                            title="Buscar"
+                            aria-label="Buscar"
                         >
-                            <img
-                                src="{{ $jogo->capa }}"
-                                alt="{{ $jogo->nome }}"
-                            >
-                            <div class="admin-game-card-info">
-                                <strong>
-                                    {{ $jogo->nome }}
-                                </strong>
-                                @if ($jogo->steam_app_id)
-                                    <span class="admin-game-source steam">Steam</span>
-                                    <small>
-                                        AppID {{ $jogo->steam_app_id }}
-                                    </small>
-                                @else
-                                    <span class="admin-game-source manual">Manual</span>
-                                @endif
-                            </div>
+                            <i class="bi bi-search"></i>
                         </button>
-                        <form
-                            method="POST"
-                            action="{{ route('admin.jogos.destroy', $jogo) }}"
-                            class="admin-game-delete-form"
-                            onsubmit="return confirm('Deseja realmente excluir este jogo?')"
+
+                        <input
+                            type="text"
+                            name="q"
+                            id="adminGameSearchInput"
+                            value="{{ request('q') }}"
+                            placeholder="Buscar jogo..."
+                            autocomplete="off"
+                            data-live-search-input
                         >
-                            @csrf
-                            @method('DELETE')
+                    </div>
+
+                    <button
+                        type="button"
+                        class="
+                            catalog-filter-toggle
+                            {{ $filtrosAdminAbertos
+                                ? 'active'
+                                : '' }}
+                        "
+                        data-bs-toggle="collapse"
+                        data-bs-target="#adminGameFilters"
+                        aria-expanded="{{ $filtrosAdminAbertos
+                            ? 'true'
+                            : 'false' }}"
+                        aria-controls="adminGameFilters"
+                    >
+                        <i class="bi bi-sliders"></i>
+
+                        <span>
+                            Filtros
+                        </span>
+
+                        <span
+                            class="catalog-filter-count"
+                            data-filter-count
+                            @if ($quantidadeFiltrosAdmin === 0) hidden @endif
+                        >
+                            {{ $quantidadeFiltrosAdmin }}
+                        </span>
+                    </button>
+                </div>
+
+                <div
+                    class="
+                        collapse
+                        {{ $filtrosAdminAbertos
+                            ? 'show'
+                            : '' }}
+                    "
+                    id="adminGameFilters"
+                >
+                    <div class="catalog-filter-panel">
+
+                        <div class="catalog-filter-group">
+                            <div class="catalog-filter-title">
+                                <i class="bi bi-database"></i>
+
+                                <span>
+                                    Origem
+                                </span>
+                            </div>
+
+                            <div class="catalog-filter-options">
+                                <label class="catalog-filter-chip">
+                                    <input
+                                        type="radio"
+                                        name="origem"
+                                        value=""
+                                        @checked(! $origemAdmin)
+                                    >
+
+                                    <span>
+                                        Todas
+                                    </span>
+                                </label>
+
+                                <label class="catalog-filter-chip">
+                                    <input
+                                        type="radio"
+                                        name="origem"
+                                        value="steam"
+                                        @checked(
+                                            $origemAdmin === 'steam'
+                                        )
+                                    >
+
+                                    <span>
+                                        Steam
+                                    </span>
+                                </label>
+
+                                <label class="catalog-filter-chip">
+                                    <input
+                                        type="radio"
+                                        name="origem"
+                                        value="manual"
+                                        @checked(
+                                            $origemAdmin === 'manual'
+                                        )
+                                    >
+
+                                    <span>
+                                        Manual
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="catalog-filter-group">
+                            <div class="catalog-filter-title">
+                                <i class="bi bi-sort-down"></i>
+
+                                <span>
+                                    Ordenar por
+                                </span>
+                            </div>
+
+                            <div class="catalog-filter-options">
+                                <label class="catalog-filter-chip">
+                                    <input
+                                        type="radio"
+                                        name="ordem"
+                                        value="az"
+                                        @checked(
+                                            $ordemAdmin === 'az'
+                                        )
+                                    >
+
+                                    <span>
+                                        Nome A-Z
+                                    </span>
+                                </label>
+
+                                <label class="catalog-filter-chip">
+                                    <input
+                                        type="radio"
+                                        name="ordem"
+                                        value="za"
+                                        @checked(
+                                            $ordemAdmin === 'za'
+                                        )
+                                    >
+
+                                    <span>
+                                        Nome Z-A
+                                    </span>
+                                </label>
+
+                                <label class="catalog-filter-chip">
+                                    <input
+                                        type="radio"
+                                        name="ordem"
+                                        value="recentes"
+                                        @checked(
+                                            $ordemAdmin === 'recentes'
+                                        )
+                                    >
+
+                                    <span>
+                                        Adicionados recentemente
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="catalog-filter-group">
+                            <div class="catalog-filter-title">
+                                <i class="bi bi-tags"></i>
+
+                                <span>
+                                    Gêneros
+                                </span>
+                            </div>
+
+                            <div
+                                class="
+                                    catalog-filter-options
+                                    catalog-filter-options-scroll
+                                "
+                            >
+                                @forelse (
+                                    $generosFiltro
+                                    as $genero
+                                )
+                                    <label class="catalog-filter-chip">
+                                        <input
+                                            type="checkbox"
+                                            name="generos[]"
+                                            value="{{ $genero->id_genero }}"
+                                            @checked(
+                                                in_array(
+                                                    (int) $genero->id_genero,
+                                                    $generosAdminAtivos,
+                                                    true
+                                                )
+                                            )
+                                        >
+
+                                        <span>
+                                            {{ $genero->genero }}
+                                        </span>
+                                    </label>
+                                @empty
+                                    <span class="catalog-filter-empty">
+                                        Nenhum gênero disponível.
+                                    </span>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        <div class="catalog-filter-group">
+                            <div class="catalog-filter-title">
+                                <i class="bi bi-controller"></i>
+
+                                <span>
+                                    Modos de jogo
+                                </span>
+                            </div>
+
+                            <div
+                                class="
+                                    catalog-filter-options
+                                    catalog-filter-options-scroll
+                                "
+                            >
+                                @forelse (
+                                    $modosFiltro
+                                    as $modo
+                                )
+                                    <label class="catalog-filter-chip">
+                                        <input
+                                            type="checkbox"
+                                            name="modos_filtro[]"
+                                            value="{{ $modo->id_modo_jogo }}"
+                                            @checked(
+                                                in_array(
+                                                    (int) $modo->id_modo_jogo,
+                                                    $modosAdminAtivos,
+                                                    true
+                                                )
+                                            )
+                                        >
+
+                                        <span>
+                                            {{ $modo->nome }}
+                                        </span>
+                                    </label>
+                                @empty
+                                    <span class="catalog-filter-empty">
+                                        Nenhum modo disponível.
+                                    </span>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        <div class="catalog-filter-actions">
+                            <a
+                                href="{{ route(
+                                    'admin.jogos.index',
+                                    request('q')
+                                        ? [
+                                            'q' => request('q'),
+                                        ]
+                                        : []
+                                ) }}"
+                                class="catalog-filter-clear"
+                            >
+                                <i class="bi bi-arrow-counterclockwise"></i>
+
+                                Limpar filtros
+                            </a>
+
                             <button
                                 type="submit"
-                                class="admin-game-delete"
-                                title="Excluir jogo"
-                                aria-label="Excluir {{ $jogo->nome }}"
+                                class="catalog-filter-apply"
                             >
-                                <i class="bi bi-trash3"></i>
+                                <i class="bi bi-check2"></i>
+
+                                Aplicar filtros
                             </button>
-                        </form>
+                        </div>
                     </div>
-                    <div
-                        class="modal fade"
-                        id="jogoModal{{ $jogo->id_jogo }}"
-                        tabindex="-1"
-                        aria-hidden="true"
-                    >
-                        <div class="modal-dialog modal-dialog-centered modal-lg">
-                            <div class="modal-content admin-game-modal">
-                                <div class="modal-header">
-                                    <h2 class="modal-title">
+                </div>
+            </form>
+
+            <div
+                class="catalog-search-loading"
+                id="adminGameSearchLoading"
+                hidden
+            >
+                <div
+                    class="spinner-border spinner-border-sm"
+                    role="status"
+                    aria-hidden="true"
+                ></div>
+
+                <span>
+                    Buscando jogos...
+                </span>
+            </div>
+
+            <div
+                id="adminGameResults"
+                class="catalog-search-results"
+                aria-live="polite"
+            >
+                <div class="admin-game-grid">
+                    @forelse ($jogos as $jogo)
+                        <div class="admin-game-card-wrapper">
+                            <button
+                                type="button"
+                                class="admin-game-card"
+                                data-bs-toggle="modal"
+                                data-bs-target="#jogoModal{{ $jogo->id_jogo }}"
+                            >
+                                <img
+                                    src="{{ $jogo->capa }}"
+                                    alt="{{ $jogo->nome }}"
+                                >
+                                <div class="admin-game-card-info">
+                                    <strong>
                                         {{ $jogo->nome }}
-                                    </h2>
-                                    <button
-                                        type="button"
-                                        class="btn-close btn-close-white"
-                                        data-bs-dismiss="modal"
-                                        aria-label="Fechar"
-                                    ></button>
-                                </div>
-                                <div class="modal-body">
-                                    <img
-                                        src="{{ $jogo->capa }}"
-                                        alt="{{ $jogo->nome }}"
-                                        class="admin-game-modal-cover"
-                                    >
+                                    </strong>
                                     @if ($jogo->steam_app_id)
-                                        <p class="admin-game-modal-source">
-                                            Steam AppID:
-                                            {{ $jogo->steam_app_id }}
-                                        </p>
+                                        <span class="admin-game-source steam">Steam</span>
+                                        <small>
+                                            AppID {{ $jogo->steam_app_id }}
+                                        </small>
                                     @else
-                                        <p class="admin-game-modal-source">
-                                            Cadastrado manualmente
-                                        </p>
+                                        <span class="admin-game-source manual">Manual</span>
                                     @endif
-                                    <div class="admin-game-modal-genres">
-                                        <strong>Gêneros</strong>
-                                        <div>
-                                            @forelse ($jogo->generos as $genero)
-                                                <span>{{ $genero->genero }}</span>
-                                            @empty
-                                                <span class="admin-game-no-genres">Nenhum gênero cadastrado.</span>
-                                            @endforelse
-                                        </div>
+                                </div>
+                            </button>
+                            <form
+                                method="POST"
+                                action="{{ route('admin.jogos.destroy', $jogo) }}"
+                                class="admin-game-delete-form"
+                                onsubmit="return confirm('Deseja realmente excluir este jogo?')"
+                            >
+                                @csrf
+                                @method('DELETE')
+                                <button
+                                    type="submit"
+                                    class="admin-game-delete"
+                                    title="Excluir jogo"
+                                    aria-label="Excluir {{ $jogo->nome }}"
+                                >
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <div
+                            class="modal fade"
+                            id="jogoModal{{ $jogo->id_jogo }}"
+                            tabindex="-1"
+                            aria-hidden="true"
+                        >
+                            <div class="modal-dialog modal-dialog-centered modal-lg">
+                                <div class="modal-content admin-game-modal">
+                                    <div class="modal-header">
+                                        <h2 class="modal-title">
+                                            {{ $jogo->nome }}
+                                        </h2>
+                                        <button
+                                            type="button"
+                                            class="btn-close btn-close-white"
+                                            data-bs-dismiss="modal"
+                                            aria-label="Fechar"
+                                        ></button>
                                     </div>
-                                    <div class="admin-game-modal-genres">
-                                        <strong>Modos de jogo</strong>
-                                        <div>
-                                            @forelse ($jogo->modos as $modo)
-                                                <span>{{ $modo->nome }}</span>
-                                            @empty
-                                                <span class="admin-game-no-genres">Nenhum modo cadastrado.</span>
-                                            @endforelse
-                                        </div>
-                                    </div>
-                                    <div class="admin-game-modal-description">
-                                        <strong>Descrição</strong>
-                                        <p>
-                                            {{ $jogo->descricao ?: 'Nenhuma descrição cadastrada.' }}
-                                        </p>
-                                    </div>
-                                    <div class="admin-game-modal-date">
-                                        <strong>Data de lançamento</strong>
-                                        <p>
-                                            {{ $jogo->dt_lancamento
-                                                ? $jogo->dt_lancamento->format('d/m/Y')
-                                                : 'Não informada'
-                                            }}
-                                        </p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        class="btn admin-game-edit-button"
-                                        data-bs-toggle="collapse"
-                                        data-bs-target="#editarJogo{{ $jogo->id_jogo }}"
-                                    >
-                                        Editar
-                                    </button>
-                                    <div
-                                        class="collapse admin-game-edit-area"
-                                        id="editarJogo{{ $jogo->id_jogo }}"
-                                    >
-                                        <form
-                                            method="POST"
-                                            action="{{ route('admin.jogos.update', $jogo) }}"
-                                            enctype="multipart/form-data"
-                                            class="admin-game-edit-form"
+                                    <div class="modal-body">
+                                        <img
+                                            src="{{ $jogo->capa }}"
+                                            alt="{{ $jogo->nome }}"
+                                            class="admin-game-modal-cover"
                                         >
-                                            @csrf
-                                            @method('PATCH')
+                                        @if ($jogo->steam_app_id)
+                                            <p class="admin-game-modal-source">
+                                                Steam AppID:
+                                                {{ $jogo->steam_app_id }}
+                                            </p>
+                                        @else
+                                            <p class="admin-game-modal-source">
+                                                Cadastrado manualmente
+                                            </p>
+                                        @endif
+                                        <div class="admin-game-modal-genres">
+                                            <strong>Gêneros</strong>
                                             <div>
-                                                <label class="form-label">
-                                                    Nome
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    name="nome"
-                                                    class="form-control"
-                                                    value="{{ $jogo->nome }}"
-                                                >
+                                                @forelse ($jogo->generos as $genero)
+                                                    <span>{{ $genero->genero }}</span>
+                                                @empty
+                                                    <span class="admin-game-no-genres">Nenhum gênero cadastrado.</span>
+                                                @endforelse
                                             </div>
+                                        </div>
+                                        <div class="admin-game-modal-genres">
+                                            <strong>Modos de jogo</strong>
                                             <div>
-                                                <label class="form-label">
-                                                    Data de lançamento
-                                                </label>
-                                                <input
-                                                    type="date"
-                                                    name="dt_lancamento"
-                                                    class="form-control"
-                                                    value="{{ $jogo->dt_lancamento?->format('Y-m-d') }}"
-                                                >
+                                                @forelse ($jogo->modos as $modo)
+                                                    <span>{{ $modo->nome }}</span>
+                                                @empty
+                                                    <span class="admin-game-no-genres">Nenhum modo cadastrado.</span>
+                                                @endforelse
                                             </div>
-                                            @if ($jogo->steam_app_id)
+                                        </div>
+                                        <div class="admin-game-modal-description">
+                                            <strong>Descrição</strong>
+                                            <p>
+                                                {{ $jogo->descricao ?: 'Nenhuma descrição cadastrada.' }}
+                                            </p>
+                                        </div>
+                                        <div class="admin-game-modal-date">
+                                            <strong>Data de lançamento</strong>
+                                            <p>
+                                                {{ $jogo->dt_lancamento
+                                                    ? $jogo->dt_lancamento->format('d/m/Y')
+                                                    : 'Não informada'
+                                                }}
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            class="btn admin-game-edit-button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#editarJogo{{ $jogo->id_jogo }}"
+                                        >
+                                            Editar
+                                        </button>
+                                        <div
+                                            class="collapse admin-game-edit-area"
+                                            id="editarJogo{{ $jogo->id_jogo }}"
+                                        >
+                                            <form
+                                                method="POST"
+                                                action="{{ route('admin.jogos.update', $jogo) }}"
+                                                enctype="multipart/form-data"
+                                                class="admin-game-edit-form"
+                                            >
+                                                @csrf
+                                                @method('PATCH')
                                                 <div>
                                                     <label class="form-label">
-                                                        Steam AppID
+                                                        Nome
                                                     </label>
                                                     <input
                                                         type="text"
+                                                        name="nome"
                                                         class="form-control"
-                                                        value="{{ $jogo->steam_app_id }}"
-                                                        readonly
+                                                        value="{{ $jogo->nome }}"
                                                     >
                                                 </div>
-                                            @endif
-                                            <div>
-                                                <label class="form-label">
-                                                    Nova capa
-                                                </label>
-                                                <input
-                                                    type="file"
-                                                    name="capa"
-                                                    class="form-control"
-                                                    accept="image/png,image/jpeg,image/webp"
-                                                >
-                                            </div>
-                                            <div class="admin-game-edit-description">
-                                                <label class="form-label">
-                                                    Descrição
-                                                </label>
-                                                <textarea
-                                                    name="descricao"
-                                                    class="form-control"
-                                                    rows="4"
-                                                >{{ $jogo->descricao }}</textarea>
-                                            </div>
-                                            <div class="admin-game-edit-description">
-                                                <label class="form-label">
-                                                    Gêneros
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    name="generos_texto"
-                                                    class="form-control"
-                                                    value="{{ $jogo->generos->pluck('genero')->implode('; ') }}"
-                                                    placeholder="Ex.: Ação; RPG; Mundo Aberto"
-                                                >
-                                                <small class="admin-game-help">
-                                                    Separe os gêneros por ponto e vírgula.
-                                                </small>
-                                            </div>
-
-                                            <div class="admin-game-edit-genres">
-                                                <label class="form-label">
-                                                    Modos de jogo
-                                                </label>
                                                 <div>
-                                                    @foreach ($modosDisponiveis as $modo)
-                                                        <label>
-                                                            <input
-                                                                type="checkbox"
-                                                                name="modos[]"
-                                                                value="{{ $modo->id_modo_jogo }}"
-                                                                @checked(
-                                                                    $jogo->modos->contains(
-                                                                        'id_modo_jogo',
-                                                                        $modo->id_modo_jogo
-                                                                    )
-                                                                )
-                                                            >
-                                                            {{ $modo->nome }}
-                                                        </label>
-                                                    @endforeach
+                                                    <label class="form-label">
+                                                        Data de lançamento
+                                                    </label>
+                                                    <input
+                                                        type="date"
+                                                        name="dt_lancamento"
+                                                        class="form-control"
+                                                        value="{{ $jogo->dt_lancamento?->format('Y-m-d') }}"
+                                                    >
                                                 </div>
-                                            </div>
-                                            <button
-                                                type="submit"
-                                                class="btn admin-game-save"
-                                            >
-                                                Salvar alterações
-                                            </button>
-                                        </form>
+                                                @if ($jogo->steam_app_id)
+                                                    <div>
+                                                        <label class="form-label">
+                                                            Steam AppID
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            class="form-control"
+                                                            value="{{ $jogo->steam_app_id }}"
+                                                            readonly
+                                                        >
+                                                    </div>
+                                                @endif
+                                                <div>
+                                                    <label class="form-label">
+                                                        Nova capa
+                                                    </label>
+                                                    <input
+                                                        type="file"
+                                                        name="capa"
+                                                        class="form-control"
+                                                        accept="image/png,image/jpeg,image/webp"
+                                                    >
+                                                </div>
+                                                <div class="admin-game-edit-description">
+                                                    <label class="form-label">
+                                                        Descrição
+                                                    </label>
+                                                    <textarea
+                                                        name="descricao"
+                                                        class="form-control"
+                                                        rows="4"
+                                                    >{{ $jogo->descricao }}</textarea>
+                                                </div>
+                                                <div class="admin-game-edit-description">
+                                                    <label class="form-label">
+                                                        Gêneros
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="generos_texto"
+                                                        class="form-control"
+                                                        value="{{ $jogo->generos->pluck('genero')->implode('; ') }}"
+                                                        placeholder="Ex.: Ação; RPG; Mundo Aberto"
+                                                    >
+                                                    <small class="admin-game-help">
+                                                        Separe os gêneros por ponto e vírgula.
+                                                    </small>
+                                                </div>
+
+                                                <div class="admin-game-edit-genres">
+                                                    <label class="form-label">
+                                                        Modos de jogo
+                                                    </label>
+                                                    <div>
+                                                        @foreach ($modosDisponiveis as $modo)
+                                                            <label>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    name="modos[]"
+                                                                    value="{{ $modo->id_modo_jogo }}"
+                                                                    @checked(
+                                                                        $jogo->modos->contains(
+                                                                            'id_modo_jogo',
+                                                                            $modo->id_modo_jogo
+                                                                        )
+                                                                    )
+                                                                >
+                                                                {{ $modo->nome }}
+                                                            </label>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="submit"
+                                                    class="btn admin-game-save"
+                                                >
+                                                    Salvar alterações
+                                                </button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                @empty
-                    <div class="admin-empty">
-                        Nenhum jogo encontrado.
-                    </div>
-                @endforelse
-            </div>
-            @if ($jogos->hasPages())
-                <div class="squad-pagination">
-                    {{ $jogos->links('pagination::bootstrap-5') }}
+                    @empty
+                        <div class="admin-empty">
+                            Nenhum jogo encontrado.
+                        </div>
+                    @endforelse
                 </div>
-            @endif
+                @if ($jogos->hasPages())
+                    <div class="squad-pagination">
+                        {{ $jogos->links('pagination::bootstrap-5') }}
+                    </div>
+                @endif
+            </div>
         </section>
     </div>
-
-    <script>
-        const steamImportForm = document.getElementById('steamImportForm');
-        const steamImportButton = document.getElementById('steamImportButton');
-        const steamImportButtonContent = document.getElementById('steamImportButtonContent');
-        const steamImportLoading = document.getElementById('steamImportLoading');
-
-        if (steamImportForm) {
-            steamImportForm.addEventListener('submit', function() {
-                steamImportButton.disabled = true;
-                steamImportButtonContent.textContent = 'Importando...';
-                steamImportLoading.hidden = false;
-            });
-        }
-    </script>
 @endsection

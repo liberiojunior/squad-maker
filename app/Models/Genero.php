@@ -15,4 +15,14 @@ class Genero extends Model
     protected $fillable = [
         'genero',
     ];
+
+    public function jogos()
+    {
+        return $this->belongsToMany(
+            Jogo::class,
+            'tb_jogo_genero',
+            'id_genero',
+            'id_jogo'
+        );
+    }
 }

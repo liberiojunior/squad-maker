@@ -2,7 +2,448 @@ document.addEventListener('DOMContentLoaded', function() {
     iniciarAvisos();
     iniciarPerfil();
     iniciarGenerosPerfil();
+    iniciarBuscasCatalogo();
+    iniciarImportacaoSteam();
 });
+
+function iniciarBuscasCatalogo() {
+    const configuracoes = [
+        {
+            formId: 'gameSearchForm',
+            inputId: 'gameSearchInput',
+            resultsId: 'gameSearchResults',
+            loadingId: 'gameSearchLoading',
+            defaultOrder: 'popularidade'
+        },
+        {
+            formId: 'adminGameSearchForm',
+            inputId: 'adminGameSearchInput',
+            resultsId: 'adminGameResults',
+            loadingId: 'adminGameSearchLoading',
+            defaultOrder: 'az'
+        }
+    ];
+
+    configuracoes.forEach(function(configuracao) {
+        const form = document.getElementById(
+            configuracao.formId
+        );
+
+        if (!form) {
+            return;
+        }
+
+        iniciarBuscaCatalogo(
+            form,
+            configuracao
+        );
+    });
+}
+
+
+function iniciarBuscaCatalogo(
+    form,
+    configuracao
+) {
+    const input = document.getElementById(
+        configuracao.inputId
+    );
+
+    const results = document.getElementById(
+        configuracao.resultsId
+    );
+
+    const loading = document.getElementById(
+        configuracao.loadingId
+    );
+
+    if (!results) {
+        return;
+    }
+
+    let searchTimer = null;
+    let searchController = null;
+
+
+    function montarUrl() {
+        const url = new URL(
+            form.action,
+            window.location.origin
+        );
+
+        const formData = new FormData(form);
+
+        formData.forEach(
+            function(value, key) {
+                if (
+                    String(value).trim() === ''
+                ) {
+                    return;
+                }
+
+                url.searchParams.append(
+                    key,
+                    value
+                );
+            }
+        );
+
+        return url;
+    }
+
+
+    function mostrarLoading(ativo) {
+        if (!loading) {
+            return;
+        }
+
+        loading.hidden = !ativo;
+    }
+
+
+    function atualizarContadorFiltros() {
+        let contador = form.querySelector(
+            '[data-filter-count], '
+            + '.catalog-filter-count'
+        );
+
+        const toggle = form.querySelector(
+            '.catalog-filter-toggle'
+        );
+
+        let quantidade = 0;
+
+
+        const generos = form.querySelectorAll(
+            'input[name="generos[]"]:checked'
+        );
+
+        quantidade += generos.length;
+
+
+        const modos = form.querySelectorAll(
+            'input[name="modos[]"]:checked, '
+            + 'input[name="modos_filtro[]"]:checked'
+        );
+
+        quantidade += modos.length;
+
+
+        const origem = form.querySelector(
+            'input[name="origem"]:checked'
+        );
+
+        if (
+            origem
+            && origem.value !== ''
+        ) {
+            quantidade++;
+        }
+
+
+        const ordem = form.querySelector(
+            'input[name="ordem"]:checked'
+        );
+
+        if (
+            ordem
+            && ordem.value
+            !== configuracao.defaultOrder
+        ) {
+            quantidade++;
+        }
+
+
+        if (
+            !contador
+            && toggle
+        ) {
+            contador =
+                document.createElement(
+                    'span'
+                );
+
+            contador.className =
+                'catalog-filter-count';
+
+            contador.dataset.filterCount = '';
+
+            toggle.appendChild(
+                contador
+            );
+        }
+
+
+        if (contador) {
+            contador.textContent =
+                quantidade;
+
+            contador.hidden =
+                quantidade === 0;
+        }
+
+
+        if (toggle) {
+            toggle.classList.toggle(
+                'active',
+                quantidade > 0
+            );
+        }
+    }
+
+
+    function mostrarErro() {
+        const antigo =
+            results.querySelector(
+                '.catalog-search-error'
+            );
+
+        if (antigo) {
+            antigo.remove();
+        }
+
+        const erro =
+            document.createElement('div');
+
+        erro.className =
+            'catalog-search-error';
+
+        erro.textContent =
+            'Não foi possível atualizar os jogos.';
+
+        results.prepend(erro);
+    }
+
+
+    async function buscar(url) {
+        if (searchController) {
+            searchController.abort();
+        }
+
+        searchController =
+            new AbortController();
+
+        mostrarLoading(true);
+
+
+        try {
+            const response = await fetch(
+                url.toString(),
+                {
+                    headers: {
+                        'Accept':
+                            'text/html',
+
+                        'X-Requested-With':
+                            'XMLHttpRequest'
+                    },
+
+                    signal:
+                    searchController.signal
+                }
+            );
+
+
+            if (!response.ok) {
+                throw new Error(
+                    'Não foi possível atualizar os jogos.'
+                );
+            }
+
+
+            const html =
+                await response.text();
+
+
+            const documento =
+                new DOMParser()
+                    .parseFromString(
+                        html,
+                        'text/html'
+                    );
+
+
+            const novosResultados =
+                documento.getElementById(
+                    configuracao.resultsId
+                );
+
+
+            if (!novosResultados) {
+                throw new Error(
+                    'Não foi possível carregar os resultados.'
+                );
+            }
+
+
+            results.innerHTML =
+                novosResultados.innerHTML;
+
+
+            window.history.replaceState(
+                {},
+                '',
+                url.toString()
+            );
+
+
+            atualizarContadorFiltros();
+
+        } catch (error) {
+            if (
+                error.name
+                === 'AbortError'
+            ) {
+                return;
+            }
+
+            console.error(error);
+
+            mostrarErro();
+
+        } finally {
+            mostrarLoading(false);
+        }
+    }
+
+
+    function agendarBusca() {
+        clearTimeout(
+            searchTimer
+        );
+
+        searchTimer =
+            setTimeout(
+                function() {
+                    buscar(
+                        montarUrl()
+                    );
+                },
+                300
+            );
+    }
+
+
+    form.addEventListener(
+        'submit',
+        function(event) {
+            event.preventDefault();
+
+            clearTimeout(
+                searchTimer
+            );
+
+            buscar(
+                montarUrl()
+            );
+        }
+    );
+
+
+    if (input) {
+        input.addEventListener(
+            'input',
+            agendarBusca
+        );
+    }
+
+
+    form.addEventListener(
+        'change',
+        function() {
+            atualizarContadorFiltros();
+        }
+    );
+
+
+    results.addEventListener(
+        'click',
+        function(event) {
+            const link =
+                event.target.closest(
+                    '.squad-pagination a'
+                );
+
+            if (!link) {
+                return;
+            }
+
+            event.preventDefault();
+
+
+            const url = new URL(
+                link.href,
+                window.location.origin
+            );
+
+
+            buscar(url);
+
+
+            window.scrollTo({
+                top:
+                    form.offsetTop - 20,
+
+                behavior:
+                    'smooth'
+            });
+        }
+    );
+
+
+    atualizarContadorFiltros();
+}
+
+
+function iniciarImportacaoSteam() {
+    const form =
+        document.getElementById(
+            'steamImportForm'
+        );
+
+    if (!form) {
+        return;
+    }
+
+
+    const button =
+        document.getElementById(
+            'steamImportButton'
+        );
+
+
+    const buttonContent =
+        document.getElementById(
+            'steamImportButtonContent'
+        );
+
+
+    const loading =
+        document.getElementById(
+            'steamImportLoading'
+        );
+
+
+    form.addEventListener(
+        'submit',
+        function() {
+            if (button) {
+                button.disabled = true;
+            }
+
+
+            if (buttonContent) {
+                buttonContent.textContent =
+                    'Importando...';
+            }
+
+
+            if (loading) {
+                loading.hidden = false;
+            }
+        }
+    );
+}
 
 function iniciarAvisos() {
     const alerts = document.querySelectorAll('.alert');

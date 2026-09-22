@@ -15,51 +15,216 @@ class AdminJogoController extends Controller
 {
     public function index(Request $request)
     {
+        $data = $request->validate([
+            'q' => [
+                'nullable',
+                'string',
+                'max:150',
+            ],
+
+            'origem' => [
+                'nullable',
+                'in:steam,manual',
+            ],
+
+            'ordem' => [
+                'nullable',
+                'in:az,za,recentes',
+            ],
+
+            'generos' => [
+                'nullable',
+                'array',
+            ],
+
+            'generos.*' => [
+                'integer',
+                'distinct',
+                'exists:tb_genero,id_genero',
+            ],
+
+            'modos_filtro' => [
+                'nullable',
+                'array',
+            ],
+
+            'modos_filtro.*' => [
+                'integer',
+                'distinct',
+                'exists:tb_modo_jogo,id_modo_jogo',
+            ],
+        ]);
+
+
         $query = Jogo::with([
             'generos',
             'modos',
         ]);
 
-        if ($request->filled('q')) {
+
+        $busca = trim(
+            $data['q'] ?? ''
+        );
+
+        $origem =
+            $data['origem']
+            ?? null;
+
+        $ordem =
+            $data['ordem']
+            ?? 'az';
+
+        $generosSelecionados =
+            $data['generos']
+            ?? [];
+
+        $modosSelecionados =
+            $data['modos_filtro']
+            ?? [];
+
+
+        if ($busca !== '') {
+
             $query->where(
                 'nome',
                 'like',
-                '%' . trim($request->input('q')) . '%'
+                '%' . $busca . '%'
             );
         }
 
-        if ($request->input('origem') === 'steam') {
-            $query->whereNotNull('steam_app_id');
+
+        if ($origem === 'steam') {
+
+            $query->whereNotNull(
+                'steam_app_id'
+            );
         }
 
-        if ($request->input('origem') === 'manual') {
-            $query->whereNull('steam_app_id');
+
+        if ($origem === 'manual') {
+
+            $query->whereNull(
+                'steam_app_id'
+            );
         }
 
-        switch ($request->input('ordem')) {
+
+        foreach (
+            $generosSelecionados
+            as $idGenero
+        ) {
+            $query->whereHas(
+                'generos',
+                function ($generosQuery) use (
+                    $idGenero
+                ) {
+                    $generosQuery->where(
+                        'tb_genero.id_genero',
+                        $idGenero
+                    );
+                }
+            );
+        }
+
+
+        foreach (
+            $modosSelecionados
+            as $idModo
+        ) {
+            $query->whereHas(
+                'modos',
+                function ($modosQuery) use (
+                    $idModo
+                ) {
+                    $modosQuery->where(
+                        'tb_modo_jogo.id_modo_jogo',
+                        $idModo
+                    );
+                }
+            );
+        }
+
+
+        switch ($ordem) {
+
             case 'za':
-                $query->orderBy('nome', 'desc');
+
+                $query->orderBy(
+                    'nome',
+                    'desc'
+                );
+
                 break;
+
 
             case 'recentes':
-                $query->orderBy('id_jogo', 'desc');
+
+                $query->orderBy(
+                    'id_jogo',
+                    'desc'
+                );
+
                 break;
 
+
             default:
+
                 $query->orderBy('nome');
+
                 break;
         }
+
 
         $jogos = $query
             ->paginate(12)
             ->withQueryString();
 
-        $modosDisponiveis = ModoJogo::orderBy('nome')->get();
+        $modosDisponiveis =
+            ModoJogo::orderBy('nome')
+                ->get();
 
-        return view('admin.jogos', [
-            'jogos' => $jogos,
-            'modosDisponiveis' => $modosDisponiveis,
-        ]);
+        $generosFiltro =
+            Genero::query()
+                ->whereHas('jogos')
+                ->orderBy('genero')
+                ->get();
+
+
+        $modosFiltro =
+            ModoJogo::query()
+                ->whereHas('jogos')
+                ->orderBy('nome')
+                ->get();
+
+
+        return view(
+            'admin.jogos',
+            [
+                'jogos' =>
+                    $jogos,
+
+                'modosDisponiveis' =>
+                    $modosDisponiveis,
+
+                'generosFiltro' =>
+                    $generosFiltro,
+
+                'modosFiltro' =>
+                    $modosFiltro,
+
+                'generosSelecionados' =>
+                    array_map(
+                        'intval',
+                        $generosSelecionados
+                    ),
+
+                'modosSelecionados' =>
+                    array_map(
+                        'intval',
+                        $modosSelecionados
+                    ),
+            ]
+        );
     }
 
     public function storeManual(Request $request)
