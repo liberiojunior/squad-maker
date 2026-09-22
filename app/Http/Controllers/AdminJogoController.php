@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Genero;
 use App\Models\Jogo;
+use App\Models\ModoJogo;
 use App\Services\SteamService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -14,7 +15,10 @@ class AdminJogoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Jogo::with('generos');
+        $query = Jogo::with([
+            'generos',
+            'modos',
+        ]);
 
         if ($request->filled('q')) {
             $query->where(
@@ -50,11 +54,11 @@ class AdminJogoController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        $generosDisponiveis = Genero::orderBy('genero')->get();
+        $modosDisponiveis = ModoJogo::orderBy('nome')->get();
 
         return view('admin.jogos', [
             'jogos' => $jogos,
-            'generosDisponiveis' => $generosDisponiveis,
+            'modosDisponiveis' => $modosDisponiveis,
         ]);
     }
 
@@ -83,6 +87,23 @@ class AdminJogoController extends Controller
                 'nullable',
                 'string',
             ],
+
+            'generos_texto' => [
+                'nullable',
+                'string',
+                'max:2000',
+            ],
+
+            'modos' => [
+                'nullable',
+                'array',
+            ],
+
+            'modos.*' => [
+                'integer',
+                'distinct',
+                'exists:tb_modo_jogo,id_modo_jogo',
+            ],
         ], [
             'nome.required' =>
                 'Informe o nome do jogo.',
@@ -101,17 +122,34 @@ class AdminJogoController extends Controller
             $request->file('capa')
         );
 
-        Jogo::create([
-            'steam_app_id' => null,
-            'nome' => $data['nome'],
-            'capa' => $capa,
-            'dt_lancamento' => $data['dt_lancamento'],
-            'qtd_jogadores' => null,
-            'descricao' => $data['descricao'] ?? null,
-        ]);
+        $jogo = DB::transaction(
+            function () use ($data, $capa) {
+                $jogo = Jogo::create([
+                    'steam_app_id' => null,
+                    'nome' => $data['nome'],
+                    'capa' => $capa,
+                    'dt_lancamento' => $data['dt_lancamento'],
+                    'descricao' => $data['descricao'] ?? null,
+                ]);
+
+                $this->sincronizarGeneros(
+                    $jogo,
+                    $this->separarGeneros(
+                        $data['generos_texto'] ?? null
+                    )
+                );
+
+                $jogo->modos()->sync(
+                    $data['modos'] ?? []
+                );
+
+                return $jogo;
+            }
+        );
 
         return back()->with([
-            'success' => 'Jogo cadastrado com sucesso.',
+            'success' =>
+                $jogo->nome . ' cadastrado com sucesso.',
             'open_form' => 'manual',
         ]);
     }
@@ -121,6 +159,8 @@ class AdminJogoController extends Controller
         SteamService $steam
     )
     {
+        set_time_limit(120);
+
         $data = $request->validate([
             'steam_app_ids' => [
                 'required',
@@ -168,11 +208,11 @@ class AdminJogoController extends Controller
             array_unique($appIds)
         );
 
-        if (count($appIds) > 20) {
+        if (count($appIds) > 10) {
             return back()
                 ->withErrors([
                     'steam_app_ids' =>
-                        'Importe no máximo 20 jogos por vez.',
+                        'Importe no máximo 10 jogos por vez.',
                 ])
                 ->withInput()
                 ->with('open_form', 'steam');
@@ -222,8 +262,9 @@ class AdminJogoController extends Controller
 
     public function update(
         Request $request,
-        Jogo $jogo
-    ) {
+        Jogo    $jogo
+    )
+    {
         $data = $request->validate([
             'nome' => [
                 'required',
@@ -248,14 +289,21 @@ class AdminJogoController extends Controller
                 'max:5120',
             ],
 
-            'generos' => [
+            'generos_texto' => [
+                'nullable',
+                'string',
+                'max:2000',
+            ],
+
+            'modos' => [
                 'nullable',
                 'array',
             ],
 
-            'generos.*' => [
+            'modos.*' => [
                 'integer',
-                'exists:tb_genero,id_genero',
+                'distinct',
+                'exists:tb_modo_jogo,id_modo_jogo',
             ],
         ]);
 
@@ -273,10 +321,21 @@ class AdminJogoController extends Controller
             $this->excluirCapaLocal($capaAnterior);
         }
 
-        $jogo->save();
+        DB::transaction(
+            function () use ($jogo, $data) {
+                $jogo->save();
 
-        $jogo->generos()->sync(
-            $data['generos'] ?? []
+                $this->sincronizarGeneros(
+                    $jogo,
+                    $this->separarGeneros(
+                        $data['generos_texto'] ?? null
+                    )
+                );
+
+                $jogo->modos()->sync(
+                    $data['modos'] ?? []
+                );
+            }
         );
 
         return back()->with(
@@ -291,6 +350,7 @@ class AdminJogoController extends Controller
 
         DB::transaction(function () use ($jogo) {
             $jogo->generos()->detach();
+            $jogo->modos()->detach();
             $jogo->usuarios()->detach();
 
             $jogo->delete();
@@ -306,7 +366,8 @@ class AdminJogoController extends Controller
 
     private function salvarCapaLocal(
         UploadedFile $file
-    ): string {
+    ): string
+    {
         $fileName =
             'jogo_'
             . uniqid()
@@ -323,10 +384,11 @@ class AdminJogoController extends Controller
 
     private function excluirCapaLocal(
         ?string $capa
-    ): void {
+    ): void
+    {
         if (
-            ! $capa
-            || ! str_starts_with(
+            !$capa
+            || !str_starts_with(
                 $capa,
                 '/uploads/jogos/'
             )
@@ -354,7 +416,8 @@ class AdminJogoController extends Controller
         if ($jogoExistente) {
             return [
                 'success' => false,
-                'message' => 'este jogo já está cadastrado.',
+                'message' =>
+                    'este jogo já está cadastrado.',
             ];
         }
 
@@ -392,48 +455,42 @@ class AdminJogoController extends Controller
             ];
         }
 
+        $classificacoes =
+            $steam->buscarClassificacoesJogo(
+                $appId,
+                $detalhes
+            );
+
         $jogo = DB::transaction(
             function () use (
                 $appId,
                 $detalhes,
-                $dataLancamento
+                $dataLancamento,
+                $classificacoes
             ) {
                 $jogo = Jogo::create([
                     'steam_app_id' => $appId,
                     'nome' => $detalhes['name'],
                     'capa' => $detalhes['header_image'],
                     'dt_lancamento' => $dataLancamento,
-                    'qtd_jogadores' => null,
                     'descricao' =>
                         $detalhes['short_description']
                         ?? null,
                 ]);
 
-                $generosIds = [];
-
-                foreach (
-                    $detalhes['genres'] ?? []
-                    as $generoSteam
-                ) {
-                    $nome =
-                        $generoSteam['description']
-                        ?? null;
-
-                    if (!$nome) {
-                        continue;
-                    }
-
-                    $genero = Genero::firstOrCreate([
-                        'genero' => $nome,
-                    ]);
-
-                    $generosIds[] =
-                        $genero->id_genero;
-                }
-
-                $jogo->generos()->sync(
-                    array_unique($generosIds)
+                $this->sincronizarGeneros(
+                    $jogo,
+                    $classificacoes['generos']
                 );
+
+                $modosIds = ModoJogo::whereIn(
+                    'nome',
+                    $classificacoes['modos']
+                )
+                    ->pluck('id_modo_jogo')
+                    ->all();
+
+                $jogo->modos()->sync($modosIds);
 
                 return $jogo;
             }
@@ -445,10 +502,56 @@ class AdminJogoController extends Controller
         ];
     }
 
+    private function separarGeneros(
+        ?string $texto
+    ): array
+    {
+        if (!$texto) {
+            return [];
+        }
+
+        return collect(
+            preg_split(
+                '/[;,\r\n]+/',
+                $texto,
+                -1,
+                PREG_SPLIT_NO_EMPTY
+            )
+        )
+            ->map(fn($nome) => trim($nome))
+            ->filter()
+            ->unique(
+                fn($nome) => mb_strtolower($nome)
+            )
+            ->values()
+            ->all();
+    }
+
+    private function sincronizarGeneros(
+        Jogo  $jogo,
+        array $nomes
+    ): void
+    {
+        $ids = [];
+
+        foreach ($nomes as $nome) {
+            $genero = Genero::firstOrCreate([
+                'genero' => $nome,
+            ]);
+
+            $ids[] = $genero->id_genero;
+        }
+
+        $jogo->generos()->sync(
+            array_unique($ids)
+        );
+    }
+
     private function dataLancamentoSteam(
         ?string $data
-    ): ?string {
-        if (! $data) {
+    ): ?string
+    {
+        if (!$data) {
             return null;
         }
 
@@ -524,18 +627,18 @@ class AdminJogoController extends Controller
         }
 
         if (
-            ! is_numeric($dia)
-            || ! is_numeric($mes)
-            || ! is_numeric($ano)
+            !is_numeric($dia)
+            || !is_numeric($mes)
+            || !is_numeric($ano)
         ) {
             return null;
         }
 
         if (
-            ! checkdate(
-                (int) $mes,
-                (int) $dia,
-                (int) $ano
+            !checkdate(
+                (int)$mes,
+                (int)$dia,
+                (int)$ano
             )
         ) {
             return null;

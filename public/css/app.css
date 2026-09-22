@@ -971,7 +971,7 @@ body {
 
 .profile-top {
     display: grid;
-    grid-template-columns: 240px 1fr;
+    grid-template-columns: 300px 1fr;
     gap: 25px;
     align-items: start;
 }
@@ -979,14 +979,14 @@ body {
 .profile-avatar-area {
     display: flex;
     justify-content: center;
-    padding-top: 10px;
+    padding-top: 0;
 }
 
 .profile-avatar-wrapper {
     position: relative;
     display: block;
-    width: 220px;
-    height: 220px;
+    width: 280px;
+    height: 280px;
     border-radius: 50%;
     overflow: hidden;
     cursor: pointer;
@@ -1104,33 +1104,45 @@ body {
 }
 
 .profile-genres-card {
-    min-height: 48px;
+    height: 50px;
+    min-height: 50px;
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
     padding: 8px 12px;
+    overflow: hidden;
     background-color: rgba(24, 0, 70, 0.88);
     border-radius: 10px;
-    font-size: 18px;
+    font-size: 17px;
 }
 
 .profile-genres-card strong {
+    flex-shrink: 0;
     white-space: nowrap;
 }
 
 .profile-genre-list {
+    min-width: 0;
+    flex: 1;
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: nowrap;
+    gap: 7px;
+    overflow: hidden;
 }
 
 .profile-genre-tag {
-    padding: 5px 14px;
+    min-width: 0;
+    max-width: 150px;
+    padding: 5px 12px;
+    overflow: hidden;
+    flex-shrink: 1;
     background-color: rgba(6, 0, 55, 0.65);
     color: #d7d0df;
     border-radius: 18px;
-    font-size: 16px;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .profile-empty-inline {
@@ -1163,6 +1175,10 @@ body {
 
 /* Modal de gêneros */
 
+.profile-genres-dialog {
+    max-width: 590px;
+}
+
 .profile-genres-modal {
     background-color: #180046;
     color: white;
@@ -1174,22 +1190,113 @@ body {
     border-color: rgba(255, 255, 255, 0.12);
 }
 
+.profile-genres-modal .modal-header {
+    align-items: flex-start;
+}
+
 .profile-genres-modal .modal-title {
     font-size: 24px;
     font-weight: 700;
 }
 
-.profile-genres-description {
+.profile-genres-modal .modal-body {
+    padding: 18px 20px;
+}
+
+.profile-genre-selected-count {
+    flex-shrink: 0;
     color: #c3bacd;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.profile-genre-selected-count.limit-reached {
+    color: #eaa7d8;
+}
+
+.profile-selected-genres-block {
+    margin-top: 14px;
+    padding: 11px 12px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9px;
+}
+
+.profile-selected-genres-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 9px;
+}
+
+.profile-selected-genres-heading strong {
+    font-size: 14px;
+}
+
+.profile-selected-genres-heading span {
+    color: #8f8799;
+    font-size: 11px;
+}
+
+.profile-selected-genres {
+    min-height: 30px;
+    max-height: 96px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    overflow-y: auto;
+}
+
+.profile-selected-genre {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 9px 5px 10px;
+    background-color: #650095;
+    color: white;
+    border: 1px solid #8d18bd;
+    border-radius: 16px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.profile-selected-genre:hover {
+    background-color: #7c00b5;
+    border-color: #e83bbd;
+}
+
+.profile-selected-genre i {
+    font-size: 11px;
+    line-height: 1;
+}
+
+.profile-selected-genres-empty {
+    margin: 0;
+    color: #8f8799;
+    font-size: 12px;
+}
+
+.profile-genre-all-heading {
+    margin: 15px 0 8px;
+    color: #c3bacd;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .profile-genre-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    max-height: 280px;
+    padding-right: 4px;
+    overflow-y: auto;
 }
 
 .profile-genre-option {
+    min-width: 0;
     cursor: pointer;
 }
 
@@ -1198,20 +1305,37 @@ body {
 }
 
 .profile-genre-option span {
+    width: 100%;
     display: block;
-    padding: 8px 16px;
-    background-color: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 18px;
+    padding: 8px 10px;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.07);
+    color: #e1dbe7;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 7px;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .profile-genre-option input:checked + span {
-    background-color: #650095;
-    border-color: #8d18bd;
+    background-color: rgba(101, 0, 149, 0.72);
+    border-color: #e83bbd;
+}
+
+.profile-genre-option input:disabled + span {
+    opacity: 0.38;
+    cursor: not-allowed;
 }
 
 .profile-genre-option:hover span {
-    border-color: #e83bbd;
+    background-color: rgba(255, 255, 255, 0.11);
+    border-color: rgba(232, 59, 189, 0.75);
+}
+
+.profile-genre-option input:checked + span:hover {
+    background-color: #650095;
 }
 
 .profile-genres-save {
@@ -1222,6 +1346,27 @@ body {
 .profile-genres-save:hover {
     background-color: #7c00b5;
     color: white;
+}
+
+@media (max-width: 575px) {
+    .profile-genres-dialog {
+        margin: 10px;
+    }
+
+    .profile-genre-selected-count {
+        white-space: normal;
+    }
+
+    .profile-selected-genres-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .profile-genre-options {
+        grid-template-columns: 1fr;
+        max-height: 250px;
+    }
 }
 
 /* Seções do perfil */
@@ -3174,13 +3319,13 @@ body {
     }
 
     .profile-top {
-        grid-template-columns: 200px 1fr;
+        grid-template-columns: 255px 1fr;
         gap: 18px;
     }
 
     .profile-avatar-wrapper {
-        width: 180px;
-        height: 180px;
+        width: 238px;
+        height: 238px;
     }
 
     .profile-info-card {
@@ -3307,12 +3452,12 @@ body {
 @media (max-width: 900px) and (min-width: 768px) {
 
     .profile-top {
-        grid-template-columns: 180px 1fr;
+        grid-template-columns: 235px 1fr;
     }
 
     .profile-avatar-wrapper {
-        width: 165px;
-        height: 165px;
+        width: 225px;
+        height: 225px;
     }
 
     .profile-info-card {
@@ -3608,8 +3753,21 @@ body {
     }
 
     .profile-genres-card {
-        flex-wrap: wrap;
-        font-size: 16px;
+        flex-wrap: nowrap;
+        font-size: 15px;
+    }
+
+    .profile-genres-card strong {
+        font-size: 14px;
+    }
+
+    .profile-genre-list {
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .profile-genre-list::-webkit-scrollbar {
+        display: none;
     }
 
     .profile-section h2 {

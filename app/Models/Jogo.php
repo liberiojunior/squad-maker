@@ -17,7 +17,6 @@ class Jogo extends Model
         'nome',
         'capa',
         'dt_lancamento',
-        'qtd_jogadores',
         'descricao',
     ];
 
@@ -32,6 +31,16 @@ class Jogo extends Model
             'tb_jogo_genero',
             'id_jogo',
             'id_genero'
+        );
+    }
+
+    public function modos()
+    {
+        return $this->belongsToMany(
+            ModoJogo::class,
+            'tb_jogo_modo',
+            'id_jogo',
+            'id_modo_jogo'
         );
     }
 

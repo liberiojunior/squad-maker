@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     iniciarAvisos();
     iniciarPerfil();
+    iniciarGenerosPerfil();
 });
 
 function iniciarAvisos() {
@@ -25,6 +26,253 @@ function iniciarAvisos() {
             }, 350);
         }, tempo);
     });
+}
+
+
+function iniciarGenerosPerfil() {
+    const modalElement =
+        document.getElementById('generosModal');
+
+    if (!modalElement) {
+        return;
+    }
+
+    const form =
+        document.getElementById('profileGenresForm');
+    const selectedContainer =
+        document.getElementById('profileSelectedGenres');
+    const selectedCount =
+        document.getElementById('profileGenreSelectedCount');
+    const maxGeneros = Number(
+        form && form.dataset.maxGenres
+            ? form.dataset.maxGenres
+            : 4
+    );
+
+    const options = Array.from(
+        modalElement.querySelectorAll(
+            '.profile-genre-option'
+        )
+    );
+
+    options.forEach(function(option) {
+        const input =
+            option.querySelector('input[type="checkbox"]');
+
+        if (input) {
+            input.dataset.initialChecked =
+                input.checked ? '1' : '0';
+        }
+    });
+
+    function obterSelecionados() {
+        return options.filter(
+            function(option) {
+                const input =
+                    option.querySelector(
+                        'input[type="checkbox"]'
+                    );
+
+                return input && input.checked;
+            }
+        );
+    }
+
+    function atualizarDisponibilidade() {
+        const quantidade =
+            obterSelecionados().length;
+        const limiteAtingido =
+            quantidade >= maxGeneros;
+
+        options.forEach(function(option) {
+            const input =
+                option.querySelector(
+                    'input[type="checkbox"]'
+                );
+
+            if (!input) {
+                return;
+            }
+
+            input.disabled =
+                limiteAtingido && !input.checked;
+        });
+    }
+
+    function atualizarSelecionados() {
+        if (
+            !selectedContainer
+            || !selectedCount
+        ) {
+            return;
+        }
+
+        const selecionados = obterSelecionados();
+
+        selectedContainer.innerHTML = '';
+
+        selectedCount.textContent =
+            selecionados.length
+            + '/'
+            + maxGeneros
+            + ' selecionados';
+
+        selectedCount.classList.toggle(
+            'limit-reached',
+            selecionados.length >= maxGeneros
+        );
+
+        if (selecionados.length === 0) {
+            const vazio =
+                document.createElement('p');
+
+            vazio.className =
+                'profile-selected-genres-empty';
+            vazio.textContent =
+                'Nenhum gênero favorito selecionado.';
+
+            selectedContainer.appendChild(
+                vazio
+            );
+
+            atualizarDisponibilidade();
+            return;
+        }
+
+        selecionados.forEach(
+            function(option) {
+                const input =
+                    option.querySelector(
+                        'input[type="checkbox"]'
+                    );
+                const nome =
+                    option.dataset.genreName
+                    || option.textContent.trim();
+
+                const botao =
+                    document.createElement('button');
+
+                botao.type = 'button';
+                botao.className =
+                    'profile-selected-genre';
+                botao.setAttribute(
+                    'aria-label',
+                    'Remover ' + nome
+                );
+
+                const texto =
+                    document.createElement('span');
+                texto.textContent = nome;
+
+                const icone =
+                    document.createElement('i');
+                icone.className = 'bi bi-x-lg';
+
+                botao.appendChild(texto);
+                botao.appendChild(icone);
+
+                botao.addEventListener(
+                    'click',
+                    function() {
+                        input.checked = false;
+
+                        input.dispatchEvent(
+                            new Event(
+                                'change',
+                                { bubbles: true }
+                            )
+                        );
+                    }
+                );
+
+                selectedContainer.appendChild(
+                    botao
+                );
+            }
+        );
+
+        atualizarDisponibilidade();
+    }
+
+    function restaurarEstadoInicial() {
+        options.forEach(function(option) {
+            const input =
+                option.querySelector(
+                    'input[type="checkbox"]'
+                );
+
+            if (!input) {
+                return;
+            }
+
+            input.disabled = false;
+            input.checked =
+                input.dataset.initialChecked === '1';
+        });
+
+        atualizarSelecionados();
+    }
+
+    options.forEach(function(option) {
+        const input =
+            option.querySelector(
+                'input[type="checkbox"]'
+            );
+
+        if (!input) {
+            return;
+        }
+
+        input.addEventListener(
+            'change',
+            function() {
+                const selecionados =
+                    obterSelecionados();
+
+                if (
+                    input.checked
+                    && selecionados.length > maxGeneros
+                ) {
+                    input.checked = false;
+                }
+
+                atualizarSelecionados();
+            }
+        );
+    });
+
+    if (form) {
+        form.addEventListener(
+            'submit',
+            function(event) {
+                const quantidade =
+                    obterSelecionados().length;
+
+                if (quantidade <= maxGeneros) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                if (selectedCount) {
+                    selectedCount.textContent =
+                        'Escolha no máximo '
+                        + maxGeneros
+                        + ' gêneros.';
+                    selectedCount.classList.add(
+                        'limit-reached'
+                    );
+                }
+            }
+        );
+    }
+
+    modalElement.addEventListener(
+        'show.bs.modal',
+        restaurarEstadoInicial
+    );
+
+    atualizarSelecionados();
 }
 
 function iniciarPerfil() {
@@ -1072,6 +1320,14 @@ function iniciarPerfil() {
                     );
 
                     renderizarResultados();
+
+                    if (managerModalElement) {
+                        bootstrap.Modal
+                            .getOrCreateInstance(
+                                managerModalElement
+                            )
+                            .hide();
+                    }
                 } catch (error) {
                     mostrarStatus(
                         gamesSaveStatus,

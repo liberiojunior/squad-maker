@@ -6,7 +6,9 @@
             || $errors->has('nome')
             || $errors->has('capa')
             || $errors->has('dt_lancamento')
-            || $errors->has('descricao');
+            || $errors->has('descricao')
+            || $errors->has('generos_texto')
+            || $errors->has('modos');
             $steamAberto =
                 session('open_form') === 'steam'
                 || $errors->has('steam_app_ids');
@@ -127,6 +129,51 @@
                                 class="form-control"
                                 rows="4"
                             >{{ old('descricao') }}</textarea>
+                        </div>
+                        <div class="admin-game-description">
+                            <label
+                                for="generos_texto"
+                                class="form-label"
+                            >
+                                Gêneros
+                            </label>
+                            <input
+                                type="text"
+                                id="generos_texto"
+                                name="generos_texto"
+                                class="form-control"
+                                value="{{ old('generos_texto') }}"
+                                placeholder="Ex.: Ação; RPG; Mundo Aberto"
+                            >
+                            <small class="admin-game-help">
+                                Separe os gêneros por ponto e vírgula.
+                            </small>
+                        </div>
+
+                        <div class="admin-game-description">
+                            <label class="form-label">
+                                Modos de jogo
+                            </label>
+                            <div class="admin-game-edit-genres">
+                                <div>
+                                    @foreach ($modosDisponiveis as $modo)
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                name="modos[]"
+                                                value="{{ $modo->id_modo_jogo }}"
+                                                @checked(
+                                                    in_array(
+                                                        $modo->id_modo_jogo,
+                                                        old('modos', [])
+                                                    )
+                                                )
+                                            >
+                                            {{ $modo->nome }}
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
                         <button
                             type="submit"
@@ -348,6 +395,16 @@
                                             @endforelse
                                         </div>
                                     </div>
+                                    <div class="admin-game-modal-genres">
+                                        <strong>Modos de jogo</strong>
+                                        <div>
+                                            @forelse ($jogo->modos as $modo)
+                                                <span>{{ $modo->nome }}</span>
+                                            @empty
+                                                <span class="admin-game-no-genres">Nenhum modo cadastrado.</span>
+                                            @endforelse
+                                        </div>
+                                    </div>
                                     <div class="admin-game-modal-description">
                                         <strong>Descrição</strong>
                                         <p>
@@ -439,25 +496,41 @@
                                                     rows="4"
                                                 >{{ $jogo->descricao }}</textarea>
                                             </div>
-                                            <div class="admin-game-edit-genres">
+                                            <div class="admin-game-edit-description">
                                                 <label class="form-label">
                                                     Gêneros
                                                 </label>
+                                                <input
+                                                    type="text"
+                                                    name="generos_texto"
+                                                    class="form-control"
+                                                    value="{{ $jogo->generos->pluck('genero')->implode('; ') }}"
+                                                    placeholder="Ex.: Ação; RPG; Mundo Aberto"
+                                                >
+                                                <small class="admin-game-help">
+                                                    Separe os gêneros por ponto e vírgula.
+                                                </small>
+                                            </div>
+
+                                            <div class="admin-game-edit-genres">
+                                                <label class="form-label">
+                                                    Modos de jogo
+                                                </label>
                                                 <div>
-                                                    @foreach ($generosDisponiveis as $genero)
+                                                    @foreach ($modosDisponiveis as $modo)
                                                         <label>
                                                             <input
                                                                 type="checkbox"
-                                                                name="generos[]"
-                                                                value="{{ $genero->id_genero }}"
+                                                                name="modos[]"
+                                                                value="{{ $modo->id_modo_jogo }}"
                                                                 @checked(
-                                                                    $jogo->generos->contains(
-                                                                        'id_genero',
-                                                                        $genero->id_genero
+                                                                    $jogo->modos->contains(
+                                                                        'id_modo_jogo',
+                                                                        $modo->id_modo_jogo
                                                                     )
                                                                 )
                                                             >
-                                                            {{ $genero->genero }}
+                                                            {{ $modo->nome }}
                                                         </label>
                                                     @endforeach
                                                 </div>

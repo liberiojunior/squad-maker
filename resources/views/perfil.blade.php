@@ -129,16 +129,16 @@
                 </section>
 
                 <section class="profile-genres-card">
-                    <strong>Meus Gêneros:</strong>
+                    <strong>Gêneros Favoritos:</strong>
 
                     <div class="profile-genre-list">
-                        @forelse ($user->generos as $genero)
+                        @forelse ($user->generos->take(4) as $genero)
                             <span class="profile-genre-tag">
                                 {{ $genero->genero }}
                             </span>
                         @empty
                             <span class="profile-empty-inline">
-                                Nenhum gênero configurado.
+                                Nenhum gênero favorito.
                             </span>
                         @endforelse
                     </div>
@@ -148,7 +148,7 @@
                         class="profile-small-add"
                         data-bs-toggle="modal"
                         data-bs-target="#generosModal"
-                        title="Editar gêneros"
+                        title="Editar gêneros favoritos"
                     >
                         <i class="bi bi-plus-lg"></i>
                     </button>
@@ -292,17 +292,25 @@
         tabindex="-1"
         aria-hidden="true"
     >
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered profile-genres-dialog">
             <div class="modal-content profile-genres-modal">
                 <form
                     method="POST"
                     action="{{ route('perfil.generos.update') }}"
+                    id="profileGenresForm"
+                    data-max-genres="4"
                 >
                     @csrf
                     @method('PATCH')
 
                     <div class="modal-header">
-                        <h2 class="modal-title">Meus Gêneros</h2>
+                        <div>
+                            <h2 class="modal-title">Gêneros Favoritos</h2>
+
+                            <p class="profile-modal-subtitle">
+                                Escolha até 4 gêneros que mais combinam com você.
+                            </p>
+                        </div>
 
                         <button
                             type="button"
@@ -313,13 +321,34 @@
                     </div>
 
                     <div class="modal-body">
-                        <p class="profile-genres-description">
-                            Escolha os gêneros de jogos que mais combinam com você.
-                        </p>
+                        <section class="profile-selected-genres-block">
+                            <div class="profile-selected-genres-heading">
+                                <strong>Favoritos selecionados</strong>
+                                <span
+                                    class="profile-genre-selected-count"
+                                    id="profileGenreSelectedCount"
+                                ></span>
+                            </div>
 
-                        <div class="profile-genre-options">
+                            <div
+                                class="profile-selected-genres"
+                                id="profileSelectedGenres"
+                            ></div>
+                        </section>
+
+                        <div class="profile-genre-all-heading">
+                            Todos os gêneros
+                        </div>
+
+                        <div
+                            class="profile-genre-options"
+                            id="profileGenreOptions"
+                        >
                             @foreach ($generos as $genero)
-                                <label class="profile-genre-option">
+                                <label
+                                    class="profile-genre-option"
+                                    data-genre-name="{{ $genero->genero }}"
+                                >
                                     <input
                                         type="checkbox"
                                         name="generos[]"
@@ -336,6 +365,7 @@
                                 </label>
                             @endforeach
                         </div>
+
                     </div>
 
                     <div class="modal-footer">
