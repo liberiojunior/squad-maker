@@ -193,27 +193,48 @@
                         id="profileGamesList"
                     >
                         @foreach ($user->jogos->take(4) as $jogo)
-                            <button
-                                type="button"
-                                class="profile-game-card profile-game-detail"
-                                data-profile-game-detail
-                                data-game-id="{{ $jogo->id_jogo }}"
-                                data-name="{{ $jogo->nome }}"
-                                data-cover="{{ $jogo->capa }}"
-                                data-level="{{ $jogo->pivot->nivel_proficiencia ?? '' }}"
-                                data-update-url="{{ route('perfil.jogos.nivel.update', $jogo) }}"
-                            >
-                                <div class="profile-game-cover">
-                                    <img
-                                        src="{{ $jogo->capa }}"
-                                        alt="{{ $jogo->nome }}"
-                                    >
-                                </div>
+                            <div class="profile-game-card">
+                                <button
+                                    type="button"
+                                    class="profile-game-detail"
+                                    data-profile-game-detail
+                                    data-game-id="{{ $jogo->id_jogo }}"
+                                    data-name="{{ $jogo->nome }}"
+                                    data-cover="{{ $jogo->capa }}"
+                                    data-level="{{ $jogo->pivot->nivel_proficiencia ?? '' }}"
+                                    data-update-url="{{ route('perfil.jogos.nivel.update', $jogo) }}"
+                                >
+                                    <div class="profile-game-cover">
+                                        <img
+                                            src="{{ $jogo->capa }}"
+                                            alt="{{ $jogo->nome }}"
+                                        >
+                                    </div>
 
-                                <span>
-                                    {{ $jogo->nome }}
-                                </span>
-                            </button>
+                                    <span>
+                                        {{ $jogo->nome }}
+                                    </span>
+                                </button>
+
+                                <form
+                                    method="POST"
+                                    action="{{ route('perfil.jogos.remove', $jogo) }}"
+                                    class="profile-game-remove-form"
+                                    onsubmit="return confirm('Deseja remover este jogo do seu perfil?')"
+                                >
+                                    @csrf
+                                    @method('DELETE')
+
+                                    <button
+                                        type="submit"
+                                        class="profile-game-remove"
+                                        title="Remover jogo"
+                                        aria-label="Remover {{ $jogo->nome }}"
+                                    >
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
+                            </div>
                         @endforeach
                     </div>
                 @endif

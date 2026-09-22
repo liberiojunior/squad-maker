@@ -296,9 +296,10 @@
                             <button
                                 type="submit"
                                 class="admin-game-delete"
-                                title="Excluir"
+                                title="Excluir jogo"
+                                aria-label="Excluir {{ $jogo->nome }}"
                             >
-                                <i class="bi bi-x-lg"></i>
+                                <i class="bi bi-trash3"></i>
                             </button>
                         </form>
                     </div>

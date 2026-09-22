@@ -1303,6 +1303,7 @@ body {
 }
 
 .profile-game-card {
+    position: relative;
     min-width: 0;
 }
 
@@ -1351,6 +1352,40 @@ body {
 
 .profile-game-detail:hover .profile-game-cover img {
     transform: scale(1.02);
+}
+
+.profile-game-remove-form {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 3;
+    margin: 0;
+}
+
+.profile-game-remove {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background-color: rgba(220, 53, 69, 0.92);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    opacity: 0;
+    font-size: 15px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.profile-game-card:hover .profile-game-remove,
+.profile-game-remove:focus {
+    opacity: 1;
+}
+
+.profile-game-remove:hover {
+    background-color: #dc3545;
 }
 
 .profile-add-card {
@@ -2907,26 +2942,33 @@ body {
 
 /* Excluir jogo */
 
-.admin-game-delete {
+.admin-game-delete-form {
     position: absolute;
     top: 8px;
     right: 8px;
+    z-index: 3;
+    margin: 0;
+}
+
+.admin-game-delete {
     width: 34px;
     height: 34px;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 0;
-    background-color: rgba(220, 53, 69, 0.9);
+    background-color: rgba(220, 53, 69, 0.92);
     color: white;
     border: none;
     border-radius: 50%;
     opacity: 0;
-    font-size: 16px;
-    transition: opacity 0.15s;
+    font-size: 15px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+    transition: opacity 0.15s ease, background-color 0.15s ease;
 }
 
-.admin-game-card-wrapper:hover .admin-game-delete {
+.admin-game-card-wrapper:hover .admin-game-delete,
+.admin-game-delete:focus {
     opacity: 1;
 }
 
@@ -4010,5 +4052,13 @@ body {
 
     .profile-order-list {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (hover: none), (pointer: coarse) {
+    .profile-game-remove,
+    .admin-game-delete,
+    .profile-order-remove {
+        opacity: 1;
     }
 }
