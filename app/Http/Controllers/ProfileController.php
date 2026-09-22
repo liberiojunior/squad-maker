@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use App\Models\User;
 
 class ProfileController extends Controller
 {
@@ -536,5 +537,62 @@ class ProfileController extends Controller
                     );
             }
         });
+    }
+
+    public function showPublic(
+        Request $request,
+        User    $user
+    )
+    {
+        if (
+            $user->id_usuario
+            === $request->user()->id_usuario
+        ) {
+            return redirect()
+                ->route('perfil');
+        }
+
+        if ($user->status_conta !== 'ativo') {
+            abort(404);
+        }
+
+        $user->load([
+            'generos' => function ($query) {
+                $query->orderBy('genero');
+            },
+
+            'jogos' => function ($query) {
+                $query
+                    ->orderByRaw(
+                        '
+                        CASE
+                            WHEN tb_jogo_usuario.ordem_perfil IS NULL
+                                THEN 1
+                            ELSE 0
+                        END
+                    '
+                    )
+                    ->orderBy(
+                        'tb_jogo_usuario.ordem_perfil'
+                    )
+                    ->orderBy('tb_jogo.nome');
+            },
+
+            'plataformas' => function ($query) {
+                $query->orderBy('nome');
+            },
+        ]);
+
+        $presenca = $user->presenca();
+
+        return view(
+            'usuarios.perfil',
+            [
+                'user' => $user,
+                'niveis' =>
+                    NivelProficiencia::todos(),
+                'presenca' => $presenca,
+            ]
+        );
     }
 }

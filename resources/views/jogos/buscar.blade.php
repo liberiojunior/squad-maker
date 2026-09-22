@@ -1,4 +1,5 @@
 @extends('layouts.internal')
+
 @section('content')
     <div class="game-search-page">
         <form
@@ -30,19 +31,28 @@
                 >
                     <option
                         value="popularidade"
-                        @selected(request('ordem', 'popularidade') === 'popularidade')
+                        @selected(
+                            request(
+                                'ordem',
+                                'popularidade'
+                            ) === 'popularidade'
+                        )
                     >
                         Populares
                     </option>
                     <option
                         value="az"
-                        @selected(request('ordem') === 'az')
+                        @selected(
+                            request('ordem') === 'az'
+                        )
                     >
                         Nome A-Z
                     </option>
                     <option
                         value="za"
-                        @selected(request('ordem') === 'za')
+                        @selected(
+                            request('ordem') === 'za'
+                        )
                     >
                         Nome Z-A
                     </option>
@@ -52,7 +62,10 @@
         <div class="game-search-panel">
             <div class="game-search-grid">
                 @forelse ($jogos as $jogo)
-                    <article class="game-search-card">
+                    <a
+                        href="{{ route('jogos.show', $jogo) }}"
+                        class="game-search-card"
+                    >
                         <div class="game-search-cover-box">
                             <img
                                 src="{{ $jogo->capa }}"
@@ -61,12 +74,23 @@
                             >
                         </div>
                         <div class="game-search-content">
-                            <span class="game-search-name">{{ $jogo->nome }}</span>
+                            <span class="game-search-name">
+                                {{ $jogo->nome }}
+                            </span>
                             <div class="game-search-online">
-                                @if ($jogo->steam_app_id && $jogo->jogadores_online !== null)
+                                @if (
+                                    $jogo->steam_app_id
+                                    && $jogo->jogadores_online !== null
+                                )
                                     <span class="game-online-dot"></span>
                                     <span>
-                                        {{ number_format($jogo->jogadores_online, 0, ',', '.') }} na Steam
+                                        {{ number_format(
+                                            $jogo->jogadores_online,
+                                            0,
+                                            ',',
+                                            '.'
+                                        ) }}
+                                        na Steam
                                     </span>
                                 @elseif ($jogo->steam_app_id)
                                     <span class="game-online-unavailable">
@@ -79,7 +103,7 @@
                                 @endif
                             </div>
                         </div>
-                    </article>
+                    </a>
                 @empty
                     <div class="game-search-empty">
                         Nenhum jogo encontrado.
@@ -88,7 +112,9 @@
             </div>
             @if ($jogos->hasPages())
                 <div class="squad-pagination">
-                    {{ $jogos->links('pagination::bootstrap-5') }}
+                    {{ $jogos->links(
+                        'pagination::bootstrap-5'
+                    ) }}
                 </div>
             @endif
         </div>

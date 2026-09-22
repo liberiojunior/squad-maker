@@ -35,6 +35,7 @@ class User extends Authenticatable
         'bio',
         'status_conta',
         'data_criacao',
+        'ultima_atividade',
     ];
 
     protected $hidden = [
@@ -43,6 +44,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'data_criacao' => 'datetime',
+        'ultima_atividade' => 'datetime',
     ];
 
     public function getAuthPassword()
@@ -74,31 +76,6 @@ class User extends Authenticatable
         ]);
     }
 
-    public function excluirConta(): void
-    {
-        $this->nickname = 'Usuário excluído #' . $this->id_usuario;
-
-        $this->email =
-            'excluido_'
-            . $this->id_usuario
-            . '_'
-            . time()
-            . '@squadmaker.local';
-
-        $this->senha = Hash::make(Str::random(40));
-
-        $this->google_id = null;
-        $this->avatar = null;
-        $this->bio = null;
-        $this->email_verified_at = null;
-        $this->remember_token = null;
-
-        $this->status_conta = 'excluido';
-        $this->data_exclusao = now();
-
-        $this->save();
-    }
-
     public function plataformas()
     {
         return $this->belongsToMany(
@@ -107,5 +84,119 @@ class User extends Authenticatable
             'id_usuario',
             'id_plataforma'
         )->withPivot('data_adicao');
+    }
+
+    public function excluirConta(): void
+    {
+        $this->nickname =
+            'Usuário excluído #' . $this->id_usuario;
+
+        $this->email =
+            'excluido_'
+            . $this->id_usuario
+            . '_'
+            . time()
+            . '@squadmaker.local';
+
+        $this->senha = Hash::make(
+            Str::random(40)
+        );
+
+        $this->google_id = null;
+        $this->avatar = null;
+        $this->bio = null;
+        $this->email_verified_at = null;
+        $this->remember_token = null;
+        $this->ultima_atividade = null;
+
+        $this->status_conta = 'excluido';
+        $this->data_exclusao = now();
+
+        $this->save();
+    }
+
+    public function presenca(): array
+    {
+        if (!$this->ultima_atividade) {
+            return [
+                'status' => 'offline',
+                'texto' => 'Offline',
+            ];
+        }
+
+        $segundos = max(
+            0,
+            now()->timestamp
+            - $this->ultima_atividade->timestamp
+        );
+
+        if ($segundos <= 5 * 60) {
+            return [
+                'status' => 'online',
+                'texto' => 'Online agora',
+            ];
+        }
+
+        if ($segundos > 3 * 24 * 60 * 60) {
+            return [
+                'status' => 'offline',
+                'texto' => 'Offline',
+            ];
+        }
+
+        if ($segundos < 60 * 60) {
+            $minutos = max(
+                1,
+                (int)floor($segundos / 60)
+            );
+
+            return [
+                'status' => 'recente',
+                'texto' =>
+                    'Ativo há '
+                    . $minutos
+                    . ' min',
+            ];
+        }
+
+        if ($segundos < 24 * 60 * 60) {
+            $horas = max(
+                1,
+                (int)floor(
+                    $segundos / 3600
+                )
+            );
+
+            return [
+                'status' => 'recente',
+                'texto' =>
+                    'Ativo há '
+                    . $horas
+                    . (
+                    $horas === 1
+                        ? ' hora'
+                        : ' horas'
+                    ),
+            ];
+        }
+
+        $dias = max(
+            1,
+            (int)floor(
+                $segundos / 86400
+            )
+        );
+
+        return [
+            'status' => 'recente',
+            'texto' =>
+                'Ativo há '
+                . $dias
+                . (
+                $dias === 1
+                    ? ' dia'
+                    : ' dias'
+                ),
+        ];
     }
 }

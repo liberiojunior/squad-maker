@@ -155,9 +155,19 @@ Route::middleware([
     )->name('perfil.plataformas.update');
 
     Route::get(
+        '/usuarios/{user}',
+        [ProfileController::class, 'showPublic']
+    )->name('usuarios.perfil');
+
+    Route::get(
         '/buscar-jogos',
         [JogoController::class, 'index']
     )->name('jogos.buscar');
+
+    Route::get(
+        '/jogos/{jogo}',
+        [JogoController::class, 'show']
+    )->name('jogos.show');
 
     Route::delete(
         '/conta',

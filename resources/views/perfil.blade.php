@@ -323,7 +323,7 @@
                     <div class="modal-body">
                         <section class="profile-selected-genres-block">
                             <div class="profile-selected-genres-heading">
-                                <strong>Favoritos selecionados</strong>
+                                <strong>Selecionados</strong>
                                 <span
                                     class="profile-genre-selected-count"
                                     id="profileGenreSelectedCount"
