@@ -20,6 +20,14 @@ class NivelProficiencia
         5 => 'Você procura jogadores muito experientes, dedicados e dispostos a enfrentar os desafios mais exigentes.',
     ];
 
+    public const DESCRICOES_SELECAO = [
+        1 => 'Você ainda está aprendendo como o jogo funciona.',
+        2 => 'Você já conhece o jogo e prefere uma experiência tranquila.',
+        3 => 'Você conhece bem o jogo busca evoluir cada vez mais.',
+        4 => 'Você tem boa experiência, busca desempenho e joga para vencer.',
+        5 => 'Você domina o jogo e busca os desafios mais exigentes.',
+    ];
+
     private const ICONES = [
         1 => 'images/niveis/iniciante.png',
         2 => 'images/niveis/casual.png',
@@ -53,14 +61,23 @@ class NivelProficiencia
         foreach (self::NIVEIS as $valor => $nome) {
             $detalhes[$valor] = [
                 'nome' => $nome,
-                'descricao' =>
-                    self::DESCRICOES[$valor],
-                'icone' =>
-                    self::ICONES[$valor],
-                'cor' =>
-                    self::CORES[$valor],
+                'descricao' => self::DESCRICOES[$valor],
+                'icone' => self::ICONES[$valor],
+                'cor' => self::CORES[$valor],
             ];
         }
+
         return $detalhes;
+    }
+
+    public static function descricoesSelecao(): array
+    {
+        return self::DESCRICOES_SELECAO;
+    }
+
+    public static function descricaoSelecao(
+        ?int $nivel
+    ): string {
+        return self::DESCRICOES_SELECAO[$nivel] ?? '';
     }
 }

@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     iniciarAvisos();
     iniciarPerfil();
+    iniciarAvatarPerfil();
     iniciarGenerosPerfil();
     iniciarBuscasCatalogo();
     iniciarImportacaoSteam();
@@ -25,37 +26,20 @@ function iniciarBuscasCatalogo() {
     ];
 
     configuracoes.forEach(function(configuracao) {
-        const form = document.getElementById(
-            configuracao.formId
-        );
+        const form = document.getElementById(configuracao.formId);
 
         if (!form) {
             return;
         }
 
-        iniciarBuscaCatalogo(
-            form,
-            configuracao
-        );
+        iniciarBuscaCatalogo(form, configuracao);
     });
 }
 
-
-function iniciarBuscaCatalogo(
-    form,
-    configuracao
-) {
-    const input = document.getElementById(
-        configuracao.inputId
-    );
-
-    const results = document.getElementById(
-        configuracao.resultsId
-    );
-
-    const loading = document.getElementById(
-        configuracao.loadingId
-    );
+function iniciarBuscaCatalogo(form, configuracao) {
+    const input = document.getElementById(configuracao.inputId);
+    const results = document.getElementById(configuracao.resultsId);
+    const loading = document.getElementById(configuracao.loadingId);
 
     if (!results) {
         return;
@@ -64,33 +48,20 @@ function iniciarBuscaCatalogo(
     let searchTimer = null;
     let searchController = null;
 
-
     function montarUrl() {
-        const url = new URL(
-            form.action,
-            window.location.origin
-        );
-
+        const url = new URL(form.action, window.location.origin);
         const formData = new FormData(form);
 
-        formData.forEach(
-            function(value, key) {
-                if (
-                    String(value).trim() === ''
-                ) {
-                    return;
-                }
-
-                url.searchParams.append(
-                    key,
-                    value
-                );
+        formData.forEach(function(value, key) {
+            if (String(value).trim() === '') {
+                return;
             }
-        );
+
+            url.searchParams.append(key, value);
+        });
 
         return url;
     }
-
 
     function mostrarLoading(ativo) {
         if (!loading) {
@@ -100,19 +71,14 @@ function iniciarBuscaCatalogo(
         loading.hidden = !ativo;
     }
 
-
     function atualizarContadorFiltros() {
         let contador = form.querySelector(
-            '[data-filter-count], '
-            + '.catalog-filter-count'
+            '[data-filter-count], .catalog-filter-count'
         );
 
-        const toggle = form.querySelector(
-            '.catalog-filter-toggle'
-        );
+        const toggle = form.querySelector('.catalog-filter-toggle');
 
         let quantidade = 0;
-
 
         const generos = form.querySelectorAll(
             'input[name="generos[]"]:checked'
@@ -120,26 +86,19 @@ function iniciarBuscaCatalogo(
 
         quantidade += generos.length;
 
-
         const modos = form.querySelectorAll(
-            'input[name="modos[]"]:checked, '
-            + 'input[name="modos_filtro[]"]:checked'
+            'input[name="modos[]"]:checked, input[name="modos_filtro[]"]:checked'
         );
 
         quantidade += modos.length;
-
 
         const origem = form.querySelector(
             'input[name="origem"]:checked'
         );
 
-        if (
-            origem
-            && origem.value !== ''
-        ) {
+        if (origem && origem.value !== '') {
             quantidade++;
         }
-
 
         const ordem = form.querySelector(
             'input[name="ordem"]:checked'
@@ -147,41 +106,23 @@ function iniciarBuscaCatalogo(
 
         if (
             ordem
-            && ordem.value
-            !== configuracao.defaultOrder
+            && ordem.value !== configuracao.defaultOrder
         ) {
             quantidade++;
         }
 
-
-        if (
-            !contador
-            && toggle
-        ) {
-            contador =
-                document.createElement(
-                    'span'
-                );
-
-            contador.className =
-                'catalog-filter-count';
-
+        if (!contador && toggle) {
+            contador = document.createElement('span');
+            contador.className = 'catalog-filter-count';
             contador.dataset.filterCount = '';
 
-            toggle.appendChild(
-                contador
-            );
+            toggle.appendChild(contador);
         }
-
 
         if (contador) {
-            contador.textContent =
-                quantidade;
-
-            contador.hidden =
-                quantidade === 0;
+            contador.textContent = quantidade;
+            contador.hidden = quantidade === 0;
         }
-
 
         if (toggle) {
             toggle.classList.toggle(
@@ -191,58 +132,44 @@ function iniciarBuscaCatalogo(
         }
     }
 
-
     function mostrarErro() {
-        const antigo =
-            results.querySelector(
-                '.catalog-search-error'
-            );
+        const antigo = results.querySelector(
+            '.catalog-search-error'
+        );
 
         if (antigo) {
             antigo.remove();
         }
 
-        const erro =
-            document.createElement('div');
+        const erro = document.createElement('div');
 
-        erro.className =
-            'catalog-search-error';
-
-        erro.textContent =
-            'Não foi possível atualizar os jogos.';
+        erro.className = 'catalog-search-error';
+        erro.textContent = 'Não foi possível atualizar os jogos.';
 
         results.prepend(erro);
     }
-
 
     async function buscar(url) {
         if (searchController) {
             searchController.abort();
         }
 
-        searchController =
-            new AbortController();
+        searchController = new AbortController();
 
         mostrarLoading(true);
-
 
         try {
             const response = await fetch(
                 url.toString(),
                 {
                     headers: {
-                        'Accept':
-                            'text/html',
-
-                        'X-Requested-With':
-                            'XMLHttpRequest'
+                        'Accept': 'text/html',
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
 
-                    signal:
-                    searchController.signal
+                    signal: searchController.signal
                 }
             );
-
 
             if (!response.ok) {
                 throw new Error(
@@ -250,24 +177,17 @@ function iniciarBuscaCatalogo(
                 );
             }
 
+            const html = await response.text();
 
-            const html =
-                await response.text();
-
-
-            const documento =
-                new DOMParser()
-                    .parseFromString(
-                        html,
-                        'text/html'
-                    );
-
-
-            const novosResultados =
-                documento.getElementById(
-                    configuracao.resultsId
+            const documento = new DOMParser()
+                .parseFromString(
+                    html,
+                    'text/html'
                 );
 
+            const novosResultados = documento.getElementById(
+                configuracao.resultsId
+            );
 
             if (!novosResultados) {
                 throw new Error(
@@ -275,10 +195,7 @@ function iniciarBuscaCatalogo(
                 );
             }
 
-
-            results.innerHTML =
-                novosResultados.innerHTML;
-
+            results.innerHTML = novosResultados.innerHTML;
 
             window.history.replaceState(
                 {},
@@ -286,14 +203,10 @@ function iniciarBuscaCatalogo(
                 url.toString()
             );
 
-
             atualizarContadorFiltros();
 
         } catch (error) {
-            if (
-                error.name
-                === 'AbortError'
-            ) {
+            if (error.name === 'AbortError') {
                 return;
             }
 
@@ -306,39 +219,21 @@ function iniciarBuscaCatalogo(
         }
     }
 
-
     function agendarBusca() {
-        clearTimeout(
-            searchTimer
-        );
+        clearTimeout(searchTimer);
 
-        searchTimer =
-            setTimeout(
-                function() {
-                    buscar(
-                        montarUrl()
-                    );
-                },
-                300
-            );
+        searchTimer = setTimeout(function() {
+            buscar(montarUrl());
+        }, 300);
     }
 
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
 
-    form.addEventListener(
-        'submit',
-        function(event) {
-            event.preventDefault();
+        clearTimeout(searchTimer);
 
-            clearTimeout(
-                searchTimer
-            );
-
-            buscar(
-                montarUrl()
-            );
-        }
-    );
-
+        buscar(montarUrl());
+    });
 
     if (input) {
         input.addEventListener(
@@ -347,102 +242,71 @@ function iniciarBuscaCatalogo(
         );
     }
 
+    form.addEventListener('change', function() {
+        atualizarContadorFiltros();
+    });
 
-    form.addEventListener(
-        'change',
-        function() {
-            atualizarContadorFiltros();
+    results.addEventListener('click', function(event) {
+        const link = event.target.closest(
+            '.squad-pagination a'
+        );
+
+        if (!link) {
+            return;
         }
-    );
 
+        event.preventDefault();
 
-    results.addEventListener(
-        'click',
-        function(event) {
-            const link =
-                event.target.closest(
-                    '.squad-pagination a'
-                );
+        const url = new URL(
+            link.href,
+            window.location.origin
+        );
 
-            if (!link) {
-                return;
-            }
+        buscar(url);
 
-            event.preventDefault();
-
-
-            const url = new URL(
-                link.href,
-                window.location.origin
-            );
-
-
-            buscar(url);
-
-
-            window.scrollTo({
-                top:
-                    form.offsetTop - 20,
-
-                behavior:
-                    'smooth'
-            });
-        }
-    );
-
+        window.scrollTo({
+            top: form.offsetTop - 20,
+            behavior: 'smooth'
+        });
+    });
 
     atualizarContadorFiltros();
 }
 
-
 function iniciarImportacaoSteam() {
-    const form =
-        document.getElementById(
-            'steamImportForm'
-        );
+    const form = document.getElementById(
+        'steamImportForm'
+    );
 
     if (!form) {
         return;
     }
 
-
-    const button =
-        document.getElementById(
-            'steamImportButton'
-        );
-
-
-    const buttonContent =
-        document.getElementById(
-            'steamImportButtonContent'
-        );
-
-
-    const loading =
-        document.getElementById(
-            'steamImportLoading'
-        );
-
-
-    form.addEventListener(
-        'submit',
-        function() {
-            if (button) {
-                button.disabled = true;
-            }
-
-
-            if (buttonContent) {
-                buttonContent.textContent =
-                    'Importando...';
-            }
-
-
-            if (loading) {
-                loading.hidden = false;
-            }
-        }
+    const button = document.getElementById(
+        'steamImportButton'
     );
+
+    const buttonContent = document.getElementById(
+        'steamImportButtonContent'
+    );
+
+    const loading = document.getElementById(
+        'steamImportLoading'
+    );
+
+    form.addEventListener('submit', function() {
+        if (button) {
+            button.disabled = true;
+        }
+
+        if (buttonContent) {
+            buttonContent.textContent = 'Importando...';
+        }
+
+        if (loading) {
+            loading.hidden = false;
+        }
+    });
 }
 
 function iniciarAvisos() {
@@ -465,40 +329,345 @@ function iniciarAvisos() {
             setTimeout(function() {
                 alert.remove();
             }, 350);
+
         }, tempo);
     });
 }
 
+function iniciarAvatarPerfil() {
+    const form = document.getElementById('avatarForm');
+    const input = document.getElementById('avatarInput');
+    const modalElement = document.getElementById('avatarCropModal');
+    const canvas = document.getElementById('avatarCropCanvas');
+    const zoomInput = document.getElementById('avatarCropZoom');
+    const saveButton = document.getElementById('avatarCropSave');
+    const errorElement = document.getElementById('avatarCropError');
+
+    if (!form || !input || !modalElement || !canvas || !zoomInput || !saveButton) {
+        return;
+    }
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    const context = canvas.getContext('2d');
+
+    let image = null;
+    let objectUrl = null;
+    let baseScale = 1;
+    let zoom = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startOffsetX = 0;
+    let startOffsetY = 0;
+    let saving = false;
+
+    function showError(message = '') {
+        if (!errorElement) {
+            return;
+        }
+
+        errorElement.textContent = message;
+        errorElement.hidden = message === '';
+    }
+
+    function clearCrop() {
+        if (objectUrl) {
+            URL.revokeObjectURL(objectUrl);
+        }
+
+        objectUrl = null;
+        image = null;
+        baseScale = 1;
+        zoom = 1;
+        offsetX = 0;
+        offsetY = 0;
+        dragging = false;
+        zoomInput.value = '1';
+
+        canvas.classList.remove('dragging');
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        showError();
+    }
+
+    function limitOffset() {
+        if (!image) {
+            return;
+        }
+
+        const width = image.naturalWidth * baseScale * zoom;
+        const height = image.naturalHeight * baseScale * zoom;
+        const limitX = Math.max(0, (width - canvas.width) / 2);
+        const limitY = Math.max(0, (height - canvas.height) / 2);
+
+        offsetX = Math.max(-limitX, Math.min(limitX, offsetX));
+        offsetY = Math.max(-limitY, Math.min(limitY, offsetY));
+    }
+
+    function renderCrop() {
+        if (!image) {
+            return;
+        }
+
+        limitOffset();
+
+        const width = image.naturalWidth * baseScale * zoom;
+        const height = image.naturalHeight * baseScale * zoom;
+        const x = (canvas.width - width) / 2 + offsetX;
+        const y = (canvas.height - height) / 2 + offsetY;
+
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = '#12001f';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = 'high';
+
+        context.drawImage(
+            image,
+            x,
+            y,
+            width,
+            height
+        );
+    }
+
+    function openCrop(file) {
+        const allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/webp'
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+            window.alert(
+                'Escolha uma imagem JPG, PNG ou WEBP.'
+            );
+
+            input.value = '';
+
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            window.alert(
+                'A imagem deve ter no máximo 5 MB.'
+            );
+
+            input.value = '';
+
+            return;
+        }
+
+        clearCrop();
+
+        objectUrl = URL.createObjectURL(file);
+        image = new Image();
+
+        image.onload = function() {
+            baseScale = Math.max(
+                canvas.width / image.naturalWidth,
+                canvas.height / image.naturalHeight
+            );
+
+            zoom = 1;
+            offsetX = 0;
+            offsetY = 0;
+
+            zoomInput.value = '1';
+
+            renderCrop();
+            modal.show();
+        };
+
+        image.onerror = function() {
+            clearCrop();
+
+            input.value = '';
+
+            window.alert(
+                'Não foi possível carregar essa imagem.'
+            );
+        };
+
+        image.src = objectUrl;
+    }
+
+    function saveCrop() {
+        if (!image || saving) {
+            return;
+        }
+
+        saveButton.disabled = true;
+        saveButton.textContent = 'Salvando...';
+
+        showError();
+
+        canvas.toBlob(
+            function(blob) {
+                if (!blob) {
+                    saveButton.disabled = false;
+                    saveButton.textContent = 'Salvar foto';
+
+                    showError(
+                        'Não foi possível preparar a imagem. Tente novamente.'
+                    );
+
+                    return;
+                }
+
+                const file = new File(
+                    [blob],
+                    'avatar.webp',
+                    {
+                        type: 'image/webp'
+                    }
+                );
+
+                const transfer = new DataTransfer();
+
+                transfer.items.add(file);
+
+                input.files = transfer.files;
+                saving = true;
+
+                form.requestSubmit();
+            },
+            'image/webp',
+            0.92
+        );
+    }
+
+    input.addEventListener('change', function() {
+        const file = input.files[0];
+
+        if (file) {
+            openCrop(file);
+        }
+    });
+
+    zoomInput.addEventListener('input', function() {
+        zoom = Number(zoomInput.value);
+
+        renderCrop();
+    });
+
+    canvas.addEventListener('pointerdown', function(event) {
+        if (
+            !image
+            || (
+                event.pointerType === 'mouse'
+                && event.button !== 0
+            )
+        ) {
+            return;
+        }
+
+        dragging = true;
+
+        startX = event.clientX;
+        startY = event.clientY;
+        startOffsetX = offsetX;
+        startOffsetY = offsetY;
+
+        canvas.classList.add('dragging');
+        canvas.setPointerCapture(event.pointerId);
+    });
+
+    canvas.addEventListener('pointermove', function(event) {
+        if (!dragging) {
+            return;
+        }
+
+        const rect = canvas.getBoundingClientRect();
+        const scale = canvas.width / rect.width;
+
+        offsetX =
+            startOffsetX
+            + (
+                event.clientX
+                - startX
+            ) * scale;
+
+        offsetY =
+            startOffsetY
+            + (
+                event.clientY
+                - startY
+            ) * scale;
+
+        renderCrop();
+    });
+
+    canvas.addEventListener('pointerup', function(event) {
+        dragging = false;
+
+        canvas.classList.remove(
+            'dragging'
+        );
+
+        if (
+            canvas.hasPointerCapture(
+                event.pointerId
+            )
+        ) {
+            canvas.releasePointerCapture(
+                event.pointerId
+            );
+        }
+    });
+
+    canvas.addEventListener('pointercancel', function() {
+        dragging = false;
+
+        canvas.classList.remove(
+            'dragging'
+        );
+    });
+
+    saveButton.addEventListener(
+        'click',
+        saveCrop
+    );
+
+    modalElement.addEventListener(
+        'hidden.bs.modal',
+        function() {
+            if (!saving) {
+                input.value = '';
+
+                clearCrop();
+            }
+        }
+    );
+}
 
 function iniciarGenerosPerfil() {
-    const modalElement =
-        document.getElementById('generosModal');
+    const modalElement = document.getElementById('generosModal');
 
     if (!modalElement) {
         return;
     }
 
-    const form =
-        document.getElementById('profileGenresForm');
-    const selectedContainer =
-        document.getElementById('profileSelectedGenres');
-    const selectedCount =
-        document.getElementById('profileGenreSelectedCount');
+    const form = document.getElementById('profileGenresForm');
+    const selectedContainer = document.getElementById('profileSelectedGenres');
+    const selectedCount = document.getElementById('profileGenreSelectedCount');
+
     const maxGeneros = Number(
         form && form.dataset.maxGenres
             ? form.dataset.maxGenres
-            : 4
+            : 5
     );
 
     const options = Array.from(
-        modalElement.querySelectorAll(
-            '.profile-genre-option'
-        )
+        modalElement.querySelectorAll('.profile-genre-option')
     );
 
     options.forEach(function(option) {
-        const input =
-            option.querySelector('input[type="checkbox"]');
+        const input = option.querySelector(
+            'input[type="checkbox"]'
+        );
 
         if (input) {
             input.dataset.initialChecked =
@@ -507,29 +676,23 @@ function iniciarGenerosPerfil() {
     });
 
     function obterSelecionados() {
-        return options.filter(
-            function(option) {
-                const input =
-                    option.querySelector(
-                        'input[type="checkbox"]'
-                    );
+        return options.filter(function(option) {
+            const input = option.querySelector(
+                'input[type="checkbox"]'
+            );
 
-                return input && input.checked;
-            }
-        );
+            return input && input.checked;
+        });
     }
 
     function atualizarDisponibilidade() {
-        const quantidade =
-            obterSelecionados().length;
-        const limiteAtingido =
-            quantidade >= maxGeneros;
+        const quantidade = obterSelecionados().length;
+        const limiteAtingido = quantidade >= maxGeneros;
 
         options.forEach(function(option) {
-            const input =
-                option.querySelector(
-                    'input[type="checkbox"]'
-                );
+            const input = option.querySelector(
+                'input[type="checkbox"]'
+            );
 
             if (!input) {
                 return;
@@ -541,10 +704,7 @@ function iniciarGenerosPerfil() {
     }
 
     function atualizarSelecionados() {
-        if (
-            !selectedContainer
-            || !selectedCount
-        ) {
+        if (!selectedContainer || !selectedCount) {
             return;
         }
 
@@ -564,83 +724,71 @@ function iniciarGenerosPerfil() {
         );
 
         if (selecionados.length === 0) {
-            const vazio =
-                document.createElement('p');
+            const vazio = document.createElement('p');
 
-            vazio.className =
-                'profile-selected-genres-empty';
+            vazio.className = 'profile-selected-genres-empty';
             vazio.textContent =
                 'Nenhum gênero favorito selecionado.';
 
-            selectedContainer.appendChild(
-                vazio
-            );
+            selectedContainer.appendChild(vazio);
 
             atualizarDisponibilidade();
+
             return;
         }
 
-        selecionados.forEach(
-            function(option) {
-                const input =
-                    option.querySelector(
-                        'input[type="checkbox"]'
-                    );
-                const nome =
-                    option.dataset.genreName
-                    || option.textContent.trim();
+        selecionados.forEach(function(option) {
+            const input = option.querySelector(
+                'input[type="checkbox"]'
+            );
 
-                const botao =
-                    document.createElement('button');
+            const nome =
+                option.dataset.genreName
+                || option.textContent.trim();
 
-                botao.type = 'button';
-                botao.className =
-                    'profile-selected-genre';
-                botao.setAttribute(
-                    'aria-label',
-                    'Remover ' + nome
+            const botao = document.createElement('button');
+
+            botao.type = 'button';
+            botao.className = 'profile-selected-genre';
+
+            botao.setAttribute(
+                'aria-label',
+                'Remover ' + nome
+            );
+
+            const texto = document.createElement('span');
+
+            texto.textContent = nome;
+
+            const icone = document.createElement('i');
+
+            icone.className = 'bi bi-x-lg';
+
+            botao.appendChild(texto);
+            botao.appendChild(icone);
+
+            botao.addEventListener('click', function() {
+                input.checked = false;
+
+                input.dispatchEvent(
+                    new Event(
+                        'change',
+                        { bubbles: true }
+                    )
                 );
+            });
 
-                const texto =
-                    document.createElement('span');
-                texto.textContent = nome;
-
-                const icone =
-                    document.createElement('i');
-                icone.className = 'bi bi-x-lg';
-
-                botao.appendChild(texto);
-                botao.appendChild(icone);
-
-                botao.addEventListener(
-                    'click',
-                    function() {
-                        input.checked = false;
-
-                        input.dispatchEvent(
-                            new Event(
-                                'change',
-                                { bubbles: true }
-                            )
-                        );
-                    }
-                );
-
-                selectedContainer.appendChild(
-                    botao
-                );
-            }
-        );
+            selectedContainer.appendChild(botao);
+        });
 
         atualizarDisponibilidade();
     }
 
     function restaurarEstadoInicial() {
         options.forEach(function(option) {
-            const input =
-                option.querySelector(
-                    'input[type="checkbox"]'
-                );
+            const input = option.querySelector(
+                'input[type="checkbox"]'
+            );
 
             if (!input) {
                 return;
@@ -655,57 +803,49 @@ function iniciarGenerosPerfil() {
     }
 
     options.forEach(function(option) {
-        const input =
-            option.querySelector(
-                'input[type="checkbox"]'
-            );
+        const input = option.querySelector(
+            'input[type="checkbox"]'
+        );
 
         if (!input) {
             return;
         }
 
-        input.addEventListener(
-            'change',
-            function() {
-                const selecionados =
-                    obterSelecionados();
+        input.addEventListener('change', function() {
+            const selecionados = obterSelecionados();
 
-                if (
-                    input.checked
-                    && selecionados.length > maxGeneros
-                ) {
-                    input.checked = false;
-                }
-
-                atualizarSelecionados();
+            if (
+                input.checked
+                && selecionados.length > maxGeneros
+            ) {
+                input.checked = false;
             }
-        );
+
+            atualizarSelecionados();
+        });
     });
 
     if (form) {
-        form.addEventListener(
-            'submit',
-            function(event) {
-                const quantidade =
-                    obterSelecionados().length;
+        form.addEventListener('submit', function(event) {
+            const quantidade = obterSelecionados().length;
 
-                if (quantidade <= maxGeneros) {
-                    return;
-                }
-
-                event.preventDefault();
-
-                if (selectedCount) {
-                    selectedCount.textContent =
-                        'Escolha no máximo '
-                        + maxGeneros
-                        + ' gêneros.';
-                    selectedCount.classList.add(
-                        'limit-reached'
-                    );
-                }
+            if (quantidade <= maxGeneros) {
+                return;
             }
-        );
+
+            event.preventDefault();
+
+            if (selectedCount) {
+                selectedCount.textContent =
+                    'Escolha no máximo '
+                    + maxGeneros
+                    + ' gêneros.';
+
+                selectedCount.classList.add(
+                    'limit-reached'
+                );
+            }
+        });
     }
 
     modalElement.addEventListener(
@@ -725,10 +865,16 @@ function iniciarPerfil() {
 
     const profileGamesList = document.getElementById('profileGamesList');
     const profileViewAllButton = document.getElementById('profileViewAllButton');
+
     const csrf = profilePage.dataset.csrf;
     const searchUrl = profilePage.dataset.gameSearchUrl;
     const updateGamesUrl = profilePage.dataset.gamesUpdateUrl;
     const updateOrderUrl = profilePage.dataset.gamesOrderUrl;
+
+    const levelDescriptions =
+        profilePage.dataset.levelDescriptions
+            ? JSON.parse(profilePage.dataset.levelDescriptions)
+            : {};
 
     const levelNames = {
         1: 'Iniciante',
@@ -751,8 +897,6 @@ function iniciarPerfil() {
     const bioInput = document.getElementById('bioInput');
     const profileEditButton = document.getElementById('profileEditButton');
     const profileEditIcon = document.getElementById('profileEditIcon');
-    const avatarForm = document.getElementById('avatarForm');
-    const avatarInput = document.getElementById('avatarInput');
 
     const managerModalElement = document.getElementById('adicionarJogosModal');
     const gameSearch = document.getElementById('profileGameSearch');
@@ -768,6 +912,7 @@ function iniciarPerfil() {
     const levelRemove = document.getElementById('profileLevelRemove');
     const levelRange = document.getElementById('profileLevelRange');
     const levelName = document.getElementById('profileLevelName');
+    const levelDescription = document.getElementById('profileLevelDescription');
     const levelGameName = document.getElementById('profileLevelGameName');
     const levelGameCover = document.getElementById('profileLevelGameCover');
 
@@ -790,6 +935,7 @@ function iniciarPerfil() {
     const detailGameCover = document.getElementById('profileDetailGameCover');
     const detailGameName = document.getElementById('profileDetailGameName');
     const detailLevelName = document.getElementById('profileDetailLevelName');
+    const detailLevelDescription = document.getElementById('profileDetailLevelDescription');
     const detailLevelRange = document.getElementById('profileDetailLevelRange');
     const detailLevelError = document.getElementById('profileDetailLevelError');
     const detailLevelSave = document.getElementById('profileDetailLevelSave');
@@ -802,18 +948,21 @@ function iniciarPerfil() {
 
     let persistedGames = criarMapaJogos(initialGames);
     let workingGames = clonarMapaJogos(persistedGames);
+
     let currentManagerGame = null;
     let currentDetailGame = null;
     let lastSearchResults = [];
     let searchTimer = null;
     let searchController = null;
     let gamesResizeTimer = null;
+
     let managerDirty = false;
     let managerSaved = false;
     let orderDirty = false;
     let profileReloadRequired = false;
     let openingDetailFromOrder = false;
     let returnToOrder = false;
+
     let draggingItem = null;
     let dropTarget = null;
     let dropBefore = true;
@@ -827,12 +976,17 @@ function iniciarPerfil() {
                 id: Number(jogo.id),
                 nome: jogo.nome,
                 capa: jogo.capa,
-                nivel: jogo.nivel !== null
-                    ? Number(jogo.nivel)
-                    : null,
-                ordem: jogo.ordem !== null
-                    ? Number(jogo.ordem)
-                    : null,
+
+                nivel:
+                    jogo.nivel !== null
+                        ? Number(jogo.nivel)
+                        : null,
+
+                ordem:
+                    jogo.ordem !== null
+                        ? Number(jogo.ordem)
+                        : null,
+
                 updateUrl: jogo.update_url,
                 removeUrl: jogo.remove_url
             });
@@ -853,7 +1007,7 @@ function iniciarPerfil() {
         return copia;
     }
 
-    function updateRangeVisual(range, nameElement) {
+    function updateRangeVisual(range, nameElement, descriptionElement = null) {
         if (!range || !nameElement) {
             return;
         }
@@ -864,6 +1018,11 @@ function iniciarPerfil() {
 
         nameElement.textContent = levelNames[value];
         nameElement.style.color = levelColors[value];
+
+        if (descriptionElement) {
+            descriptionElement.textContent =
+                levelDescriptions[value] || '';
+        }
 
         if (wrapper) {
             wrapper.style.setProperty(
@@ -911,9 +1070,8 @@ function iniciarPerfil() {
         }
 
         if (data && data.errors) {
-            const primeiroErro = Object.values(
-                data.errors
-            )[0];
+            const primeiroErro =
+                Object.values(data.errors)[0];
 
             if (
                 Array.isArray(primeiroErro)
@@ -931,6 +1089,7 @@ function iniciarPerfil() {
             url,
             {
                 ...options,
+
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
@@ -972,10 +1131,7 @@ function iniciarPerfil() {
     }
 
     function atualizarJogosVisiveis() {
-        if (
-            !profileGamesList
-            || !profileViewAllButton
-        ) {
+        if (!profileGamesList || !profileViewAllButton) {
             return;
         }
 
@@ -1031,9 +1187,7 @@ function iniciarPerfil() {
 
         const empty = document.createElement('div');
 
-        empty.className =
-            'profile-game-search-empty';
-
+        empty.className = 'profile-game-search-empty';
         empty.textContent =
             'Digite pelo menos 2 letras para pesquisar.';
 
@@ -1050,8 +1204,7 @@ function iniciarPerfil() {
 
         const item = document.createElement('div');
 
-        item.className =
-            'profile-game-search-item';
+        item.className = 'profile-game-search-item';
 
         if (selecionado) {
             item.classList.add('selected');
@@ -1060,8 +1213,7 @@ function iniciarPerfil() {
         const card = document.createElement('button');
 
         card.type = 'button';
-        card.className =
-            'profile-game-search-card';
+        card.className = 'profile-game-search-card';
 
         const image = document.createElement('img');
 
@@ -1070,8 +1222,7 @@ function iniciarPerfil() {
 
         const info = document.createElement('div');
 
-        info.className =
-            'profile-game-search-info';
+        info.className = 'profile-game-search-info';
 
         const name = document.createElement('strong');
 
@@ -1088,6 +1239,7 @@ function iniciarPerfil() {
 
             status.className =
                 'profile-game-search-level';
+
         } else {
             status.textContent =
                 'Adicionar ao perfil';
@@ -1102,12 +1254,9 @@ function iniciarPerfil() {
         card.appendChild(image);
         card.appendChild(info);
 
-        card.addEventListener(
-            'click',
-            function() {
-                abrirPopupNivel(jogo);
-            }
-        );
+        card.addEventListener('click', function() {
+            abrirPopupNivel(jogo);
+        });
 
         item.appendChild(card);
 
@@ -1124,11 +1273,8 @@ function iniciarPerfil() {
         if (lastSearchResults.length === 0) {
             const empty = document.createElement('div');
 
-            empty.className =
-                'profile-game-search-empty';
-
-            empty.textContent =
-                'Nenhum jogo encontrado.';
+            empty.className = 'profile-game-search-empty';
+            empty.textContent = 'Nenhum jogo encontrado.';
 
             searchResults.appendChild(empty);
 
@@ -1160,28 +1306,31 @@ function iniciarPerfil() {
             id: id,
             nome: jogo.nome,
             capa: jogo.capa,
-            nivel: atual && atual.nivel
-                ? atual.nivel
-                : 1,
-            ordem: atual
-                ? atual.ordem
-                : null,
-            updateUrl: atual
-                ? atual.updateUrl
-                : null,
-            removeUrl: atual
-                ? atual.removeUrl
-                : null
+
+            nivel:
+                atual && atual.nivel
+                    ? atual.nivel
+                    : 1,
+
+            ordem:
+                atual
+                    ? atual.ordem
+                    : null,
+
+            updateUrl:
+                atual
+                    ? atual.updateUrl
+                    : null,
+
+            removeUrl:
+                atual
+                    ? atual.removeUrl
+                    : null
         };
 
-        levelGameName.textContent =
-            jogo.nome;
-
-        levelGameCover.src =
-            jogo.capa;
-
-        levelGameCover.alt =
-            jogo.nome;
+        levelGameName.textContent = jogo.nome;
+        levelGameCover.src = jogo.capa;
+        levelGameCover.alt = jogo.nome;
 
         levelRange.value =
             currentManagerGame.nivel;
@@ -1193,7 +1342,8 @@ function iniciarPerfil() {
 
         updateRangeVisual(
             levelRange,
-            levelName
+            levelName,
+            levelDescription
         );
 
         levelPopup.hidden = false;
@@ -1217,18 +1367,14 @@ function iniciarPerfil() {
             searchController.abort();
         }
 
-        searchController =
-            new AbortController();
+        searchController = new AbortController();
 
         searchResults.innerHTML = '';
 
         const loading = document.createElement('div');
 
-        loading.className =
-            'profile-game-search-empty';
-
-        loading.textContent =
-            'Buscando jogos...';
+        loading.className = 'profile-game-search-empty';
+        loading.textContent = 'Buscando jogos...';
 
         searchResults.appendChild(loading);
 
@@ -1247,16 +1393,14 @@ function iniciarPerfil() {
                 url.toString(),
                 {
                     headers: {
-                        'Accept':
-                            'application/json'
+                        'Accept': 'application/json'
                     },
-                    signal:
-                    searchController.signal
+
+                    signal: searchController.signal
                 }
             );
 
-            const data =
-                await response.json();
+            const data = await response.json();
 
             if (!response.ok) {
                 throw new Error(
@@ -1271,6 +1415,7 @@ function iniciarPerfil() {
                 data.jogos || [];
 
             renderizarResultados();
+
         } catch (error) {
             if (error.name === 'AbortError') {
                 return;
@@ -1287,9 +1432,7 @@ function iniciarPerfil() {
             message.textContent =
                 error.message;
 
-            searchResults.appendChild(
-                message
-            );
+            searchResults.appendChild(message);
         }
     }
 
@@ -1305,19 +1448,15 @@ function iniciarPerfil() {
         }
 
         currentDetailGame = {
-            id: Number(
-                trigger.dataset.gameId
-            ),
-            nome:
-            trigger.dataset.name,
-            capa:
-            trigger.dataset.cover,
+            id: Number(trigger.dataset.gameId),
+            nome: trigger.dataset.name,
+            capa: trigger.dataset.cover,
+
             nivel:
                 trigger.dataset.level
-                    ? Number(
-                        trigger.dataset.level
-                    )
+                    ? Number(trigger.dataset.level)
                     : 1,
+
             updateUrl:
             trigger.dataset.updateUrl
         };
@@ -1341,16 +1480,14 @@ function iniciarPerfil() {
 
         updateRangeVisual(
             detailLevelRange,
-            detailLevelName
+            detailLevelName,
+            detailLevelDescription
         );
 
         detailModal.show();
     }
 
-    function atualizarNivelNosBotoes(
-        id,
-        nivel
-    ) {
+    function atualizarNivelNosBotoes(id, nivel) {
         document
             .querySelectorAll(
                 '[data-profile-game-detail][data-game-id="'
@@ -1358,8 +1495,7 @@ function iniciarPerfil() {
                 + '"]'
             )
             .forEach(function(button) {
-                button.dataset.level =
-                    nivel;
+                button.dataset.level = nivel;
             });
     }
 
@@ -1400,10 +1536,7 @@ function iniciarPerfil() {
         dropTarget = null;
     }
 
-
-    function mostrarIndicadorDrop(
-        destino
-    ) {
+    function mostrarIndicadorDrop(destino) {
         limparIndicadorDrop();
 
         if (!destino) {
@@ -1420,12 +1553,7 @@ function iniciarPerfil() {
         );
     }
 
-
-    function encontrarDestinoDrop(
-        container,
-        x,
-        y
-    ) {
+    function encontrarDestinoDrop(container, x, y) {
         const items = [
             ...container.querySelectorAll(
                 '.profile-order-item:not(.dragging)'
@@ -1436,24 +1564,16 @@ function iniciarPerfil() {
             return null;
         }
 
+        const dados = items.map(function(item) {
+            const box = item.getBoundingClientRect();
 
-        const dados = items.map(
-            function(item) {
-                const box =
-                    item.getBoundingClientRect();
-
-                return {
-                    element: item,
-                    box: box,
-                    centerX:
-                        box.left
-                        + box.width / 2,
-                    centerY:
-                        box.top
-                        + box.height / 2
-                };
-            }
-        );
+            return {
+                element: item,
+                box: box,
+                centerX: box.left + box.width / 2,
+                centerY: box.top + box.height / 2
+            };
+        });
 
         const linhas = [];
 
@@ -1461,99 +1581,64 @@ function iniciarPerfil() {
             .sort(function(a, b) {
                 if (
                     Math.abs(
-                        a.box.top
-                        - b.box.top
+                        a.box.top - b.box.top
                     ) < 10
                 ) {
-                    return (
-                        a.box.left
-                        - b.box.left
-                    );
+                    return a.box.left - b.box.left;
                 }
 
-                return (
-                    a.box.top
-                    - b.box.top
-                );
+                return a.box.top - b.box.top;
             })
             .forEach(function(dado) {
-
-                let linha =
-                    linhas.find(
-                        function(itemLinha) {
-                            return (
-                                Math.abs(
-                                    itemLinha.top
-                                    - dado.box.top
-                                )
-                                < dado.box.height / 2
-                            );
-                        }
-                    );
-
+                let linha = linhas.find(
+                    function(itemLinha) {
+                        return (
+                            Math.abs(
+                                itemLinha.top
+                                - dado.box.top
+                            )
+                            < dado.box.height / 2
+                        );
+                    }
+                );
 
                 if (!linha) {
                     linha = {
-                        top:
-                        dado.box.top,
-
-                        centerY:
-                        dado.centerY,
-
+                        top: dado.box.top,
+                        centerY: dado.centerY,
                         items: []
                     };
 
                     linhas.push(linha);
                 }
 
-
                 linha.items.push(dado);
             });
 
+        linhas.sort(function(a, b) {
+            return a.top - b.top;
+        });
 
-        linhas.sort(
-            function(a, b) {
-                return a.top - b.top;
-            }
+        let linhaEscolhida = linhas[0];
+
+        let menorDistancia = Math.abs(
+            y - linhas[0].centerY
         );
 
-        let linhaEscolhida =
-            linhas[0];
-
-        let menorDistancia =
-            Math.abs(
-                y - linhas[0].centerY
+        linhas.forEach(function(linha) {
+            const distancia = Math.abs(
+                y - linha.centerY
             );
 
-
-        linhas.forEach(function(linha) {
-
-            const distancia =
-                Math.abs(
-                    y - linha.centerY
-                );
-
-            if (
-                distancia
-                < menorDistancia
-            ) {
-                menorDistancia =
-                    distancia;
-
-                linhaEscolhida =
-                    linha;
+            if (distancia < menorDistancia) {
+                menorDistancia = distancia;
+                linhaEscolhida = linha;
             }
         });
 
-
-        linhaEscolhida.items.sort(
-            function(a, b) {
-                return (
-                    a.box.left
-                    - b.box.left
-                );
-            }
-        );
+        linhaEscolhida.items.sort(function(a, b) {
+            return a.box.left - b.box.left;
+        });
 
         for (
             let i = 0;
@@ -1565,41 +1650,31 @@ function iniciarPerfil() {
 
             if (x < item.centerX) {
                 return {
-                    element:
-                    item.element,
-
-                    before:
-                        true
+                    element: item.element,
+                    before: true
                 };
             }
         }
 
-            const ultimo =
+        const ultimo =
             linhaEscolhida.items[
             linhaEscolhida.items.length - 1
                 ];
 
         return {
-            element:
-            ultimo.element,
-
-            before:
-                false
+            element: ultimo.element,
+            before: false
         };
     }
 
-    function moverItemComAnimacao(
-        container,
-        mover
-    ) {
+    function moverItemComAnimacao(container, mover) {
         const items = [
             ...container.querySelectorAll(
                 '.profile-order-item:not(.dragging)'
             )
         ];
 
-        const posicoes =
-            new Map();
+        const posicoes = new Map();
 
         items.forEach(function(item) {
             posicoes.set(
@@ -1695,20 +1770,6 @@ function iniciarPerfil() {
         );
     }
 
-    if (avatarInput && avatarForm) {
-        avatarInput.addEventListener(
-            'change',
-            function() {
-                if (
-                    avatarInput.files.length
-                    > 0
-                ) {
-                    avatarForm.requestSubmit();
-                }
-            }
-        );
-    }
-
     if (managerModalElement) {
         managerModalElement.addEventListener(
             'show.bs.modal',
@@ -1750,10 +1811,9 @@ function iniciarPerfil() {
                     return;
                 }
 
-                const descartar =
-                    window.confirm(
-                        'Descartar as alterações que ainda não foram salvas?'
-                    );
+                const descartar = window.confirm(
+                    'Descartar as alterações que ainda não foram salvas?'
+                );
 
                 if (!descartar) {
                     event.preventDefault();
@@ -1782,9 +1842,7 @@ function iniciarPerfil() {
                 const termo =
                     gameSearch.value.trim();
 
-                clearTimeout(
-                    searchTimer
-                );
+                clearTimeout(searchTimer);
 
                 if (termo.length < 2) {
                     mostrarInstrucaoBusca();
@@ -1794,9 +1852,7 @@ function iniciarPerfil() {
 
                 searchTimer = setTimeout(
                     function() {
-                        buscarJogos(
-                            termo
-                        );
+                        buscarJogos(termo);
                     },
                     300
                 );
@@ -1810,7 +1866,8 @@ function iniciarPerfil() {
             function() {
                 updateRangeVisual(
                     levelRange,
-                    levelName
+                    levelName,
+                    levelDescription
                 );
             }
         );
@@ -1834,18 +1891,26 @@ function iniciarPerfil() {
                     id,
                     {
                         ...currentManagerGame,
-                        nivel: Number(
-                            levelRange.value
-                        ),
-                        ordem: anterior
-                            ? anterior.ordem
-                            : null,
-                        updateUrl: anterior
-                            ? anterior.updateUrl
-                            : null,
-                        removeUrl: anterior
-                            ? anterior.removeUrl
-                            : null
+
+                        nivel:
+                            Number(
+                                levelRange.value
+                            ),
+
+                        ordem:
+                            anterior
+                                ? anterior.ordem
+                                : null,
+
+                        updateUrl:
+                            anterior
+                                ? anterior.updateUrl
+                                : null,
+
+                        removeUrl:
+                            anterior
+                                ? anterior.removeUrl
+                                : null
                     }
                 );
 
@@ -1897,10 +1962,7 @@ function iniciarPerfil() {
         levelPopup.addEventListener(
             'click',
             function(event) {
-                if (
-                    event.target
-                    === levelPopup
-                ) {
+                if (event.target === levelPopup) {
                     fecharPopupNivel();
                 }
             }
@@ -1917,14 +1979,11 @@ function iniciarPerfil() {
                 workingGames.forEach(
                     function(jogo, id) {
                         jogos.push(id);
-
-                        niveis[id] =
-                            jogo.nivel;
+                        niveis[id] = jogo.nivel;
                     }
                 );
 
-                gamesSaveButton.disabled =
-                    true;
+                gamesSaveButton.disabled = true;
 
                 mostrarStatus(
                     gamesSaveStatus,
@@ -1937,12 +1996,11 @@ function iniciarPerfil() {
                             updateGamesUrl,
                             {
                                 method: 'PATCH',
+
                                 body:
                                     JSON.stringify({
-                                        jogos:
-                                        jogos,
-                                        niveis:
-                                        niveis
+                                        jogos: jogos,
+                                        niveis: niveis
                                     })
                             }
                         );
@@ -1971,15 +2029,16 @@ function iniciarPerfil() {
                             )
                             .hide();
                     }
+
                 } catch (error) {
                     mostrarStatus(
                         gamesSaveStatus,
                         error.message,
                         'error'
                     );
+
                 } finally {
-                    gamesSaveButton.disabled =
-                        false;
+                    gamesSaveButton.disabled = false;
                 }
             }
         );
@@ -2003,41 +2062,29 @@ function iniciarPerfil() {
                 );
 
             if (!insideOrder) {
-                abrirDetalheJogo(
-                    trigger
-                );
+                abrirDetalheJogo(trigger);
 
                 return;
             }
 
-            if (
-                !orderModal
-                || !orderModalElement
-            ) {
+            if (!orderModal || !orderModalElement) {
                 return;
             }
 
-            openingDetailFromOrder =
-                true;
+            openingDetailFromOrder = true;
+            returnToOrder = true;
 
-            returnToOrder =
-                true;
+            orderModalElement.addEventListener(
+                'hidden.bs.modal',
+                function abrirDepois() {
+                    openingDetailFromOrder = false;
 
-            orderModalElement
-                .addEventListener(
-                    'hidden.bs.modal',
-                    function abrirDepois() {
-                        openingDetailFromOrder =
-                            false;
-
-                        abrirDetalheJogo(
-                            trigger
-                        );
-                    },
-                    {
-                        once: true
-                    }
-                );
+                    abrirDetalheJogo(trigger);
+                },
+                {
+                    once: true
+                }
+            );
 
             orderModal.hide();
         }
@@ -2049,7 +2096,8 @@ function iniciarPerfil() {
             function() {
                 updateRangeVisual(
                     detailLevelRange,
-                    detailLevelName
+                    detailLevelName,
+                    detailLevelDescription
                 );
             }
         );
@@ -2061,40 +2109,35 @@ function iniciarPerfil() {
             async function() {
                 if (
                     !currentDetailGame
-                    || !currentDetailGame
-                        .updateUrl
+                    || !currentDetailGame.updateUrl
                 ) {
                     if (detailLevelError) {
                         detailLevelError.textContent =
                             'Não foi possível identificar o jogo.';
 
-                        detailLevelError.hidden =
-                            false;
+                        detailLevelError.hidden = false;
                     }
 
                     return;
                 }
 
-                detailLevelSave.disabled =
-                    true;
+                detailLevelSave.disabled = true;
 
                 if (detailLevelError) {
-                    detailLevelError.hidden =
-                        true;
+                    detailLevelError.hidden = true;
                 }
 
                 try {
                     await requisicaoJson(
-                        currentDetailGame
-                            .updateUrl,
+                        currentDetailGame.updateUrl,
                         {
                             method: 'PATCH',
+
                             body:
                                 JSON.stringify({
                                     nivel:
                                         Number(
-                                            detailLevelRange
-                                                .value
+                                            detailLevelRange.value
                                         )
                                 })
                         }
@@ -2112,8 +2155,7 @@ function iniciarPerfil() {
                     ) {
                         persistedGames.get(
                             currentDetailGame.id
-                        ).nivel =
-                            nivel;
+                        ).nivel = nivel;
                     }
 
                     atualizarNivelNosBotoes(
@@ -2122,17 +2164,17 @@ function iniciarPerfil() {
                     );
 
                     detailModal.hide();
+
                 } catch (error) {
                     if (detailLevelError) {
                         detailLevelError.textContent =
                             error.message;
 
-                        detailLevelError.hidden =
-                            false;
+                        detailLevelError.hidden = false;
                     }
+
                 } finally {
-                    detailLevelSave.disabled =
-                        false;
+                    detailLevelSave.disabled = false;
                 }
             }
         );
@@ -2144,12 +2186,8 @@ function iniciarPerfil() {
             function() {
                 currentDetailGame = null;
 
-                if (
-                    returnToOrder
-                    && orderModal
-                ) {
-                    returnToOrder =
-                        false;
+                if (returnToOrder && orderModal) {
+                    returnToOrder = false;
 
                     orderModal.show();
                 }
@@ -2158,7 +2196,6 @@ function iniciarPerfil() {
     }
 
     if (orderList) {
-
         orderList.addEventListener(
             'dragstart',
             function(event) {
@@ -2181,8 +2218,7 @@ function iniciarPerfil() {
                     'is-dragging'
                 );
 
-                event.dataTransfer
-                    .effectAllowed =
+                event.dataTransfer.effectAllowed =
                     'move';
 
                 event.dataTransfer.setData(
@@ -2191,7 +2227,6 @@ function iniciarPerfil() {
                 );
             }
         );
-
 
         orderList.addEventListener(
             'dragover',
@@ -2205,7 +2240,6 @@ function iniciarPerfil() {
                 event.dataTransfer.dropEffect =
                     'move';
 
-
                 const destino =
                     encontrarDestinoDrop(
                         orderList,
@@ -2213,23 +2247,17 @@ function iniciarPerfil() {
                         event.clientY
                     );
 
-
                 if (
                     destino
                     && (
-                        destino.element
-                        !== dropTarget
-                        || destino.before
-                        !== dropBefore
+                        destino.element !== dropTarget
+                        || destino.before !== dropBefore
                     )
                 ) {
-                    mostrarIndicadorDrop(
-                        destino
-                    );
+                    mostrarIndicadorDrop(destino);
                 }
             }
         );
-
 
         orderList.addEventListener(
             'dragleave',
@@ -2248,7 +2276,6 @@ function iniciarPerfil() {
             }
         );
 
-
         orderList.addEventListener(
             'drop',
             function(event) {
@@ -2258,7 +2285,6 @@ function iniciarPerfil() {
 
                 event.preventDefault();
 
-
                 const destino =
                     encontrarDestinoDrop(
                         orderList,
@@ -2266,35 +2292,29 @@ function iniciarPerfil() {
                         event.clientY
                     );
 
-
                 if (!destino) {
                     limparIndicadorDrop();
 
                     return;
                 }
 
-
                 moverItemComAnimacao(
                     orderList,
                     function() {
                         if (destino.before) {
-
                             orderList.insertBefore(
                                 draggingItem,
                                 destino.element
                             );
 
                         } else {
-
                             orderList.insertBefore(
                                 draggingItem,
-                                destino.element
-                                    .nextSibling
+                                destino.element.nextSibling
                             );
                         }
                     }
                 );
-
 
                 orderDirty = true;
 
@@ -2302,16 +2322,13 @@ function iniciarPerfil() {
             }
         );
 
-
         orderList.addEventListener(
             'dragend',
             function() {
                 if (draggingItem) {
-                    draggingItem
-                        .classList
-                        .remove(
-                            'dragging'
-                        );
+                    draggingItem.classList.remove(
+                        'dragging'
+                    );
                 }
 
                 orderList.classList.remove(
@@ -2345,47 +2362,36 @@ function iniciarPerfil() {
                     return;
                 }
 
-                const confirmar =
-                    window.confirm(
-                        'Deseja remover este jogo do seu perfil?'
-                    );
+                const confirmar = window.confirm(
+                    'Deseja remover este jogo do seu perfil?'
+                );
 
                 if (!confirmar) {
                     return;
                 }
 
-                removeButton.disabled =
-                    true;
+                removeButton.disabled = true;
 
                 try {
                     const data =
                         await requisicaoJson(
-                            item.dataset
-                                .removeUrl,
+                            item.dataset.removeUrl,
                             {
-                                method:
-                                    'DELETE'
+                                method: 'DELETE'
                             }
                         );
 
                     const id =
                         Number(
-                            item.dataset
-                                .gameId
+                            item.dataset.gameId
                         );
 
-                    persistedGames.delete(
-                        id
-                    );
-
-                    workingGames.delete(
-                        id
-                    );
+                    persistedGames.delete(id);
+                    workingGames.delete(id);
 
                     item.remove();
 
-                    profileReloadRequired =
-                        true;
+                    profileReloadRequired = true;
 
                     mostrarStatus(
                         orderStatus,
@@ -2402,12 +2408,11 @@ function iniciarPerfil() {
                             )
                             .length === 0
                     ) {
-                        orderSaveButton.disabled =
-                            true;
+                        orderSaveButton.disabled = true;
                     }
+
                 } catch (error) {
-                    removeButton.disabled =
-                        false;
+                    removeButton.disabled = false;
 
                     mostrarStatus(
                         orderStatus,
@@ -2423,15 +2428,13 @@ function iniciarPerfil() {
         orderSaveButton.addEventListener(
             'click',
             async function() {
-                const jogos =
-                    idsDaOrdem();
+                const jogos = idsDaOrdem();
 
                 if (jogos.length === 0) {
                     return;
                 }
 
-                orderSaveButton.disabled =
-                    true;
+                orderSaveButton.disabled = true;
 
                 mostrarStatus(
                     orderStatus,
@@ -2443,24 +2446,19 @@ function iniciarPerfil() {
                         await requisicaoJson(
                             updateOrderUrl,
                             {
-                                method:
-                                    'PATCH',
+                                method: 'PATCH',
+
                                 body:
                                     JSON.stringify({
-                                        jogos:
-                                        jogos
+                                        jogos: jogos
                                     })
                             }
                         );
 
                     jogos.forEach(
-                        function(
-                            id,
-                            index
-                        ) {
+                        function(id, index) {
                             if (
-                                persistedGames
-                                    .has(id)
+                                persistedGames.has(id)
                             ) {
                                 persistedGames
                                     .get(id)
@@ -2470,11 +2468,8 @@ function iniciarPerfil() {
                         }
                     );
 
-                    orderDirty =
-                        false;
-
-                    profileReloadRequired =
-                        true;
+                    orderDirty = false;
+                    profileReloadRequired = true;
 
                     mostrarStatus(
                         orderStatus,
@@ -2486,15 +2481,16 @@ function iniciarPerfil() {
                     if (orderModal) {
                         orderModal.hide();
                     }
+
                 } catch (error) {
                     mostrarStatus(
                         orderStatus,
                         error.message,
                         'error'
                     );
+
                 } finally {
-                    orderSaveButton.disabled =
-                        false;
+                    orderSaveButton.disabled = false;
                 }
             }
         );
@@ -2504,9 +2500,7 @@ function iniciarPerfil() {
         orderModalElement.addEventListener(
             'hide.bs.modal',
             function(event) {
-                if (
-                    openingDetailFromOrder
-                ) {
+                if (openingDetailFromOrder) {
                     return;
                 }
 
@@ -2514,10 +2508,9 @@ function iniciarPerfil() {
                     return;
                 }
 
-                const descartar =
-                    window.confirm(
-                        'Descartar a nova ordem que ainda não foi salva?'
-                    );
+                const descartar = window.confirm(
+                    'Descartar a nova ordem que ainda não foi salva?'
+                );
 
                 if (!descartar) {
                     event.preventDefault();
@@ -2548,15 +2541,12 @@ function iniciarPerfil() {
     window.addEventListener(
         'resize',
         function() {
-            clearTimeout(
-                gamesResizeTimer
-            );
+            clearTimeout(gamesResizeTimer);
 
-            gamesResizeTimer =
-                setTimeout(
-                    atualizarJogosVisiveis,
-                    120
-                );
+            gamesResizeTimer = setTimeout(
+                atualizarJogosVisiveis,
+                120
+            );
         }
     );
 }

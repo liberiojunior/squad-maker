@@ -852,11 +852,7 @@
                         </div>
                     @endforelse
                 </div>
-                @if ($jogos->hasPages())
-                    <div class="squad-pagination">
-                        {{ $jogos->links('pagination::bootstrap-5') }}
-                    </div>
-                @endif
+                <x-paginacao :paginator="$jogos" />
             </div>
         </section>
     </div>

@@ -13,13 +13,26 @@ class RegisterJogosController extends Controller
 
     public function show(Request $request)
     {
-        $query = Jogo::orderBy('nome');
+        $data = $request->validate([
+            'q' => [
+                'nullable',
+                'string',
+                'max:150',
+            ],
+        ]);
 
-        if ($request->filled('q')) {
+        $busca = trim(
+            $data['q'] ?? ''
+        );
+
+        $query = Jogo::query()
+            ->orderBy('nome');
+
+        if ($busca !== '') {
             $query->where(
                 'nome',
                 'like',
-                '%' . $request->q . '%'
+                '%' . $busca . '%'
             );
         }
 
@@ -27,18 +40,38 @@ class RegisterJogosController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        $selecionados = $request->session()->get(
-            $this->sessionKey($request->user()->id_usuario),
-            []
-        );
+        $selecionados = $request
+            ->session()
+            ->get(
+                $this->sessionKey(
+                    $request
+                        ->user()
+                        ->id_usuario
+                ),
+                []
+            );
 
-        return view('register.cadastro-jogos', [
-            'jogos' => $jogos,
-            'niveis' => NivelProficiencia::todos(),
-            'selecionados' => $selecionados,
-            'limiteJogos' => self::LIMITE_JOGOS,
-        ]);
+        return view(
+            'register.cadastro-jogos',
+            [
+                'jogos' =>
+                    $jogos,
+
+                'niveis' =>
+                    NivelProficiencia::todos(),
+
+                'descricoesNiveis' =>
+                    NivelProficiencia::descricoesSelecao(),
+
+                'selecionados' =>
+                    $selecionados,
+
+                'limiteJogos' =>
+                    self::LIMITE_JOGOS,
+            ]
+        );
     }
+
 
     public function selectGame(Request $request)
     {
@@ -48,6 +81,7 @@ class RegisterJogosController extends Controller
                 'integer',
                 'exists:tb_jogo,id_jogo',
             ],
+
             'nivel' => [
                 'required',
                 'integer',
@@ -56,41 +90,64 @@ class RegisterJogosController extends Controller
         ]);
 
         $key = $this->sessionKey(
-            $request->user()->id_usuario
+            $request
+                ->user()
+                ->id_usuario
         );
 
-        $selecionados = $request->session()->get(
-            $key,
-            []
-        );
+        $selecionados = $request
+            ->session()
+            ->get(
+                $key,
+                []
+            );
 
-        $idJogo = (int)$data['id_jogo'];
+        $idJogo =
+            (int)$data['id_jogo'];
 
         if (
-            !array_key_exists($idJogo, $selecionados)
-            && count($selecionados) >= self::LIMITE_JOGOS
+            !array_key_exists(
+                $idJogo,
+                $selecionados
+            )
+            && count($selecionados)
+            >= self::LIMITE_JOGOS
         ) {
-            return response()->json([
-                'message' => 'Você pode escolher no máximo 3 jogos no cadastro inicial.',
-            ], 422);
+            return response()->json(
+                [
+                    'message' =>
+                        'Você pode escolher no máximo 3 jogos no cadastro inicial.',
+                ],
+                422
+            );
         }
 
-        $selecionados[$idJogo] = (int)$data['nivel'];
+        $selecionados[$idJogo] =
+            (int)$data['nivel'];
 
-        $request->session()->put(
-            $key,
-            $selecionados
-        );
+        $request
+            ->session()
+            ->put(
+                $key,
+                $selecionados
+            );
 
         return response()->json([
             'success' => true,
-            'count' => count($selecionados),
-            'nivel' => (int)$data['nivel'],
-            'nivel_nome' => NivelProficiencia::nome(
-                (int)$data['nivel']
-            ),
+
+            'count' =>
+                count($selecionados),
+
+            'nivel' =>
+                (int)$data['nivel'],
+
+            'nivel_nome' =>
+                NivelProficiencia::nome(
+                    (int)$data['nivel']
+                ),
         ]);
     }
+
 
     public function removeGame(
         Request $request,
@@ -98,28 +155,37 @@ class RegisterJogosController extends Controller
     )
     {
         $key = $this->sessionKey(
-            $request->user()->id_usuario
+            $request
+                ->user()
+                ->id_usuario
         );
 
-        $selecionados = $request->session()->get(
-            $key,
-            []
-        );
+        $selecionados = $request
+            ->session()
+            ->get(
+                $key,
+                []
+            );
 
         unset(
             $selecionados[$jogo->id_jogo]
         );
 
-        $request->session()->put(
-            $key,
-            $selecionados
-        );
+        $request
+            ->session()
+            ->put(
+                $key,
+                $selecionados
+            );
 
         return response()->json([
             'success' => true,
-            'count' => count($selecionados),
+
+            'count' =>
+                count($selecionados),
         ]);
     }
+
 
     public function store(Request $request)
     {
@@ -129,26 +195,35 @@ class RegisterJogosController extends Controller
             $user->id_usuario
         );
 
-        $selecionados = $request->session()->get(
-            $key,
-            []
-        );
+        $selecionados = $request
+            ->session()
+            ->get(
+                $key,
+                []
+            );
 
         if (empty($selecionados)) {
             return back()->withErrors([
-                'jogos' => 'Escolha pelo menos um jogo para continuar.',
+                'jogos' =>
+                    'Escolha pelo menos um jogo para continuar.',
             ]);
         }
 
-        if (count($selecionados) > self::LIMITE_JOGOS) {
+        if (
+            count($selecionados)
+            > self::LIMITE_JOGOS
+        ) {
             return back()->withErrors([
-                'jogos' => 'Escolha no máximo 3 jogos.',
+                'jogos' =>
+                    'Escolha no máximo 3 jogos.',
             ]);
         }
 
         $ids = array_map(
             'intval',
-            array_keys($selecionados)
+            array_keys(
+                $selecionados
+            )
         );
 
         $jogosExistentes = Jogo::whereIn(
@@ -156,36 +231,54 @@ class RegisterJogosController extends Controller
             $ids
         )
             ->pluck('id_jogo')
-            ->map(fn($id) => (int)$id)
+            ->map(
+                fn($id) => (int)$id
+            )
             ->toArray();
 
-        if (count($jogosExistentes) !== count($ids)) {
+        if (
+            count($jogosExistentes)
+            !== count($ids)
+        ) {
             return back()->withErrors([
-                'jogos' => 'Um dos jogos selecionados não está mais disponível.',
+                'jogos' =>
+                    'Um dos jogos selecionados não está mais disponível.',
             ]);
         }
 
         $jogosSalvar = [];
 
-        foreach ($selecionados as $idJogo => $nivel) {
+        foreach (
+            $selecionados
+            as $idJogo => $nivel
+        ) {
             $jogosSalvar[(int)$idJogo] = [
-                'data_adicao' => now(),
-                'nivel_proficiencia' => (int)$nivel,
+                'data_adicao' =>
+                    now(),
+
+                'nivel_proficiencia' =>
+                    (int)$nivel,
             ];
         }
 
-        DB::transaction(function () use (
-            $user,
-            $jogosSalvar
-        ) {
-            $user->jogos()->sync(
+        DB::transaction(
+            function () use (
+                $user,
                 $jogosSalvar
-            );
-        });
-
-        $request->session()->forget(
-            $key
+            ) {
+                $user
+                    ->jogos()
+                    ->sync(
+                        $jogosSalvar
+                    );
+            }
         );
+
+        $request
+            ->session()
+            ->forget(
+                $key
+            );
 
         return redirect()
             ->route('perfil')
@@ -195,8 +288,13 @@ class RegisterJogosController extends Controller
             );
     }
 
-    private function sessionKey(int $idUsuario): string
+
+    private function sessionKey(
+        int $idUsuario
+    ): string
     {
-        return 'cadastro_jogos_' . $idUsuario;
+        return
+            'cadastro_jogos_'
+            . $idUsuario;
     }
 }

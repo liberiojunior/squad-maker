@@ -48,6 +48,7 @@
         data-game-search-url="{{ route('perfil.jogos.buscar') }}"
         data-games-update-url="{{ route('perfil.jogos.update') }}"
         data-games-order-url="{{ route('perfil.jogos.ordem.update') }}"
+        data-level-descriptions='@json($descricoesNiveis)'
     >
         <div class="profile-top">
             <div class="profile-avatar-area">
@@ -72,7 +73,7 @@
 
                         <span class="profile-avatar-overlay">
                             <i class="bi bi-camera-fill"></i>
-                            Alterar foto
+                            Ajustar foto
                         </span>
                     </label>
 
@@ -132,7 +133,7 @@
                     <strong>Gêneros Favoritos:</strong>
 
                     <div class="profile-genre-list">
-                        @forelse ($user->generos->take(4) as $genero)
+                        @forelse ($user->generos->take(5) as $genero)
                             <span class="profile-genre-tag">
                                 {{ $genero->genero }}
                             </span>
@@ -298,7 +299,7 @@
                     method="POST"
                     action="{{ route('perfil.generos.update') }}"
                     id="profileGenresForm"
-                    data-max-genres="4"
+                    data-max-genres="5"
                 >
                     @csrf
                     @method('PATCH')
@@ -308,7 +309,7 @@
                             <h2 class="modal-title">Gêneros Favoritos</h2>
 
                             <p class="profile-modal-subtitle">
-                                Escolha até 4 gêneros que mais combinam com você.
+                                Escolha até 5 gêneros que mais combinam com você.
                             </p>
                         </div>
 
@@ -468,12 +469,15 @@
                             </div>
 
                             <div class="profile-level-popup-current">
-                                <span>Seu nível</span>
-
-                                <strong id="profileLevelName">
-                                    Iniciante
-                                </strong>
+                                <strong id="profileLevelName">Iniciante</strong>
                             </div>
+
+                            <p
+                                class="game-level-selection-description"
+                                id="profileLevelDescription"
+                            >
+                                {{ $descricoesNiveis[1] }}
+                            </p>
 
                             <div class="game-level-range-wrap">
                                 <input
@@ -693,12 +697,15 @@
                     </div>
 
                     <div class="profile-level-edit-current">
-                        <span>Seu nível</span>
-
-                        <strong id="profileDetailLevelName">
-                            Iniciante
-                        </strong>
+                        <strong id="profileDetailLevelName">Iniciante</strong>
                     </div>
+
+                    <p
+                        class="game-level-selection-description"
+                        id="profileDetailLevelDescription"
+                    >
+                        {{ $descricoesNiveis[1] }}
+                    </p>
 
                     <div class="game-level-range-wrap">
                         <input
@@ -832,6 +839,34 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="avatarCropModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered avatar-crop-dialog">
+            <div class="modal-content profile-games-modal avatar-crop-modal">
+                <div class="modal-body avatar-crop-body">
+                    <div class="avatar-crop-stage">
+                        <canvas id="avatarCropCanvas" width="512" height="512"
+                                aria-label="Pré-visualização da foto"></canvas>
+                    </div>
+
+                    <div class="avatar-crop-zoom">
+                        <i class="bi bi-dash-lg" aria-hidden="true"></i>
+                        <input type="range" id="avatarCropZoom" min="1" max="3" step="0.01" value="1"
+                               aria-label="Zoom da foto">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                    </div>
+
+                    <p class="avatar-crop-hint">Arraste a foto dentro do círculo para escolher o enquadramento.</p>
+                    <div class="avatar-crop-error" id="avatarCropError" hidden></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn profile-games-save" id="avatarCropSave">Salvar foto</button>
+                </div>
             </div>
         </div>
     </div>

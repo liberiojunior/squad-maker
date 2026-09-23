@@ -5,12 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Genero;
 use App\Models\Jogo;
 use App\Models\Plataforma;
+use App\Models\User;
 use App\Support\NivelProficiencia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use App\Models\User;
 
 class ProfileController extends Controller
 {
@@ -19,13 +19,17 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $user->load([
-            'generos',
+            'generos' => function ($query) {
+                $query->orderBy('genero');
+            },
+
             'jogos' => function ($query) {
                 $query
                     ->orderByRaw('tb_jogo_usuario.ordem_perfil IS NULL')
                     ->orderBy('tb_jogo_usuario.ordem_perfil')
                     ->orderBy('tb_jogo_usuario.data_adicao');
             },
+
             'plataformas',
         ]);
 
@@ -45,6 +49,7 @@ class ProfileController extends Controller
             'generos' => $generos,
             'plataformasDisponiveis' => $plataformasDisponiveis,
             'niveis' => NivelProficiencia::todos(),
+            'descricoesNiveis' => NivelProficiencia::descricoesSelecao(),
             'niveisJogosUsuario' => $niveisJogosUsuario,
         ]);
     }
@@ -70,54 +75,55 @@ class ProfileController extends Controller
     public function updateAvatar(Request $request)
     {
         $request->validate([
-            'avatar' => [
-                'required',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
-                'max:5120',
-            ],
+            'avatar' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         $user = $request->user();
         $file = $request->file('avatar');
+        $pasta = public_path('uploads/avatars');
+        $avatarAnterior = $user->avatar;
 
-        $fileName = 'avatar_'
-            . $user->id_usuario
-            . '_'
-            . time()
-            . '.'
-            . $file->getClientOriginalExtension();
+        if (!is_dir($pasta)) {
+            mkdir($pasta, 0755, true);
+        }
 
-        $file->move(
-            public_path('uploads/avatars'),
-            $fileName
-        );
+        $fileName = 'avatar_' . $user->id_usuario . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $file->move($pasta, $fileName);
 
         $user->avatar = '/uploads/avatars/' . $fileName;
         $user->save();
 
-        return redirect()
-            ->route('perfil')
-            ->with('success', 'Foto atualizada.');
+        if ($avatarAnterior && str_starts_with($avatarAnterior, '/uploads/avatars/')) {
+            $arquivoAnterior = public_path(ltrim($avatarAnterior, '/'));
+
+            if (is_file($arquivoAnterior)) {
+                unlink($arquivoAnterior);
+            }
+        }
+
+        return redirect()->route('perfil')->with('success', 'Foto atualizada.');
     }
 
     public function updateGeneros(Request $request)
     {
         $data = $request->validate([
-            'generos' => ['nullable', 'array'],
-            'generos.*' => [
-                'integer',
-                'exists:tb_genero,id_genero',
-            ],
+            'generos' => ['nullable', 'array', 'max:5'],
+
+            'generos.*' => ['integer', 'distinct', 'exists:tb_genero,id_genero'],
         ]);
 
         $request->user()
             ->generos()
-            ->sync($data['generos'] ?? []);
+            ->sync(
+                $data['generos'] ?? []
+            );
 
         return redirect()
             ->route('perfil')
-            ->with('success', 'Gêneros atualizados.');
+            ->with(
+                'success',
+                'Gêneros atualizados.'
+            );
     }
 
     public function buscarJogos(Request $request)
@@ -589,8 +595,7 @@ class ProfileController extends Controller
             'usuarios.perfil',
             [
                 'user' => $user,
-                'niveis' =>
-                    NivelProficiencia::todos(),
+                'niveis' => NivelProficiencia::todos(),
                 'presenca' => $presenca,
             ]
         );

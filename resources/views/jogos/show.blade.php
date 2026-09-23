@@ -146,11 +146,6 @@
 
                         </div>
 
-
-                        <strong>
-                            {{ $nivel['nome'] }}
-                        </strong>
-
                         @if ($nivelUsuario === $valor)
                             <small class="game-level-user-label">
                                 Seu nível
@@ -287,18 +282,7 @@
 
             </div>
 
-
-            @if ($jogadores->hasPages())
-
-                <div class="squad-pagination">
-
-                    {{ $jogadores->links(
-                        'pagination::bootstrap-5'
-                    ) }}
-
-                </div>
-
-            @endif
+            <x-paginacao :paginator="$jogadores" />
 
         </section>
 
