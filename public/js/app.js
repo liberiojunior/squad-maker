@@ -815,6 +815,8 @@ function iniciarPerfil() {
     let openingDetailFromOrder = false;
     let returnToOrder = false;
     let draggingItem = null;
+    let dropTarget = null;
+    let dropBefore = true;
     let editingProfile = false;
 
     function criarMapaJogos(jogos) {
@@ -1379,7 +1381,47 @@ function iniciarPerfil() {
             });
     }
 
-    function elementoDepoisDoCursor(
+    function limparIndicadorDrop() {
+        if (!orderList) {
+            return;
+        }
+
+        orderList
+            .querySelectorAll(
+                '.drop-before, .drop-after'
+            )
+            .forEach(function(item) {
+                item.classList.remove(
+                    'drop-before',
+                    'drop-after'
+                );
+            });
+
+        dropTarget = null;
+    }
+
+
+    function mostrarIndicadorDrop(
+        destino
+    ) {
+        limparIndicadorDrop();
+
+        if (!destino) {
+            return;
+        }
+
+        dropTarget = destino.element;
+        dropBefore = destino.before;
+
+        dropTarget.classList.add(
+            dropBefore
+                ? 'drop-before'
+                : 'drop-after'
+        );
+    }
+
+
+    function encontrarDestinoDrop(
         container,
         x,
         y
@@ -1390,25 +1432,106 @@ function iniciarPerfil() {
             )
         ];
 
-        let itemMaisProximo = null;
-        let menorDistancia = Infinity;
+        if (items.length === 0) {
+            return null;
+        }
 
-        items.forEach(function(item) {
-            const box =
-                item.getBoundingClientRect();
 
-            const centroX =
-                box.left
-                + box.width / 2;
+        const dados = items.map(
+            function(item) {
+                const box =
+                    item.getBoundingClientRect();
 
-            const centroY =
-                box.top
-                + box.height / 2;
+                return {
+                    element: item,
+                    box: box,
+                    centerX:
+                        box.left
+                        + box.width / 2,
+                    centerY:
+                        box.top
+                        + box.height / 2
+                };
+            }
+        );
 
-            const distancia = Math.hypot(
-                x - centroX,
-                y - centroY
+        const linhas = [];
+
+        dados
+            .sort(function(a, b) {
+                if (
+                    Math.abs(
+                        a.box.top
+                        - b.box.top
+                    ) < 10
+                ) {
+                    return (
+                        a.box.left
+                        - b.box.left
+                    );
+                }
+
+                return (
+                    a.box.top
+                    - b.box.top
+                );
+            })
+            .forEach(function(dado) {
+
+                let linha =
+                    linhas.find(
+                        function(itemLinha) {
+                            return (
+                                Math.abs(
+                                    itemLinha.top
+                                    - dado.box.top
+                                )
+                                < dado.box.height / 2
+                            );
+                        }
+                    );
+
+
+                if (!linha) {
+                    linha = {
+                        top:
+                        dado.box.top,
+
+                        centerY:
+                        dado.centerY,
+
+                        items: []
+                    };
+
+                    linhas.push(linha);
+                }
+
+
+                linha.items.push(dado);
+            });
+
+
+        linhas.sort(
+            function(a, b) {
+                return a.top - b.top;
+            }
+        );
+
+        let linhaEscolhida =
+            linhas[0];
+
+        let menorDistancia =
+            Math.abs(
+                y - linhas[0].centerY
             );
+
+
+        linhas.forEach(function(linha) {
+
+            const distancia =
+                Math.abs(
+                    y - linha.centerY
+                );
 
             if (
                 distancia
@@ -1417,38 +1540,117 @@ function iniciarPerfil() {
                 menorDistancia =
                     distancia;
 
-                itemMaisProximo =
-                    item;
+                linhaEscolhida =
+                    linha;
             }
         });
 
-        if (!itemMaisProximo) {
-            return null;
+
+        linhaEscolhida.items.sort(
+            function(a, b) {
+                return (
+                    a.box.left
+                    - b.box.left
+                );
+            }
+        );
+
+        for (
+            let i = 0;
+            i < linhaEscolhida.items.length;
+            i++
+        ) {
+            const item =
+                linhaEscolhida.items[i];
+
+            if (x < item.centerX) {
+                return {
+                    element:
+                    item.element,
+
+                    before:
+                        true
+                };
+            }
         }
 
-        const box =
-            itemMaisProximo
-                .getBoundingClientRect();
-
-        const mesmaLinha =
-            y >= box.top
-            && y <= box.bottom;
-
-        const antes =
-            mesmaLinha
-                ? x
-                < box.left
-                + box.width / 2
-                : y
-                < box.top
-                + box.height / 2;
+            const ultimo =
+            linhaEscolhida.items[
+            linhaEscolhida.items.length - 1
+                ];
 
         return {
             element:
-            itemMaisProximo,
+            ultimo.element,
+
             before:
-            antes
+                false
         };
+    }
+
+    function moverItemComAnimacao(
+        container,
+        mover
+    ) {
+        const items = [
+            ...container.querySelectorAll(
+                '.profile-order-item:not(.dragging)'
+            )
+        ];
+
+        const posicoes =
+            new Map();
+
+        items.forEach(function(item) {
+            posicoes.set(
+                item,
+                item.getBoundingClientRect()
+            );
+        });
+
+        mover();
+
+        items.forEach(function(item) {
+            const antes =
+                posicoes.get(item);
+
+            const depois =
+                item.getBoundingClientRect();
+
+            const distanciaX =
+                antes.left - depois.left;
+
+            const distanciaY =
+                antes.top - depois.top;
+
+            if (
+                distanciaX === 0
+                && distanciaY === 0
+            ) {
+                return;
+            }
+
+            item.animate(
+                [
+                    {
+                        transform:
+                            'translate('
+                            + distanciaX
+                            + 'px, '
+                            + distanciaY
+                            + 'px)'
+                    },
+                    {
+                        transform:
+                            'translate(0, 0)'
+                    }
+                ],
+                {
+                    duration: 160,
+                    easing: 'ease-out'
+                }
+            );
+        });
     }
 
     if (
@@ -1956,6 +2158,7 @@ function iniciarPerfil() {
     }
 
     if (orderList) {
+
         orderList.addEventListener(
             'dragstart',
             function(event) {
@@ -1968,18 +2171,137 @@ function iniciarPerfil() {
                     return;
                 }
 
-                draggingItem =
-                    item;
+                draggingItem = item;
 
                 item.classList.add(
                     'dragging'
                 );
 
+                orderList.classList.add(
+                    'is-dragging'
+                );
+
                 event.dataTransfer
                     .effectAllowed =
                     'move';
+
+                event.dataTransfer.setData(
+                    'text/plain',
+                    item.dataset.gameId || ''
+                );
             }
         );
+
+
+        orderList.addEventListener(
+            'dragover',
+            function(event) {
+                if (!draggingItem) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                event.dataTransfer.dropEffect =
+                    'move';
+
+
+                const destino =
+                    encontrarDestinoDrop(
+                        orderList,
+                        event.clientX,
+                        event.clientY
+                    );
+
+
+                if (
+                    destino
+                    && (
+                        destino.element
+                        !== dropTarget
+                        || destino.before
+                        !== dropBefore
+                    )
+                ) {
+                    mostrarIndicadorDrop(
+                        destino
+                    );
+                }
+            }
+        );
+
+
+        orderList.addEventListener(
+            'dragleave',
+            function(event) {
+                if (!draggingItem) {
+                    return;
+                }
+
+                if (
+                    !orderList.contains(
+                        event.relatedTarget
+                    )
+                ) {
+                    limparIndicadorDrop();
+                }
+            }
+        );
+
+
+        orderList.addEventListener(
+            'drop',
+            function(event) {
+                if (!draggingItem) {
+                    return;
+                }
+
+                event.preventDefault();
+
+
+                const destino =
+                    encontrarDestinoDrop(
+                        orderList,
+                        event.clientX,
+                        event.clientY
+                    );
+
+
+                if (!destino) {
+                    limparIndicadorDrop();
+
+                    return;
+                }
+
+
+                moverItemComAnimacao(
+                    orderList,
+                    function() {
+                        if (destino.before) {
+
+                            orderList.insertBefore(
+                                draggingItem,
+                                destino.element
+                            );
+
+                        } else {
+
+                            orderList.insertBefore(
+                                draggingItem,
+                                destino.element
+                                    .nextSibling
+                            );
+                        }
+                    }
+                );
+
+
+                orderDirty = true;
+
+                limparIndicadorDrop();
+            }
+        );
+
 
         orderList.addEventListener(
             'dragend',
@@ -1992,47 +2314,13 @@ function iniciarPerfil() {
                         );
                 }
 
-                draggingItem =
-                    null;
-            }
-        );
+                orderList.classList.remove(
+                    'is-dragging'
+                );
 
-        orderList.addEventListener(
-            'dragover',
-            function(event) {
-                event.preventDefault();
+                limparIndicadorDrop();
 
-                if (!draggingItem) {
-                    return;
-                }
-
-                const destino =
-                    elementoDepoisDoCursor(
-                        orderList,
-                        event.clientX,
-                        event.clientY
-                    );
-
-                if (!destino) {
-                    orderList.appendChild(
-                        draggingItem
-                    );
-                } else if (
-                    destino.before
-                ) {
-                    orderList.insertBefore(
-                        draggingItem,
-                        destino.element
-                    );
-                } else {
-                    orderList.insertBefore(
-                        draggingItem,
-                        destino.element
-                            .nextSibling
-                    );
-                }
-
-                orderDirty = true;
+                draggingItem = null;
             }
         );
 
