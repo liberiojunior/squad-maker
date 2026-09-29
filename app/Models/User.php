@@ -89,14 +89,14 @@ class User extends Authenticatable
     public function excluirConta(): void
     {
         $this->nickname =
-            'Usuário excluído #' . $this->id_usuario;
+            'Usuário excluído '.$this->id_usuario;
 
         $this->email =
             'excluido_'
-            . $this->id_usuario
-            . '_'
-            . time()
-            . '@squadmaker.local';
+            .$this->id_usuario
+            .'_'
+            .time()
+            .'@squadmaker.local';
 
         $this->senha = Hash::make(
             Str::random(40)
@@ -117,7 +117,7 @@ class User extends Authenticatable
 
     public function presenca(): array
     {
-        if (!$this->ultima_atividade) {
+        if (! $this->ultima_atividade) {
             return [
                 'status' => 'offline',
                 'texto' => 'Offline',
@@ -147,55 +147,52 @@ class User extends Authenticatable
         if ($segundos < 60 * 60) {
             $minutos = max(
                 1,
-                (int)floor($segundos / 60)
+                (int) floor($segundos / 60)
             );
 
             return [
                 'status' => 'recente',
-                'texto' =>
-                    'Ativo há '
-                    . $minutos
-                    . ' min',
+                'texto' => 'Ativo há '
+                    .$minutos
+                    .' min',
             ];
         }
 
         if ($segundos < 24 * 60 * 60) {
             $horas = max(
                 1,
-                (int)floor(
+                (int) floor(
                     $segundos / 3600
                 )
             );
 
             return [
                 'status' => 'recente',
-                'texto' =>
-                    'Ativo há '
-                    . $horas
-                    . (
-                    $horas === 1
-                        ? ' hora'
-                        : ' horas'
+                'texto' => 'Ativo há '
+                    .$horas
+                    .(
+                        $horas === 1
+                            ? ' hora'
+                            : ' horas'
                     ),
             ];
         }
 
         $dias = max(
             1,
-            (int)floor(
+            (int) floor(
                 $segundos / 86400
             )
         );
 
         return [
             'status' => 'recente',
-            'texto' =>
-                'Ativo há '
-                . $dias
-                . (
-                $dias === 1
-                    ? ' dia'
-                    : ' dias'
+            'texto' => 'Ativo há '
+                .$dias
+                .(
+                    $dias === 1
+                        ? ' dia'
+                        : ' dias'
                 ),
         ];
     }

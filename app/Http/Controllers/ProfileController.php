@@ -10,6 +10,7 @@ use App\Support\NivelProficiencia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class ProfileController extends Controller
@@ -56,12 +57,24 @@ class ProfileController extends Controller
 
     public function update(Request $request)
     {
-        $data = $request->validate([
-            'nickname' => ['required', 'string', 'max:80'],
-            'bio' => ['nullable', 'string'],
-        ]);
-
         $user = $request->user();
+
+        $data = $request->validate([
+            'nickname' => [
+                'required',
+                'string',
+                'max:80',
+                'regex:/^[^\/?#\\\\]+$/u',
+                Rule::unique('tb_usuario', 'nickname')->ignore(
+                    $user->id_usuario,
+                    'id_usuario'
+                ),
+            ],
+            'bio' => ['nullable', 'string'],
+        ], [
+            'nickname.regex' => 'O nome não pode conter /, \\, ? ou #.',
+            'nickname.unique' => 'Este nome de perfil já está em uso.',
+        ]);
 
         $user->nickname = $data['nickname'];
         $user->bio = $data['bio'] ?? null;
@@ -184,6 +197,68 @@ class ProfileController extends Controller
             'jogos' => $jogos,
         ]);
     }
+
+    public function addJogo(
+        Request $request,
+        Jogo $jogo
+    ) {
+        $data = $request->validate([
+            'nivel' => [
+                'required',
+                'integer',
+                'between:1,5',
+            ],
+        ]);
+
+        $user = $request->user();
+
+        DB::transaction(function () use ($user, $jogo, $data) {
+            DB::table('tb_usuario')
+                ->where('id_usuario', $user->id_usuario)
+                ->lockForUpdate()
+                ->first();
+
+            $jogosAtuais = DB::table('tb_jogo_usuario')
+                ->where('id_usuario', $user->id_usuario)
+                ->lockForUpdate()
+                ->get([
+                    'id_jogo',
+                    'ordem_perfil',
+                ]);
+
+            $jaPossui = $jogosAtuais->contains(
+                'id_jogo',
+                $jogo->id_jogo
+            );
+
+            if ($jaPossui) {
+                throw ValidationException::withMessages([
+                    'jogo' => 'Este jogo já está em Meus Jogos.',
+                ]);
+            }
+
+            $maiorOrdem = (int)($jogosAtuais->max('ordem_perfil') ?? 0);
+
+            $user->jogos()->attach(
+                $jogo->id_jogo,
+                [
+                    'data_adicao' => now(),
+                    'nivel_proficiencia' => (int)$data['nivel'],
+                    'ordem_perfil' => $maiorOrdem + 1,
+                ]
+            );
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Jogo adicionado ao perfil.',
+            'nivel' => (int)$data['nivel'],
+            'nivel_nome' => NivelProficiencia::nome(
+                (int)$data['nivel']
+            ),
+        ]);
+    }
+
 
     public function updateJogos(Request $request)
     {

@@ -52,7 +52,7 @@ class GoogleAuthController extends Controller
             ]);
         } else {
             $user = User::create([
-                'nickname' => $name ?? 'Usuário Google',
+                'nickname' => $this->nicknameDisponivel($name),
                 'email' => $email,
                 'senha' => Hash::make(
                     Str::random(16)
@@ -79,5 +79,43 @@ class GoogleAuthController extends Controller
 
         return redirect()
             ->route('perfil');
+    }
+
+    private function nicknameDisponivel(?string $nome): string
+    {
+        $base = preg_replace(
+            '/[\/?#\\\\]+/u',
+            ' ',
+            $nome ?? ''
+        );
+
+        $base = preg_replace(
+            '/\s+/u',
+            ' ',
+            trim($base)
+        );
+
+        if ($base === '') {
+            $base = 'Jogador';
+        }
+
+        $base = Str::substr($base, 0, 80);
+        $nickname = $base;
+        $numero = 2;
+
+        while (User::where('nickname', $nickname)->exists()) {
+            $sufixo = ' ' . $numero;
+            $limiteBase = 80 - Str::length($sufixo);
+
+            $nickname = Str::substr(
+                $base,
+                0,
+                $limiteBase
+            ) . $sufixo;
+
+            $numero++;
+        }
+
+        return $nickname;
     }
 }

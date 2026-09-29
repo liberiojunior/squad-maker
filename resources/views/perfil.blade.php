@@ -221,7 +221,8 @@
                                     method="POST"
                                     action="{{ route('perfil.jogos.remove', $jogo) }}"
                                     class="profile-game-remove-form"
-                                    onsubmit="return confirm('Deseja remover este jogo do seu perfil?')"
+                                    data-profile-remove-form
+                                    data-game-name="{{ $jogo->nome }}"
                                 >
                                     @csrf
                                     @method('DELETE')
@@ -591,6 +592,7 @@
                             <div
                                 class="profile-order-item"
                                 data-game-id="{{ $jogo->id_jogo }}"
+                                data-game-name="{{ $jogo->nome }}"
                                 data-remove-url="{{ route('perfil.jogos.remove', $jogo) }}"
                                 draggable="true"
                             >
@@ -839,6 +841,56 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div
+        class="profile-confirm-overlay"
+        id="profileRemoveGameConfirm"
+        hidden
+    >
+        <div
+            class="profile-confirm-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="profileRemoveGameTitle"
+        >
+            <div class="profile-confirm-icon">
+                <i class="bi bi-trash3"></i>
+            </div>
+
+            <h2 id="profileRemoveGameTitle">
+                Remover jogo?
+            </h2>
+
+            <p>
+                <strong id="profileRemoveGameName"></strong>
+                será removido de Meus Jogos. Você poderá adicioná-lo novamente depois.
+            </p>
+
+            <div
+                class="profile-confirm-error"
+                id="profileRemoveGameError"
+                hidden
+            ></div>
+
+            <div class="profile-confirm-actions">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="profileRemoveGameCancel"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    id="profileRemoveGameAccept"
+                >
+                    Remover
+                </button>
             </div>
         </div>
     </div>

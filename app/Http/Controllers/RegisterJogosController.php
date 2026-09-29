@@ -13,6 +13,10 @@ class RegisterJogosController extends Controller
 
     public function show(Request $request)
     {
+        if ($request->user()->jogos()->exists()) {
+            return redirect()->route('perfil');
+        }
+
         $data = $request->validate([
             'q' => [
                 'nullable',
@@ -75,6 +79,12 @@ class RegisterJogosController extends Controller
 
     public function selectGame(Request $request)
     {
+        if ($request->user()->jogos()->exists()) {
+            return response()->json([
+                'message' => 'O cadastro inicial de jogos já foi concluído.',
+            ], 409);
+        }
+
         $data = $request->validate([
             'id_jogo' => [
                 'required',
@@ -154,6 +164,12 @@ class RegisterJogosController extends Controller
         Jogo    $jogo
     )
     {
+        if ($request->user()->jogos()->exists()) {
+            return response()->json([
+                'message' => 'O cadastro inicial de jogos já foi concluído.',
+            ], 409);
+        }
+
         $key = $this->sessionKey(
             $request
                 ->user()
@@ -194,6 +210,12 @@ class RegisterJogosController extends Controller
         $key = $this->sessionKey(
             $user->id_usuario
         );
+
+        if ($user->jogos()->exists()) {
+            $request->session()->forget($key);
+
+            return redirect()->route('perfil');
+        }
 
         $selecionados = $request
             ->session()
@@ -247,6 +269,7 @@ class RegisterJogosController extends Controller
         }
 
         $jogosSalvar = [];
+        $ordem = 1;
 
         foreach (
             $selecionados
@@ -258,7 +281,12 @@ class RegisterJogosController extends Controller
 
                 'nivel_proficiencia' =>
                     (int)$nivel,
+
+                'ordem_perfil' =>
+                    $ordem,
             ];
+
+            $ordem++;
         }
 
         DB::transaction(

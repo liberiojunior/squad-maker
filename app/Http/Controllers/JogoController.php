@@ -56,6 +56,12 @@ class JogoController extends Controller
 
         $query = Jogo::query();
 
+        $jogosUsuario = $request
+            ->user()
+            ->jogos()
+            ->get()
+            ->keyBy('id_jogo');
+
         $busca = trim(
             $data['q'] ?? ''
         );
@@ -129,7 +135,8 @@ class JogoController extends Controller
             return $this->viewBusca(
                 $jogos,
                 $generosSelecionados,
-                $modosSelecionados
+                $modosSelecionados,
+                $jogosUsuario
             );
         }
 
@@ -152,7 +159,8 @@ class JogoController extends Controller
             return $this->viewBusca(
                 $jogos,
                 $generosSelecionados,
-                $modosSelecionados
+                $modosSelecionados,
+                $jogosUsuario
             );
         }
 
@@ -224,7 +232,8 @@ class JogoController extends Controller
         return $this->viewBusca(
             $jogos,
             $generosSelecionados,
-            $modosSelecionados
+            $modosSelecionados,
+            $jogosUsuario
         );
     }
 
@@ -296,7 +305,8 @@ class JogoController extends Controller
     private function viewBusca(
         LengthAwarePaginator $jogos,
         array                $generosSelecionados,
-        array                $modosSelecionados
+        array                $modosSelecionados,
+        $jogosUsuario
     )
     {
         $generos = Genero::query()
@@ -334,6 +344,12 @@ class JogoController extends Controller
                         'intval',
                         $modosSelecionados
                     ),
+
+                'jogosUsuario' =>
+                    $jogosUsuario,
+
+                'descricoesNiveis' =>
+                    NivelProficiencia::descricoesSelecao(),
             ]
         );
     }

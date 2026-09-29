@@ -129,6 +129,11 @@ Route::middleware([
         [ProfileController::class, 'buscarJogos']
     )->name('perfil.jogos.buscar');
 
+    Route::post(
+        '/perfil/jogos/{jogo}',
+        [ProfileController::class, 'addJogo']
+    )->name('perfil.jogos.add');
+
     Route::patch(
         '/perfil/jogos',
         [ProfileController::class, 'updateJogos']
@@ -155,7 +160,7 @@ Route::middleware([
     )->name('perfil.plataformas.update');
 
     Route::get(
-        '/usuarios/{user}',
+        '/usuarios/{user:nickname}',
         [ProfileController::class, 'showPublic']
     )->name('usuarios.perfil');
 

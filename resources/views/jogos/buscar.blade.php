@@ -31,6 +31,8 @@
     <div
         class="game-search-page"
         id="gameSearchPage"
+        data-csrf="{{ csrf_token() }}"
+        data-level-descriptions='@json($descricoesNiveis)'
     >
 
         <form
@@ -382,82 +384,141 @@
 
                     @forelse ($jogos as $jogo)
 
-                        <a
-                            href="{{ route(
-                                'jogos.show',
-                                $jogo
-                            ) }}"
-                            class="game-search-card"
-                        >
+                        @php
+                            $jogoPerfil = $jogosUsuario->get(
+                                $jogo->id_jogo
+                            );
 
-                            <div class="game-search-cover-box">
+                            $estaNoPerfil =
+                                $jogoPerfil !== null;
 
-                                <img
-                                    src="{{ $jogo->capa }}"
-                                    alt="{{ $jogo->nome }}"
-                                    class="game-search-cover"
-                                >
-
-                            </div>
-
-
-                            <div class="game-search-content">
-
-                                <span class="game-search-name">
-                                    {{ $jogo->nome }}
-                                </span>
+                            $nivelPerfil =
+                                $estaNoPerfil
+                                && $jogoPerfil
+                                    ->pivot
+                                    ->nivel_proficiencia
+                                    ? (int)$jogoPerfil
+                                        ->pivot
+                                        ->nivel_proficiencia
+                                    : 1;
+                        @endphp
 
 
-                                <div class="game-search-online">
+                        <article class="game-search-card">
 
-                                    @if (
-                                        $jogo->steam_app_id
-                                        && $jogo->jogadores_online
-                                            !== null
-                                    )
+                            <a
+                                href="{{ route(
+                                    'jogos.show',
+                                    $jogo
+                                ) }}"
+                                class="game-search-card-link"
+                            >
 
-                                        <span
-                                            class="game-online-dot"
-                                        ></span>
+                                <div class="game-search-cover-box">
 
-                                        <span>
-                                            {{ number_format(
-                                                $jogo->jogadores_online,
-                                                0,
-                                                ',',
-                                                '.'
-                                            ) }}
-
-                                            na Steam
-                                        </span>
-
-                                    @elseif ($jogo->steam_app_id)
-
-                                        <span
-                                            class="
-                                                game-online-unavailable
-                                            "
-                                        >
-                                            Jogadores Steam indisponíveis
-                                        </span>
-
-                                    @else
-
-                                        <span
-                                            class="
-                                                game-online-unavailable
-                                            "
-                                        >
-                                            Jogo externo à Steam
-                                        </span>
-
-                                    @endif
+                                    <img
+                                        src="{{ $jogo->capa }}"
+                                        alt="{{ $jogo->nome }}"
+                                        class="game-search-cover"
+                                    >
 
                                 </div>
 
-                            </div>
 
-                        </a>
+                                <div class="game-search-content">
+
+                                    <span class="game-search-name">
+                                        {{ $jogo->nome }}
+                                    </span>
+
+
+                                    <div class="game-search-online">
+
+                                        @if (
+                                            $jogo->steam_app_id
+                                            && $jogo->jogadores_online
+                                                !== null
+                                        )
+
+                                            <span
+                                                class="game-online-dot"
+                                            ></span>
+
+                                            <span>
+                                                {{ number_format(
+                                                    $jogo->jogadores_online,
+                                                    0,
+                                                    ',',
+                                                    '.'
+                                                ) }}
+
+                                                na Steam
+                                            </span>
+
+                                        @elseif ($jogo->steam_app_id)
+
+                                            <span
+                                                class="game-online-unavailable"
+                                            >
+                                                Jogadores Steam indisponíveis
+                                            </span>
+
+                                        @else
+
+                                            <span
+                                                class="game-online-unavailable"
+                                            >
+                                                Jogo externo à Steam
+                                            </span>
+
+                                        @endif
+
+                                    </div>
+
+                                </div>
+
+                            </a>
+
+
+                            <button
+                                type="button"
+                                class="
+                                    game-search-profile-action
+                                    {{ $estaNoPerfil
+                                        ? 'selected'
+                                        : '' }}
+                                "
+                                data-game-profile-action
+                                data-game-id="{{ $jogo->id_jogo }}"
+                                data-name="{{ $jogo->nome }}"
+                                data-cover="{{ $jogo->capa }}"
+                                data-level="{{ $nivelPerfil }}"
+                                data-selected="{{ $estaNoPerfil
+                                    ? '1'
+                                    : '0' }}"
+                                data-add-url="{{ route(
+                                    'perfil.jogos.add',
+                                    $jogo
+                                ) }}"
+                                data-update-url="{{ route(
+                                    'perfil.jogos.nivel.update',
+                                    $jogo
+                                ) }}"
+                                title="{{ $estaNoPerfil
+                                    ? 'Editar nível em Meus Jogos'
+                                    : 'Adicionar aos Meus Jogos' }}"
+                                aria-label="{{ $estaNoPerfil
+                                    ? 'Editar nível de ' . $jogo->nome
+                                    : 'Adicionar ' . $jogo->nome . ' aos Meus Jogos' }}"
+                            >
+                                <i
+                                    class="bi {{ $estaNoPerfil
+                                        ? 'bi-check-lg'
+                                        : 'bi-plus-lg' }}"
+                                ></i>
+                            </button>
+
+                        </article>
 
                     @empty
 
@@ -485,6 +546,109 @@
             </div>
 
         </div>
+
+    <div
+        class="modal fade"
+        id="gameSearchLevelModal"
+        tabindex="-1"
+        aria-hidden="true"
+    >
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content profile-games-modal">
+
+                <div class="modal-header">
+                    <h2
+                        class="modal-title"
+                        id="gameSearchLevelTitle"
+                    >
+                        Nível de proficiência
+                    </h2>
+
+                    <button
+                        type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                        aria-label="Fechar"
+                    ></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="profile-level-detail-game">
+                        <img
+                            src=""
+                            alt=""
+                            id="gameSearchLevelCover"
+                        >
+
+                        <strong id="gameSearchLevelGame"></strong>
+                    </div>
+
+                    <div class="profile-level-edit-current">
+                        <strong id="gameSearchLevelName">
+                            Iniciante
+                        </strong>
+                    </div>
+
+                    <p
+                        class="game-level-selection-description"
+                        id="gameSearchLevelDescription"
+                    >
+                        {{ $descricoesNiveis[1] }}
+                    </p>
+
+                    <div class="game-level-range-wrap">
+                        <input
+                            type="range"
+                            min="1"
+                            max="5"
+                            step="1"
+                            value="1"
+                            class="game-level-range"
+                            id="gameSearchLevelRange"
+                        >
+
+                        <i
+                            class="bi bi-star-fill game-level-star"
+                            aria-hidden="true"
+                        ></i>
+                    </div>
+
+                    <div class="game-level-points">
+                        <span>1</span>
+                        <span>2</span>
+                        <span>3</span>
+                        <span>4</span>
+                        <span>5</span>
+                    </div>
+
+                    <div
+                        class="game-level-error"
+                        id="gameSearchLevelError"
+                        hidden
+                    ></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn profile-games-save"
+                        id="gameSearchLevelSave"
+                    >
+                        Adicionar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
     </div>
 

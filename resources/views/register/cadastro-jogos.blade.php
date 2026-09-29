@@ -2,15 +2,19 @@
 
 @section('content')
 
-    <main class="game-setup-page">
+    <main
+        class="game-setup-page"
+        id="gameSetupPage"
+        data-csrf="{{ csrf_token() }}"
+        data-select-url="{{ route('cadastro.jogos.selecionar') }}"
+        data-limit="{{ $limiteJogos }}"
+        data-selected-count="{{ count($selecionados) }}"
+        data-level-descriptions='@json($descricoesNiveis)'
+    >
 
         <div class="game-setup-container">
 
             <div class="game-setup-header">
-
-                <span class="game-setup-step">
-                    Etapa 2 de 2
-                </span>
 
                 <h1>
                     Escolha seus jogos
@@ -210,6 +214,7 @@
                     'cadastro.jogos.store'
                 ) }}"
                 class="game-setup-footer"
+                id="gameSetupFinishForm"
             >
 
                 @csrf
@@ -231,6 +236,60 @@
         </div>
 
     </main>
+
+
+    <div
+        class="modal fade game-setup-guide-modal"
+        id="gameSetupIntroModal"
+        tabindex="-1"
+        aria-hidden="true"
+        data-bs-backdrop="static"
+        data-bs-keyboard="false"
+    >
+        <div class="modal-dialog modal-dialog-centered game-setup-guide-dialog">
+            <div class="modal-content profile-games-modal game-setup-guide-content">
+                <div class="modal-body game-setup-guide-body">
+
+                    <div class="game-setup-guide-mascot">
+                        @if (file_exists(public_path('images/astronauta-inicio.png')))
+                            <img
+                                src="{{ asset('images/astronauta-inicio.png') }}"
+                                alt="Astronauta do Squad Maker"
+                            >
+                        @else
+                            <i class="bi bi-rocket-takeoff"></i>
+                        @endif
+                    </div>
+
+                    <h2>
+                        Vamos montar seu perfil
+                    </h2>
+
+                    <p>
+                        Escolha até 3 jogos que você costuma jogar e informe seu nível em cada um. Isso ajuda o Squad Maker a começar a encontrar jogadores com interesses e experiências parecidas com as suas.
+                    </p>
+
+                    <div class="game-setup-guide-note">
+                        <i class="bi bi-info-circle"></i>
+
+                        <span>
+                            Fique tranquilo, você poderá adicionar mais jogos depois pelo seu perfil. Aqui vamos escolher apenas os primeiros para começar.
+                        </span>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn profile-games-save game-setup-guide-primary"
+                        id="gameSetupIntroStart"
+                        data-bs-dismiss="modal"
+                    >
+                        Começar
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     <div
@@ -385,744 +444,66 @@
 
     </div>
 
-
-    <script>
-        const levelNames = {
-            1: 'Iniciante',
-            2: 'Casual',
-            3: 'Engajado',
-            4: 'Competitivo',
-            5: 'Hardcore'
-        };
-
-        const levelDescriptions =
-            @json($descricoesNiveis);
-
-        const levelColors = {
-            1: '#aaa1b8',
-            2: '#39d353',
-            3: '#25c2e8',
-            4: '#4f7cff',
-            5: '#ec3bbd'
-        };
-
-
-        const modalElement =
-            document.getElementById(
-                'nivelJogoModal'
-            );
-
-        const levelRange =
-            document.getElementById(
-                'levelGameRange'
-            );
-
-        const levelName =
-            document.getElementById(
-                'levelGameNameValue'
-            );
-
-        const levelDescription =
-            document.getElementById(
-                'levelGameDescription'
-            );
-
-        const gameName =
-            document.getElementById(
-                'levelGameName'
-            );
-
-        const gameCover =
-            document.getElementById(
-                'levelGameCover'
-            );
-
-        const gameError =
-            document.getElementById(
-                'levelGameError'
-            );
-
-        const saveButton =
-            document.getElementById(
-                'saveGameLevelButton'
-            );
-
-        const removeButton =
-            document.getElementById(
-                'removeGameButton'
-            );
-
-        const countElement =
-            document.getElementById(
-                'gameSetupCount'
-            );
-
-
-        const searchForm =
-            document.getElementById(
-                'gameSetupSearchForm'
-            );
-
-        const searchInput =
-            document.getElementById(
-                'gameSetupSearchInput'
-            );
-
-        const searchResults =
-            document.getElementById(
-                'gameSetupResults'
-            );
-
-        const searchLoading =
-            document.getElementById(
-                'gameSetupSearchLoading'
-            );
-
-
-        let currentCard = null;
-
-        let selectedCount =
-            {{ count($selecionados) }};
-
-        let searchTimer = null;
-
-        let searchController = null;
-
-
-        function updateRangeVisual(
-            range,
-            nameElement
-        ) {
-            const value =
-                Number(range.value);
-
-            const percent =
-                ((value - 1) / 4) * 100;
-
-            const wrapper =
-                range.closest(
-                    '.game-level-range-wrap'
-                );
-
-
-            nameElement.textContent =
-                levelNames[value];
-
-            if (levelDescription) {
-                levelDescription.textContent =
-                    levelDescriptions[value] || '';
-            }
-
-            nameElement.style.color =
-                levelColors[value];
-
-
-            wrapper.style.setProperty(
-                '--level-color',
-                levelColors[value]
-            );
-
-            wrapper.style.setProperty(
-                '--level-percent',
-                percent + '%'
-            );
-
-
-            range.style.setProperty(
-                '--level-color',
-                levelColors[value]
-            );
-
-            range.style.setProperty(
-                '--level-percent',
-                percent + '%'
-            );
-        }
-
-
-        function updateCount() {
-            countElement.textContent =
-                selectedCount
-                + ' de {{ $limiteJogos }}'
-                + ' jogos selecionados';
-        }
-
-
-        function updateModalLimit(
-            selected
-        ) {
-            const limitReached =
-                !selected
-                && selectedCount
-                >= {{ $limiteJogos }};
-
-
-            saveButton.disabled =
-                limitReached;
-
-
-            if (limitReached) {
-
-                gameError.textContent =
-                    'Você já escolheu '
-                    + '{{ $limiteJogos }}'
-                    + ' jogos. Remova um deles'
-                    + ' para adicionar outro.';
-
-                gameError.hidden =
-                    false;
-            }
-        }
-
-
-        function showSearchLoading(
-            active
-        ) {
-            if (!searchLoading) {
-                return;
-            }
-
-            searchLoading.hidden =
-                !active;
-        }
-
-
-        function buildSearchUrl() {
-            const url = new URL(
-                searchForm.action,
-                window.location.origin
-            );
-
-            const term =
-                searchInput.value.trim();
-
-            if (term !== '') {
-                url.searchParams.set(
-                    'q',
-                    term
-                );
-            }
-
-            return url;
-        }
-
-
-        async function searchGames(
-            url
-        ) {
-            if (searchController) {
-                searchController.abort();
-            }
-
-            searchController =
-                new AbortController();
-
-            showSearchLoading(true);
-
-
-            try {
-                const response =
-                    await fetch(
-                        url.toString(),
-                        {
-                            headers: {
-                                'Accept':
-                                    'text/html',
-
-                                'X-Requested-With':
-                                    'XMLHttpRequest'
-                            },
-
-                            signal:
-                            searchController.signal
-                        }
-                    );
-
-
-                if (!response.ok) {
-                    throw new Error(
-                        'Não foi possível buscar os jogos.'
-                    );
-                }
-
-
-                const html =
-                    await response.text();
-
-
-                const documentResponse =
-                    new DOMParser()
-                        .parseFromString(
-                            html,
-                            'text/html'
-                        );
-
-
-                const newResults =
-                    documentResponse
-                        .getElementById(
-                            'gameSetupResults'
-                        );
-
-
-                if (!newResults) {
-                    throw new Error(
-                        'Não foi possível atualizar os resultados.'
-                    );
-                }
-
-
-                searchResults.innerHTML =
-                    newResults.innerHTML;
-
-
-                window.history.replaceState(
-                    {},
-                    '',
-                    url.toString()
-                );
-
-            } catch (error) {
-
-                if (
-                    error.name
-                    === 'AbortError'
-                ) {
-                    return;
-                }
-
-                console.error(error);
-
-            } finally {
-                showSearchLoading(false);
-            }
-        }
-
-
-        function scheduleSearch() {
-            clearTimeout(
-                searchTimer
-            );
-
-            searchTimer =
-                setTimeout(
-                    function() {
-                        searchGames(
-                            buildSearchUrl()
-                        );
-                    },
-                    300
-                );
-        }
-
-
-        searchInput.addEventListener(
-            'input',
-            scheduleSearch
-        );
-
-
-        searchForm.addEventListener(
-            'submit',
-            function(event) {
-                event.preventDefault();
-
-                clearTimeout(
-                    searchTimer
-                );
-
-                searchGames(
-                    buildSearchUrl()
-                );
-            }
-        );
-
-
-        searchResults.addEventListener(
-            'click',
-            function(event) {
-                const link =
-                    event.target.closest(
-                        '.squad-pagination a'
-                    );
-
-                if (!link) {
-                    return;
-                }
-
-                event.preventDefault();
-
-                const url =
-                    new URL(
-                        link.href,
-                        window.location.origin
-                    );
-
-                searchGames(url);
-            }
-        );
-
-
-        modalElement.addEventListener(
-            'show.bs.modal',
-            function(event) {
-
-                currentCard =
-                    event.relatedTarget;
-
-                if (!currentCard) {
-                    return;
-                }
-
-
-                const selected =
-                    currentCard
-                        .dataset
-                        .selected
-                    === '1';
-
-
-                gameName.textContent =
-                    currentCard
-                        .dataset
-                        .name;
-
-
-                gameCover.src =
-                    currentCard
-                        .dataset
-                        .cover;
-
-
-                gameCover.alt =
-                    currentCard
-                        .dataset
-                        .name;
-
-
-                levelRange.value =
-                    currentCard
-                        .dataset
-                        .level
-                    || 1;
-
-
-                gameError.hidden =
-                    true;
-
-                gameError.textContent =
-                    '';
-
-
-                removeButton.hidden =
-                    !selected;
-
-                removeButton.disabled =
-                    false;
-
-
-                updateModalLimit(
-                    selected
-                );
-
-                updateRangeVisual(
-                    levelRange,
-                    levelName
-                );
-            }
-        );
-
-
-        levelRange.addEventListener(
-            'input',
-            function() {
-                updateRangeVisual(
-                    levelRange,
-                    levelName
-                );
-            }
-        );
-
-
-        saveButton.addEventListener(
-            'click',
-            async function() {
-
-                if (
-                    !currentCard
-                    || saveButton.disabled
-                ) {
-                    return;
-                }
-
-
-                gameError.hidden =
-                    true;
-
-                gameError.textContent =
-                    '';
-
-                saveButton.disabled =
-                    true;
-
-
-                try {
-                    const response =
-                        await fetch(
-                            '{{ route(
-                                'cadastro.jogos.selecionar'
-                            ) }}',
-                            {
-                                method:
-                                    'POST',
-
-                                headers: {
-                                    'Content-Type':
-                                        'application/json',
-
-                                    'Accept':
-                                        'application/json',
-
-                                    'X-CSRF-TOKEN':
-                                        '{{ csrf_token() }}'
-                                },
-
-                                body:
-                                    JSON.stringify({
-                                        id_jogo:
-                                        currentCard
-                                            .dataset
-                                            .id,
-
-                                        nivel:
-                                            Number(
-                                                levelRange
-                                                    .value
-                                            )
-                                    })
-                            }
-                        );
-
-
-                    const data =
-                        await response.json();
-
-
-                    if (!response.ok) {
-                        throw new Error(
-                            data.message
-                            || 'Não foi possível salvar o jogo.'
-                        );
-                    }
-
-
-                    const wasSelected =
-                        currentCard
-                            .dataset
-                            .selected
-                        === '1';
-
-
-                    currentCard
-                        .dataset
-                        .selected =
-                        '1';
-
-                    currentCard
-                        .dataset
-                        .level =
-                        String(
-                            data.nivel
-                        );
-
-                    currentCard
-                        .classList
-                        .add(
-                            'selected'
-                        );
-
-
-                    const badge =
-                        currentCard
-                            .querySelector(
-                                '.game-setup-level-badge'
-                            );
-
-
-                    badge.textContent =
-                        data.nivel_nome;
-
-                    badge.hidden =
-                        false;
-
-
-                    if (!wasSelected) {
-                        selectedCount++;
-                    }
-
-
-                    updateCount();
-
-
-                    bootstrap.Modal
-                        .getOrCreateInstance(
-                            modalElement
-                        )
-                        .hide();
-
-                } catch (error) {
-
-                    gameError.textContent =
-                        error.message;
-
-                    gameError.hidden =
-                        false;
-
-
-                    const selected =
-                        currentCard
-                            .dataset
-                            .selected
-                        === '1';
-
-                    updateModalLimit(
-                        selected
-                    );
-
-                } finally {
-
-                    const selected =
-                        currentCard
-                        && currentCard
-                            .dataset
-                            .selected
-                        === '1';
-
-                    if (selected) {
-                        saveButton.disabled =
-                            false;
-                    }
-                }
-            }
-        );
-
-
-        removeButton.addEventListener(
-            'click',
-            async function() {
-
-                if (!currentCard) {
-                    return;
-                }
-
-
-                removeButton.disabled =
-                    true;
-
-                gameError.hidden =
-                    true;
-
-                gameError.textContent =
-                    '';
-
-
-                try {
-                    const response =
-                        await fetch(
-                            currentCard
-                                .dataset
-                                .removeUrl,
-                            {
-                                method:
-                                    'DELETE',
-
-                                headers: {
-                                    'Accept':
-                                        'application/json',
-
-                                    'X-CSRF-TOKEN':
-                                        '{{ csrf_token() }}'
-                                }
-                            }
-                        );
-
-
-                    const data =
-                        await response.json();
-
-
-                    if (!response.ok) {
-                        throw new Error(
-                            data.message
-                            || 'Não foi possível remover o jogo.'
-                        );
-                    }
-
-
-                    currentCard
-                        .dataset
-                        .selected =
-                        '0';
-
-                    currentCard
-                        .dataset
-                        .level =
-                        '1';
-
-                    currentCard
-                        .classList
-                        .remove(
-                            'selected'
-                        );
-
-
-                    const badge =
-                        currentCard
-                            .querySelector(
-                                '.game-setup-level-badge'
-                            );
-
-
-                    badge.textContent =
-                        '';
-
-                    badge.hidden =
-                        true;
-
-
-                    selectedCount =
-                        data.count;
-
-
-                    updateCount();
-
-
-                    bootstrap.Modal
-                        .getOrCreateInstance(
-                            modalElement
-                        )
-                        .hide();
-
-                } catch (error) {
-
-                    gameError.textContent =
-                        error.message;
-
-                    gameError.hidden =
-                        false;
-
-                    removeButton.disabled =
-                        false;
-                }
-            }
-        );
-
-
-        updateRangeVisual(
-            levelRange,
-            levelName
-        );
-
-    </script>
+    <div
+        class="modal fade game-setup-guide-modal"
+        id="gameSetupCompleteModal"
+        tabindex="-1"
+        aria-hidden="true"
+        data-bs-backdrop="static"
+        data-bs-keyboard="false"
+    >
+        <div class="modal-dialog modal-dialog-centered game-setup-guide-dialog">
+            <div class="modal-content profile-games-modal game-setup-guide-content">
+                <div class="modal-body game-setup-guide-body">
+
+                    <div class="game-setup-guide-mascot game-setup-guide-mascot-ready">
+                        @if (file_exists(public_path('images/astronauta-pronto.png')))
+                            <img
+                                src="{{ asset('images/astronauta-pronto.png') }}"
+                                alt="Astronauta do Squad Maker"
+                            >
+                        @else
+                            <i class="bi bi-stars"></i>
+                        @endif
+                    </div>
+
+                    <h2>
+                        Tudo pronto!
+                    </h2>
+
+                    <p>
+                        Você escolheu seus 3 primeiros jogos. Seu perfil já tem uma base para começar.
+                    </p>
+
+                    <div class="game-setup-guide-note">
+                        <i class="bi bi-controller"></i>
+
+                        <span>
+                            Depois você poderá adicionar, remover ou reorganizar outros jogos diretamente pelo seu perfil.
+                        </span>
+                    </div>
+
+                    <div class="game-setup-guide-actions">
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                        >
+                            Revisar escolhas
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn profile-games-save"
+                            id="gameSetupCompleteFinish"
+                        >
+                            Concluir cadastro
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
 
 @endsection

@@ -193,7 +193,7 @@
                     <a
                         href="{{ route(
                             'usuarios.perfil',
-                            $jogador
+                            ['user' => $jogador->nickname]
                         ) }}"
                         class="
                             game-partner-card

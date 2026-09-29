@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     iniciarAvatarPerfil();
     iniciarGenerosPerfil();
     iniciarBuscasCatalogo();
+    iniciarBuscaJogosPerfil();
+    iniciarCadastroJogos();
     iniciarImportacaoSteam();
 });
 
@@ -272,6 +274,603 @@ function iniciarBuscaCatalogo(form, configuracao) {
 
     atualizarContadorFiltros();
 }
+
+function iniciarBuscaJogosPerfil() {
+    const page = document.getElementById('gameSearchPage');
+    const modalElement = document.getElementById('gameSearchLevelModal');
+    const levelRange = document.getElementById('gameSearchLevelRange');
+    const levelName = document.getElementById('gameSearchLevelName');
+    const levelDescription = document.getElementById('gameSearchLevelDescription');
+    const gameName = document.getElementById('gameSearchLevelGame');
+    const gameCover = document.getElementById('gameSearchLevelCover');
+    const modalTitle = document.getElementById('gameSearchLevelTitle');
+    const saveButton = document.getElementById('gameSearchLevelSave');
+    const errorElement = document.getElementById('gameSearchLevelError');
+
+    if (!page || !modalElement || !levelRange || !levelName || !gameName || !gameCover || !saveButton) {
+        return;
+    }
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    const csrf = page.dataset.csrf;
+    const descriptions = page.dataset.levelDescriptions
+        ? JSON.parse(page.dataset.levelDescriptions)
+        : {};
+
+    const names = {
+        1: 'Iniciante',
+        2: 'Casual',
+        3: 'Engajado',
+        4: 'Competitivo',
+        5: 'Hardcore'
+    };
+
+    const colors = {
+        1: '#aaa1b8',
+        2: '#39d353',
+        3: '#25c2e8',
+        4: '#4f7cff',
+        5: '#ec3bbd'
+    };
+
+    let currentButton = null;
+
+    function updateLevel() {
+        const value = Number(levelRange.value);
+        const percent = ((value - 1) / 4) * 100;
+        const wrapper = levelRange.closest('.game-level-range-wrap');
+
+        levelName.textContent = names[value];
+        levelName.style.color = colors[value];
+
+        if (levelDescription) {
+            levelDescription.textContent = descriptions[value] || '';
+        }
+
+        if (wrapper) {
+            wrapper.style.setProperty('--level-color', colors[value]);
+            wrapper.style.setProperty('--level-percent', percent + '%');
+        }
+
+        levelRange.style.setProperty('--level-color', colors[value]);
+        levelRange.style.setProperty('--level-percent', percent + '%');
+    }
+
+    function showError(message = '') {
+        if (!errorElement) {
+            return;
+        }
+
+        errorElement.textContent = message;
+        errorElement.hidden = message === '';
+    }
+
+    function responseMessage(data, fallback) {
+        if (data && data.message) {
+            return data.message;
+        }
+
+        if (data && data.errors) {
+            const firstError = Object.values(data.errors)[0];
+
+            if (Array.isArray(firstError) && firstError.length > 0) {
+                return firstError[0];
+            }
+        }
+
+        return fallback;
+    }
+
+    page.addEventListener('click', function(event) {
+        const button = event.target.closest('[data-game-profile-action]');
+
+        if (!button) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        currentButton = button;
+
+        const selected = button.dataset.selected === '1';
+
+        gameName.textContent = button.dataset.name;
+        gameCover.src = button.dataset.cover;
+        gameCover.alt = button.dataset.name;
+        levelRange.value = button.dataset.level || '1';
+
+        if (modalTitle) {
+            modalTitle.textContent = selected
+                ? 'Editar nível'
+                : 'Adicionar aos Meus Jogos';
+        }
+
+        saveButton.textContent = selected
+            ? 'Salvar nível'
+            : 'Adicionar';
+
+        showError();
+        updateLevel();
+        modal.show();
+    });
+
+    levelRange.addEventListener('input', updateLevel);
+
+    saveButton.addEventListener('click', async function() {
+        if (!currentButton) {
+            return;
+        }
+
+        const selected = currentButton.dataset.selected === '1';
+        const url = selected
+            ? currentButton.dataset.updateUrl
+            : currentButton.dataset.addUrl;
+
+        saveButton.disabled = true;
+        showError();
+
+        try {
+            const response = await fetch(url, {
+                method: selected ? 'PATCH' : 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf
+                },
+                body: JSON.stringify({
+                    nivel: Number(levelRange.value)
+                })
+            });
+
+            const data = await response.json().catch(function() {
+                return {};
+            });
+
+            if (!response.ok) {
+                throw new Error(
+                    responseMessage(
+                        data,
+                        'Não foi possível atualizar Meus Jogos.'
+                    )
+                );
+            }
+
+            currentButton.dataset.selected = '1';
+            currentButton.dataset.level = String(data.nivel || levelRange.value);
+            currentButton.classList.add('selected');
+            currentButton.title = 'Editar nível em Meus Jogos';
+            currentButton.setAttribute(
+                'aria-label',
+                'Editar nível de ' + currentButton.dataset.name
+            );
+
+            const icon = currentButton.querySelector('i');
+
+            if (icon) {
+                icon.className = 'bi bi-check-lg';
+            }
+
+            modal.hide();
+
+        } catch (error) {
+            showError(error.message);
+
+        } finally {
+            saveButton.disabled = false;
+        }
+    });
+
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        currentButton = null;
+        showError();
+    });
+
+    updateLevel();
+}
+
+
+function iniciarCadastroJogos() {
+    const page = document.getElementById('gameSetupPage');
+
+    if (!page) {
+        return;
+    }
+
+    const modalElement = document.getElementById('nivelJogoModal');
+    const levelRange = document.getElementById('levelGameRange');
+    const levelName = document.getElementById('levelGameNameValue');
+    const levelDescription = document.getElementById('levelGameDescription');
+    const gameName = document.getElementById('levelGameName');
+    const gameCover = document.getElementById('levelGameCover');
+    const gameError = document.getElementById('levelGameError');
+    const saveButton = document.getElementById('saveGameLevelButton');
+    const removeButton = document.getElementById('removeGameButton');
+    const countElement = document.getElementById('gameSetupCount');
+    const searchForm = document.getElementById('gameSetupSearchForm');
+    const searchInput = document.getElementById('gameSetupSearchInput');
+    const searchResults = document.getElementById('gameSetupResults');
+    const searchLoading = document.getElementById('gameSetupSearchLoading');
+    const finishForm = document.getElementById('gameSetupFinishForm');
+    const introModalElement = document.getElementById('gameSetupIntroModal');
+    const introStart = document.getElementById('gameSetupIntroStart');
+    const completeModalElement = document.getElementById('gameSetupCompleteModal');
+    const completeFinish = document.getElementById('gameSetupCompleteFinish');
+
+    if (!modalElement || !levelRange || !levelName || !gameName || !gameCover || !saveButton || !removeButton || !searchForm || !searchInput || !searchResults) {
+        return;
+    }
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    const introModal = introModalElement
+        ? bootstrap.Modal.getOrCreateInstance(introModalElement)
+        : null;
+    const completeModal = completeModalElement
+        ? bootstrap.Modal.getOrCreateInstance(completeModalElement)
+        : null;
+
+    const csrf = page.dataset.csrf;
+    const selectUrl = page.dataset.selectUrl;
+    const limit = Number(page.dataset.limit || 3);
+    const descriptions = page.dataset.levelDescriptions
+        ? JSON.parse(page.dataset.levelDescriptions)
+        : {};
+
+    const names = {
+        1: 'Iniciante',
+        2: 'Casual',
+        3: 'Engajado',
+        4: 'Competitivo',
+        5: 'Hardcore'
+    };
+
+    const colors = {
+        1: '#aaa1b8',
+        2: '#39d353',
+        3: '#25c2e8',
+        4: '#4f7cff',
+        5: '#ec3bbd'
+    };
+
+    let currentCard = null;
+    let selectedCount = Number(page.dataset.selectedCount || 0);
+    let searchTimer = null;
+    let searchController = null;
+    let showCompleteAfterLevel = false;
+
+    function updateRangeVisual() {
+        const value = Number(levelRange.value);
+        const percent = ((value - 1) / 4) * 100;
+        const wrapper = levelRange.closest('.game-level-range-wrap');
+
+        levelName.textContent = names[value];
+        levelName.style.color = colors[value];
+
+        if (levelDescription) {
+            levelDescription.textContent = descriptions[value] || '';
+        }
+
+        if (wrapper) {
+            wrapper.style.setProperty('--level-color', colors[value]);
+            wrapper.style.setProperty('--level-percent', percent + '%');
+        }
+
+        levelRange.style.setProperty('--level-color', colors[value]);
+        levelRange.style.setProperty('--level-percent', percent + '%');
+    }
+
+    function updateCount() {
+        if (!countElement) {
+            return;
+        }
+
+        countElement.textContent = selectedCount
+            + ' de '
+            + limit
+            + ' jogos selecionados';
+    }
+
+    function updateModalLimit(selected) {
+        const limitReached = !selected && selectedCount >= limit;
+
+        saveButton.disabled = limitReached;
+
+        if (gameError) {
+            if (limitReached) {
+                gameError.textContent = 'Você já escolheu '
+                    + limit
+                    + ' jogos. Remova um deles para adicionar outro.';
+                gameError.hidden = false;
+            } else {
+                gameError.textContent = '';
+                gameError.hidden = true;
+            }
+        }
+    }
+
+    function showSearchLoading(active) {
+        if (searchLoading) {
+            searchLoading.hidden = !active;
+        }
+    }
+
+    function buildSearchUrl() {
+        const url = new URL(searchForm.action, window.location.origin);
+        const term = searchInput.value.trim();
+
+        if (term !== '') {
+            url.searchParams.set('q', term);
+        }
+
+        return url;
+    }
+
+    async function searchGames(url) {
+        if (searchController) {
+            searchController.abort();
+        }
+
+        searchController = new AbortController();
+        showSearchLoading(true);
+
+        try {
+            const response = await fetch(url.toString(), {
+                headers: {
+                    'Accept': 'text/html',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                signal: searchController.signal
+            });
+
+            if (!response.ok) {
+                throw new Error('Não foi possível buscar os jogos.');
+            }
+
+            const html = await response.text();
+            const documentResponse = new DOMParser().parseFromString(
+                html,
+                'text/html'
+            );
+            const newResults = documentResponse.getElementById('gameSetupResults');
+
+            if (!newResults) {
+                throw new Error('Não foi possível atualizar os resultados.');
+            }
+
+            searchResults.innerHTML = newResults.innerHTML;
+            window.history.replaceState({}, '', url.toString());
+
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error(error);
+            }
+
+        } finally {
+            showSearchLoading(false);
+        }
+    }
+
+    function scheduleSearch() {
+        clearTimeout(searchTimer);
+
+        searchTimer = setTimeout(function() {
+            searchGames(buildSearchUrl());
+        }, 300);
+    }
+
+    searchInput.addEventListener('input', scheduleSearch);
+
+    searchForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        clearTimeout(searchTimer);
+        searchGames(buildSearchUrl());
+    });
+
+    searchResults.addEventListener('click', function(event) {
+        const link = event.target.closest('.squad-pagination a');
+
+        if (!link) {
+            return;
+        }
+
+        event.preventDefault();
+
+        searchGames(
+            new URL(link.href, window.location.origin)
+        );
+    });
+
+    modalElement.addEventListener('show.bs.modal', function(event) {
+        currentCard = event.relatedTarget;
+
+        if (!currentCard) {
+            return;
+        }
+
+        const selected = currentCard.dataset.selected === '1';
+
+        gameName.textContent = currentCard.dataset.name;
+        gameCover.src = currentCard.dataset.cover;
+        gameCover.alt = currentCard.dataset.name;
+        levelRange.value = currentCard.dataset.level || 1;
+
+        if (gameError) {
+            gameError.hidden = true;
+            gameError.textContent = '';
+        }
+
+        removeButton.hidden = !selected;
+        removeButton.disabled = false;
+        updateModalLimit(selected);
+        updateRangeVisual();
+    });
+
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        currentCard = null;
+
+        if (showCompleteAfterLevel && completeModal) {
+            showCompleteAfterLevel = false;
+            completeModal.show();
+        }
+    });
+
+    levelRange.addEventListener('input', updateRangeVisual);
+
+    saveButton.addEventListener('click', async function() {
+        if (!currentCard || saveButton.disabled) {
+            return;
+        }
+
+        if (gameError) {
+            gameError.hidden = true;
+            gameError.textContent = '';
+        }
+
+        saveButton.disabled = true;
+
+        try {
+            const response = await fetch(selectUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrf
+                },
+                body: JSON.stringify({
+                    id_jogo: Number(currentCard.dataset.id),
+                    nivel: Number(levelRange.value)
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message || 'Não foi possível salvar o jogo.'
+                );
+            }
+
+            const wasSelected = currentCard.dataset.selected === '1';
+
+            currentCard.dataset.selected = '1';
+            currentCard.dataset.level = String(data.nivel);
+            currentCard.classList.add('selected');
+
+            const badge = currentCard.querySelector('.game-setup-level-badge');
+
+            if (badge) {
+                badge.textContent = data.nivel_nome;
+                badge.hidden = false;
+            }
+
+            selectedCount = Number(data.count);
+            updateCount();
+
+            if (!wasSelected && selectedCount === limit) {
+                showCompleteAfterLevel = true;
+            }
+
+            modal.hide();
+
+        } catch (error) {
+            if (gameError) {
+                gameError.textContent = error.message;
+                gameError.hidden = false;
+            }
+
+            const selected = currentCard
+                && currentCard.dataset.selected === '1';
+
+            updateModalLimit(selected);
+
+        } finally {
+            const selected = currentCard
+                && currentCard.dataset.selected === '1';
+
+            if (selected) {
+                saveButton.disabled = false;
+            }
+        }
+    });
+
+    removeButton.addEventListener('click', async function() {
+        if (!currentCard) {
+            return;
+        }
+
+        removeButton.disabled = true;
+
+        if (gameError) {
+            gameError.hidden = true;
+            gameError.textContent = '';
+        }
+
+        try {
+            const response = await fetch(currentCard.dataset.removeUrl, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrf
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message || 'Não foi possível remover o jogo.'
+                );
+            }
+
+            currentCard.dataset.selected = '0';
+            currentCard.dataset.level = '1';
+            currentCard.classList.remove('selected');
+
+            const badge = currentCard.querySelector('.game-setup-level-badge');
+
+            if (badge) {
+                badge.textContent = '';
+                badge.hidden = true;
+            }
+
+            selectedCount = Number(data.count);
+            updateCount();
+            modal.hide();
+
+        } catch (error) {
+            if (gameError) {
+                gameError.textContent = error.message;
+                gameError.hidden = false;
+            }
+
+            removeButton.disabled = false;
+        }
+    });
+
+    if (introModal && !sessionStorage.getItem('squadmakerCadastroJogosIntro')) {
+        introModal.show();
+    }
+
+    if (introStart) {
+        introStart.addEventListener('click', function() {
+            sessionStorage.setItem(
+                'squadmakerCadastroJogosIntro',
+                '1'
+            );
+        });
+    }
+
+    if (completeFinish && finishForm) {
+        completeFinish.addEventListener('click', function() {
+            completeFinish.disabled = true;
+            finishForm.requestSubmit();
+        });
+    }
+
+    updateRangeVisual();
+    updateCount();
+}
+
 
 function iniciarImportacaoSteam() {
     const form = document.getElementById(
@@ -940,6 +1539,12 @@ function iniciarPerfil() {
     const detailLevelError = document.getElementById('profileDetailLevelError');
     const detailLevelSave = document.getElementById('profileDetailLevelSave');
 
+    const removeConfirmElement = document.getElementById('profileRemoveGameConfirm');
+    const removeConfirmName = document.getElementById('profileRemoveGameName');
+    const removeConfirmCancel = document.getElementById('profileRemoveGameCancel');
+    const removeConfirmAccept = document.getElementById('profileRemoveGameAccept');
+    const removeConfirmError = document.getElementById('profileRemoveGameError');
+
     const stateElement = document.getElementById('profileGamesState');
 
     const initialGames = stateElement
@@ -967,6 +1572,7 @@ function iniciarPerfil() {
     let dropTarget = null;
     let dropBefore = true;
     let editingProfile = false;
+    let pendingRemove = null;
 
     function criarMapaJogos(jogos) {
         const mapa = new Map();
@@ -1115,6 +1721,114 @@ function iniciarPerfil() {
         }
 
         return data;
+    }
+
+    function abrirConfirmacaoRemocao(nome, dados) {
+        if (!removeConfirmElement || !removeConfirmName || !removeConfirmAccept) {
+            return false;
+        }
+
+        pendingRemove = dados;
+        removeConfirmName.textContent = nome;
+        removeConfirmAccept.disabled = false;
+        removeConfirmAccept.textContent = 'Remover';
+
+        if (removeConfirmError) {
+            removeConfirmError.hidden = true;
+            removeConfirmError.textContent = '';
+        }
+
+        removeConfirmElement.hidden = false;
+
+        if (removeConfirmCancel) {
+            removeConfirmCancel.focus();
+        }
+
+        return true;
+    }
+
+    function fecharConfirmacaoRemocao() {
+        if (!removeConfirmElement) {
+            return;
+        }
+
+        removeConfirmElement.hidden = true;
+        pendingRemove = null;
+
+        if (removeConfirmError) {
+            removeConfirmError.hidden = true;
+            removeConfirmError.textContent = '';
+        }
+    }
+
+    async function confirmarRemocao() {
+        if (!pendingRemove || !removeConfirmAccept) {
+            return;
+        }
+
+        if (pendingRemove.type === 'form') {
+            pendingRemove.form.dataset.confirmed = '1';
+            removeConfirmAccept.disabled = true;
+            removeConfirmAccept.textContent = 'Removendo...';
+            pendingRemove.form.requestSubmit();
+
+            return;
+        }
+
+        if (pendingRemove.type !== 'order') {
+            return;
+        }
+
+        const item = pendingRemove.item;
+        const removeButton = pendingRemove.button;
+
+        removeConfirmAccept.disabled = true;
+        removeConfirmAccept.textContent = 'Removendo...';
+        removeButton.disabled = true;
+
+        try {
+            const data = await requisicaoJson(
+                item.dataset.removeUrl,
+                {
+                    method: 'DELETE'
+                }
+            );
+
+            const id = Number(item.dataset.gameId);
+
+            persistedGames.delete(id);
+            workingGames.delete(id);
+            item.remove();
+
+            profileReloadRequired = true;
+
+            mostrarStatus(
+                orderStatus,
+                data.message || 'Jogo removido.',
+                'success'
+            );
+
+            if (
+                orderSaveButton
+                && orderList
+                    .querySelectorAll('.profile-order-item')
+                    .length === 0
+            ) {
+                orderSaveButton.disabled = true;
+            }
+
+            fecharConfirmacaoRemocao();
+
+        } catch (error) {
+            removeButton.disabled = false;
+            removeConfirmAccept.disabled = false;
+            removeConfirmAccept.textContent = 'Remover';
+
+            if (removeConfirmError) {
+                removeConfirmError.textContent = error.message;
+                removeConfirmError.hidden = false;
+            }
+        }
     }
 
     function atualizarContadorJogos() {
@@ -1725,6 +2439,56 @@ function iniciarPerfil() {
                     easing: 'ease-out'
                 }
             );
+        });
+    }
+
+    profilePage.addEventListener('submit', function(event) {
+        const form = event.target.closest('[data-profile-remove-form]');
+
+        if (!form || form.dataset.confirmed === '1') {
+            return;
+        }
+
+        event.preventDefault();
+
+        abrirConfirmacaoRemocao(
+            form.dataset.gameName || 'Este jogo',
+            {
+                type: 'form',
+                form: form
+            }
+        );
+    });
+
+    if (removeConfirmCancel) {
+        removeConfirmCancel.addEventListener(
+            'click',
+            fecharConfirmacaoRemocao
+        );
+    }
+
+    if (removeConfirmAccept) {
+        removeConfirmAccept.addEventListener(
+            'click',
+            confirmarRemocao
+        );
+    }
+
+    if (removeConfirmElement) {
+        removeConfirmElement.addEventListener('click', function(event) {
+            if (event.target === removeConfirmElement) {
+                fecharConfirmacaoRemocao();
+            }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (
+                event.key === 'Escape'
+                && !removeConfirmElement.hidden
+                && !(removeConfirmAccept && removeConfirmAccept.disabled)
+            ) {
+                fecharConfirmacaoRemocao();
+            }
         });
     }
 
@@ -2362,64 +3126,14 @@ function iniciarPerfil() {
                     return;
                 }
 
-                const confirmar = window.confirm(
-                    'Deseja remover este jogo do seu perfil?'
-                );
-
-                if (!confirmar) {
-                    return;
-                }
-
-                removeButton.disabled = true;
-
-                try {
-                    const data =
-                        await requisicaoJson(
-                            item.dataset.removeUrl,
-                            {
-                                method: 'DELETE'
-                            }
-                        );
-
-                    const id =
-                        Number(
-                            item.dataset.gameId
-                        );
-
-                    persistedGames.delete(id);
-                    workingGames.delete(id);
-
-                    item.remove();
-
-                    profileReloadRequired = true;
-
-                    mostrarStatus(
-                        orderStatus,
-                        data.message
-                        || 'Jogo removido.',
-                        'success'
-                    );
-
-                    if (
-                        orderSaveButton
-                        && orderList
-                            .querySelectorAll(
-                                '.profile-order-item'
-                            )
-                            .length === 0
-                    ) {
-                        orderSaveButton.disabled = true;
+                abrirConfirmacaoRemocao(
+                    item.dataset.gameName || 'Este jogo',
+                    {
+                        type: 'order',
+                        item: item,
+                        button: removeButton
                     }
-
-                } catch (error) {
-                    removeButton.disabled = false;
-
-                    mostrarStatus(
-                        orderStatus,
-                        error.message,
-                        'error'
-                    );
-                }
+                );
             }
         );
     }

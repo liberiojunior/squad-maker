@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class RegisterController extends Controller
@@ -28,6 +29,8 @@ class RegisterController extends Controller
                 'required',
                 'string',
                 'max:80',
+                'regex:/^[^\/?#\\\\]+$/u',
+                Rule::unique('tb_usuario', 'nickname'),
             ],
 
             'email' => [
@@ -57,6 +60,10 @@ class RegisterController extends Controller
             'nickname.required' => 'Informe o nome que será mostrado.',
 
             'nickname.max' => 'O nome pode ter no máximo 80 caracteres.',
+
+            'nickname.regex' => 'O nome não pode conter /, \\, ? ou #.',
+
+            'nickname.unique' => 'Este nome de perfil já está em uso.',
 
             'email.required' => 'Informe seu e-mail.',
 
