@@ -942,36 +942,13 @@ function iniciarBioPublica() {
         return;
     }
 
-    let expandida = false;
-
     function atualizar() {
-        if (expandida) {
-            bio.classList.add('is-expanded');
-            toggle.hidden = false;
-            toggle.textContent = 'Ver menos';
-            toggle.setAttribute('aria-expanded', 'true');
-            return;
-        }
-
-        bio.classList.remove('is-expanded');
-        toggle.textContent = 'Ver mais';
-        toggle.setAttribute('aria-expanded', 'false');
-
         requestAnimationFrame(function() {
             toggle.hidden = bio.scrollHeight <= bio.clientHeight + 1;
         });
     }
 
-    toggle.addEventListener('click', function() {
-        expandida = !expandida;
-        atualizar();
-    });
-
-    window.addEventListener('resize', function() {
-        if (!expandida) {
-            atualizar();
-        }
-    });
+    window.addEventListener('resize', atualizar);
 
     atualizar();
 }
@@ -1618,7 +1595,6 @@ function iniciarPerfil() {
     let dropBefore = true;
     let editingProfile = false;
     let pendingRemove = null;
-    let bioExpandida = false;
 
     function atualizarContadorBio() {
         if (!bioInput || !bioCounter) {
@@ -1642,25 +1618,12 @@ function iniciarPerfil() {
         const alturaRecolhida = 84;
         const excede = alturaCompleta > alturaRecolhida + 1;
 
-        if (editingProfile || bioExpandida || !excede) {
-            bioInput.style.height = alturaCompleta + 'px';
-        } else {
-            bioInput.style.height = alturaRecolhida + 'px';
-        }
+        bioInput.style.height = editingProfile || !excede
+            ? alturaCompleta + 'px'
+            : alturaRecolhida + 'px';
 
         if (bioToggle) {
             bioToggle.hidden = editingProfile || !excede;
-
-            if (!editingProfile && excede) {
-                bioToggle.textContent = bioExpandida
-                    ? 'Ver menos'
-                    : 'Ver mais';
-
-                bioToggle.setAttribute(
-                    'aria-expanded',
-                    bioExpandida ? 'true' : 'false'
-                );
-            }
         }
 
         if (bioCounter) {
@@ -2586,13 +2549,6 @@ function iniciarPerfil() {
         });
     }
 
-    if (bioToggle && bioInput) {
-        bioToggle.addEventListener('click', function() {
-            bioExpandida = !bioExpandida;
-            ajustarBio();
-        });
-    }
-
     if (bioInput) {
         bioInput.addEventListener('input', function() {
             atualizarContadorBio();
@@ -2624,7 +2580,6 @@ function iniciarPerfil() {
                         'readonly'
                     );
 
-                    bioExpandida = true;
                     atualizarContadorBio();
                     ajustarBio();
 

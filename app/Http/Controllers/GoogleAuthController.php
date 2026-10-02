@@ -14,8 +14,7 @@ class GoogleAuthController extends Controller
 {
     public function redirect()
     {
-        return Socialite::driver('google')
-            ->redirect();
+        return Socialite::driver('google')->redirect();
     }
 
     public function callback(Request $request)
@@ -27,36 +26,45 @@ class GoogleAuthController extends Controller
         $email = $googleUser->getEmail();
         $avatar = $googleUser->getAvatar();
 
-        $user = User::where(
-            'google_id',
-            $googleId
-        )->first();
+        if (!$googleId || !$email) {
+            return redirect()
+                ->route('login')
+                ->with('error', 'Não foi possível obter os dados necessários da sua conta Google.');
+        }
 
-        if (!$user && $email) {
-            $user = User::where(
-                'email',
-                $email
-            )->first();
+        $user = User::where('google_id', $googleId)->first();
+
+        if (!$user) {
+            $user = User::where('email', $email)->first();
         }
 
         $novoUsuario = !$user;
 
         if ($user) {
+            $user->sincronizarStatusBanimento();
+
+            if ($user->status_conta === 'banido') {
+                return redirect()
+                    ->route('login')
+                    ->with('error', 'Sua conta está temporariamente banida.');
+            }
+
+            if ($user->status_conta !== 'ativo') {
+                return redirect()
+                    ->route('login')
+                    ->with('error', 'Não foi possível acessar esta conta.');
+            }
+
             $user->update([
-                'email' => $email ?? $user->email,
                 'google_id' => $user->google_id ?? $googleId,
                 'avatar' => $user->avatar ?? $avatar,
-                'email_verified_at' =>
-                    $user->email_verified_at
-                    ?? Carbon::now(),
+                'email_verified_at' => $user->email_verified_at ?? Carbon::now(),
             ]);
         } else {
             $user = User::create([
                 'nickname' => $this->nicknameDisponivel($name),
                 'email' => $email,
-                'senha' => Hash::make(
-                    Str::random(16)
-                ),
+                'senha' => Hash::make(Str::random(16)),
                 'google_id' => $googleId,
                 'avatar' => $avatar,
                 'email_verified_at' => Carbon::now(),
@@ -65,35 +73,21 @@ class GoogleAuthController extends Controller
             ]);
         }
 
-        Auth::login(
-            $user,
-            true
-        );
+        Auth::login($user, true);
 
         $request->session()->regenerate();
 
         if ($novoUsuario) {
-            return redirect()
-                ->route('cadastro.jogos');
+            return redirect()->route('cadastro.jogos');
         }
 
-        return redirect()
-            ->route('perfil');
+        return redirect()->route('perfil');
     }
 
     private function nicknameDisponivel(?string $nome): string
     {
-        $base = preg_replace(
-            '/[\/?#\\\\]+/u',
-            ' ',
-            $nome ?? ''
-        );
-
-        $base = preg_replace(
-            '/\s+/u',
-            ' ',
-            trim($base)
-        );
+        $base = preg_replace('/[\/?#\\\\]+/u', ' ', $nome ?? '');
+        $base = preg_replace('/\s+/u', ' ', trim($base));
 
         if ($base === '') {
             $base = 'Jogador';
@@ -106,13 +100,7 @@ class GoogleAuthController extends Controller
         while (User::where('nickname', $nickname)->exists()) {
             $sufixo = ' ' . $numero;
             $limiteBase = 80 - Str::length($sufixo);
-
-            $nickname = Str::substr(
-                $base,
-                0,
-                $limiteBase
-            ) . $sufixo;
-
+            $nickname = Str::substr($base, 0, $limiteBase) . $sufixo;
             $numero++;
         }
 

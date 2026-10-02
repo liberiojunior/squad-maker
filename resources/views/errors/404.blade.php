@@ -25,11 +25,6 @@
     <p>
         A página que você tentou acessar não existe ou não está disponível.
     </p>
-
-    <a href="{{ route('login') }}" class="btn error-button">
-        Voltar ao início
-    </a>
-
 </div>
 
 </body>

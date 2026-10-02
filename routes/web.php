@@ -3,10 +3,13 @@
 use App\Http\Controllers\AdminCatalogoController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminJogoController;
+use App\Http\Controllers\AmizadeController;
+use App\Http\Controllers\ConversaController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\JogoController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\MensagemController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\RegisterJogosController;
@@ -163,6 +166,69 @@ Route::middleware([
         '/usuarios/{user:nickname}',
         [ProfileController::class, 'showPublic']
     )->name('usuarios.perfil');
+
+    // Amizades
+
+    Route::post(
+        '/usuarios/{user:nickname}/amizade',
+        [AmizadeController::class, 'enviar']
+    )
+        ->middleware('throttle:20,1')
+        ->name('amizades.enviar');
+
+    Route::patch(
+        '/amizades/{amizade}/aceitar',
+        [AmizadeController::class, 'aceitar']
+    )->name('amizades.aceitar');
+
+    Route::delete(
+        '/amizades/{amizade}/recusar',
+        [AmizadeController::class, 'recusar']
+    )->name('amizades.recusar');
+
+    Route::delete(
+        '/amizades/{amizade}/cancelar',
+        [AmizadeController::class, 'cancelar']
+    )->name('amizades.cancelar');
+
+    Route::delete(
+        '/amizades/{amizade}',
+        [AmizadeController::class, 'remover']
+    )->name('amizades.remover');
+
+    // Conversas
+
+    Route::get(
+        '/conversas',
+        [ConversaController::class, 'index']
+    )->name('conversas.index');
+
+    Route::post(
+        '/usuarios/{user:nickname}/conversar',
+        [ConversaController::class, 'iniciar']
+    )->name('conversas.iniciar');
+
+    Route::get(
+        '/conversas/{conversa}',
+        [ConversaController::class, 'show']
+    )->name('conversas.show');
+
+    Route::delete(
+        '/conversas/{conversa}',
+        [ConversaController::class, 'destroy']
+    )->name('conversas.destroy');
+
+    Route::post(
+        '/conversas/{conversa}/mensagens',
+        [MensagemController::class, 'store']
+    )
+        ->middleware('throttle:60,1')
+        ->name('mensagens.store');
+
+    Route::patch(
+        '/conversas/{conversa}/lidas',
+        [MensagemController::class, 'marcarComoLidas']
+    )->name('mensagens.lidas');
 
     Route::get(
         '/buscar-jogos',

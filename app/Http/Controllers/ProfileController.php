@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Amizade;
 use App\Models\Genero;
 use App\Models\Jogo;
 use App\Models\Plataforma;
@@ -70,10 +71,11 @@ class ProfileController extends Controller
                     'id_usuario'
                 ),
             ],
-            'bio' => ['nullable', 'string'],
+            'bio' => ['nullable', 'string', 'max:4000'],
         ], [
             'nickname.regex' => 'O nome não pode conter /, \\, ? ou #.',
             'nickname.unique' => 'Este nome de perfil já está em uso.',
+            'bio.max' => 'A bio pode ter no máximo 4000 caracteres.',
         ]);
 
         $user->nickname = $data['nickname'];
@@ -200,8 +202,9 @@ class ProfileController extends Controller
 
     public function addJogo(
         Request $request,
-        Jogo $jogo
-    ) {
+        Jogo    $jogo
+    )
+    {
         $data = $request->validate([
             'nivel' => [
                 'required',
@@ -258,7 +261,6 @@ class ProfileController extends Controller
             ),
         ]);
     }
-
 
     public function updateJogos(Request $request)
     {
@@ -620,59 +622,68 @@ class ProfileController extends Controller
         });
     }
 
-    public function showPublic(
-        Request $request,
-        User    $user
-    )
+    public function showPublic(Request $request, User $user)
     {
-        if (
-            $user->id_usuario
-            === $request->user()->id_usuario
-        ) {
-            return redirect()
-                ->route('perfil');
+        $usuarioAtual = $request->user();
+
+        if ($user->id_usuario === $usuarioAtual->id_usuario) {
+            return redirect()->route('perfil');
         }
 
-        if ($user->status_conta !== 'ativo') {
+        $user->sincronizarStatusBanimento();
+
+        if (!in_array($user->status_conta, ['ativo', 'banido'], true)) {
             abort(404);
+        }
+
+        $contaSuspensa = $user->status_conta === 'banido';
+
+        if ($contaSuspensa) {
+            return view('usuarios.perfil', [
+                'user' => $user,
+                'contaSuspensa' => true,
+            ]);
+        }
+
+        $idUsuario1 = min($usuarioAtual->id_usuario, $user->id_usuario);
+        $idUsuario2 = max($usuarioAtual->id_usuario, $user->id_usuario);
+
+        $amizade = Amizade::where('id_usuario_1', $idUsuario1)
+            ->where('id_usuario_2', $idUsuario2)
+            ->first();
+
+        $estadoAmizade = 'nenhuma';
+
+        if ($amizade?->status_amizade === 'aceita') {
+            $estadoAmizade = 'amigos';
+        } elseif ($amizade?->status_amizade === 'pendente') {
+            $estadoAmizade = $amizade->id_solicitante === $usuarioAtual->id_usuario
+                ? 'enviada'
+                : 'recebida';
         }
 
         $user->load([
             'generos' => function ($query) {
                 $query->orderBy('genero');
             },
-
             'jogos' => function ($query) {
                 $query
-                    ->orderByRaw(
-                        '
-                        CASE
-                            WHEN tb_jogo_usuario.ordem_perfil IS NULL
-                                THEN 1
-                            ELSE 0
-                        END
-                    '
-                    )
-                    ->orderBy(
-                        'tb_jogo_usuario.ordem_perfil'
-                    )
+                    ->orderByRaw('CASE WHEN tb_jogo_usuario.ordem_perfil IS NULL THEN 1 ELSE 0 END')
+                    ->orderBy('tb_jogo_usuario.ordem_perfil')
                     ->orderBy('tb_jogo.nome');
             },
-
             'plataformas' => function ($query) {
                 $query->orderBy('nome');
             },
         ]);
 
-        $presenca = $user->presenca();
-
-        return view(
-            'usuarios.perfil',
-            [
-                'user' => $user,
-                'niveis' => NivelProficiencia::todos(),
-                'presenca' => $presenca,
-            ]
-        );
+        return view('usuarios.perfil', [
+            'user' => $user,
+            'niveis' => NivelProficiencia::todos(),
+            'presenca' => $user->presenca(),
+            'contaSuspensa' => false,
+            'amizade' => $amizade,
+            'estadoAmizade' => $estadoAmizade,
+        ]);
     }
 }

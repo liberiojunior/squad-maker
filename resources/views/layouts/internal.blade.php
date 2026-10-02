@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Squad Maker</title>
 
@@ -17,9 +18,10 @@
     >
 
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    @stack('styles')
 </head>
 
-<body class="internal-body">
+<body class="internal-body" data-user-id="{{ auth()->id() }}">
 
 <aside class="internal-sidebar">
 
@@ -33,7 +35,11 @@
             >
         </div>
 
-        <a href="{{ route('perfil') }}" class="sidebar-item" title="Perfil">
+        <a
+            href="{{ route('perfil') }}"
+            class="sidebar-item {{ request()->routeIs('perfil', 'perfil.*') ? 'active' : '' }}"
+            title="Perfil"
+        >
             <i class="bi bi-person-circle"></i>
         </a>
 
@@ -43,14 +49,29 @@
 
         <a
             href="{{ route('jogos.buscar') }}"
-            class="sidebar-item"
+            class="sidebar-item {{ request()->routeIs('jogos.*') ? 'active' : '' }}"
             title="Buscar jogos"
         >
             <i class="bi bi-search"></i>
         </a>
 
-        <a href="#" class="sidebar-item" title="Chat">
+        @php($notificacoesChat = auth()->user()->totalNotificacoesChat())
+
+        <a
+            href="{{ route('conversas.index') }}"
+            class="sidebar-item {{ request()->routeIs('conversas.*') ? 'active' : '' }}"
+            title="Chat"
+        >
             <i class="bi bi-chat-dots-fill"></i>
+
+            <span
+                class="sidebar-notification-badge"
+                id="sidebarChatBadge"
+                aria-label="{{ $notificacoesChat }} notificações"
+                @if ($notificacoesChat === 0) hidden @endif
+            >
+                {{ $notificacoesChat > 99 ? '99+' : $notificacoesChat }}
+            </span>
         </a>
 
         <a href="#" class="sidebar-item" title="Publicar">
@@ -191,7 +212,9 @@
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js">
 </script>
 
+@vite('resources/js/realtime.js')
 <script src="{{ asset('js/app.js') }}"></script>
+@stack('scripts')
 
 </body>
 </html>

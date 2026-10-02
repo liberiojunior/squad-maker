@@ -25,11 +25,6 @@
     <p>
         Não foi possível concluir esta ação. Tente novamente mais tarde.
     </p>
-
-    <a href="{{ route('login') }}" class="btn error-button">
-        Voltar ao início
-    </a>
-
 </div>
 
 </body>

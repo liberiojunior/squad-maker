@@ -119,13 +119,30 @@
                             ></i>
                         </button>
 
-                        <textarea
-                            name="bio"
-                            id="bioInput"
-                            class="profile-bio"
-                            readonly
-                            placeholder="Você ainda não adicionou uma bio."
-                        >{{ old('bio', $user->bio) }}</textarea>
+                        <div class="profile-bio-area">
+                            <textarea
+                                name="bio"
+                                id="bioInput"
+                                class="profile-bio"
+                                maxlength="4000"
+                                readonly
+                                placeholder="Você ainda não adicionou uma bio."
+                            >{{ old('bio', $user->bio) }}</textarea>
+
+                            <div class="profile-bio-footer">
+                                <button
+                                    type="button"
+                                    class="profile-bio-toggle"
+                                    id="bioToggle"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#bioModal"
+                                    hidden
+                                >
+                                    Ver mais
+                                </button>
+                                <span class="profile-bio-counter" id="bioCounter" hidden>0 / 4000</span>
+                            </div>
+                        </div>
                     </form>
                 </section>
 
@@ -922,4 +939,25 @@
             </div>
         </div>
     </div>
+<div class="modal fade" id="bioModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content profile-bio-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Sobre mim</h2>
+
+                <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal"
+                    aria-label="Fechar"
+                ></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="profile-bio-modal-text">{{ old('bio', $user->bio) ?: 'Você ainda não adicionou uma bio.' }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection

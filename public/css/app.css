@@ -522,49 +522,36 @@ body {
 .game-setup-search {
     min-width: 0;
     height: 58px;
-
     display: flex;
     align-items: center;
-
     gap: 12px;
-
     padding: 0 18px;
-
     background-color: white;
-
     border: 2px solid transparent;
     border-radius: 9px;
-
     transition: border-color 0.15s ease,
     box-shadow 0.15s ease;
 }
 
 .game-setup-search:focus-within {
     border-color: #6c63e8;
-
     box-shadow: 0 0 0 3px rgba(108, 99, 232, 0.2);
 }
 
 .game-setup-search i {
     flex-shrink: 0;
-
     color: #120026;
-
     font-size: 27px;
 }
 
 .game-setup-search input {
     width: 100%;
     height: 100%;
-
     padding: 0;
-
     background: transparent;
     color: #20152a;
-
     border: none;
     outline: none;
-
     font-size: 17px;
 }
 
@@ -574,9 +561,7 @@ body {
 
 .game-setup-count {
     min-width: 155px;
-
     color: #d7d0df;
-
     font-size: 14px;
     text-align: right;
 }
@@ -924,24 +909,19 @@ body {
     .game-setup-guide-dialog {
         margin: 10px;
     }
-
     .game-setup-guide-body {
         padding: 22px 18px 24px;
     }
-
     .game-setup-guide-mascot {
         width: 170px;
         height: 155px;
     }
-
     .game-setup-guide-body h2 {
         font-size: 24px;
     }
-
     .game-setup-guide-actions {
         flex-direction: column-reverse;
     }
-
     .game-setup-guide-actions .btn {
         width: 100%;
     }
@@ -1073,6 +1053,7 @@ body {
 }
 
 .sidebar-item {
+    position: relative;
     width: 52px;
     height: 52px;
     display: flex;
@@ -1092,6 +1073,29 @@ body {
 .sidebar-item:hover {
     background-color: rgba(124, 0, 181, 0.55);
     color: white;
+}
+
+.sidebar-item.active {
+    background-color: #e83bbd;
+    color: white;
+}
+.sidebar-notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -5px;
+    min-width: 19px;
+    height: 19px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 5px;
+    background-color: #ff3b6b;
+    color: white;
+    border: 2px solid #120038;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .sidebar-settings-button {
@@ -1324,7 +1328,7 @@ body {
 .profile-info-card {
     position: relative;
     min-height: 220px;
-    padding: 22px 70px 22px 22px;
+    padding: 22px;
     background-color: rgba(24, 0, 70, 0.88);
     border-radius: 12px;
 }
@@ -1373,11 +1377,16 @@ body {
     outline: none;
 }
 
+.profile-bio-area {
+    margin-top: 20px;
+}
+
 .profile-bio {
     width: 100%;
-    min-height: 105px;
-    margin-top: 20px;
+    min-height: 56px;
+    height: auto;
     padding: 0;
+    overflow: hidden;
     background-color: transparent;
     color: #d7d0df;
     border: 1px solid transparent;
@@ -1393,6 +1402,65 @@ body {
     padding: 10px;
     background-color: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.35);
+}
+
+.profile-bio-footer {
+    min-height: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.profile-bio-toggle {
+    padding: 0;
+    background: transparent;
+    color: #e83bbd;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.profile-bio-toggle:hover,
+.profile-bio-toggle:focus {
+    color: #ff67d3;
+    outline: none;
+}
+
+.profile-bio-counter {
+    margin-left: auto;
+    color: #aaa1b8;
+    font-size: 12px;
+}
+
+.profile-bio-counter.is-limit {
+    color: #ff8b8b;
+}
+
+.profile-bio-modal {
+    background-color: #180046;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+}
+.profile-bio-modal .modal-header {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+.profile-bio-modal .modal-title {
+    font-size: 20px;
+    font-weight: 700;
+}
+.profile-bio-modal-text {
+    max-height: min(60dvh, 520px);
+    padding: 4px 2px;
+    overflow-y: auto;
+    color: #d7d0df;
+    font-size: 16px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 .profile-genres-card {
@@ -1644,17 +1712,14 @@ body {
     .profile-genres-dialog {
         margin: 10px;
     }
-
     .profile-genre-selected-count {
         white-space: normal;
     }
-
     .profile-selected-genres-heading {
         align-items: flex-start;
         flex-direction: column;
         gap: 3px;
     }
-
     .profile-genre-options {
         grid-template-columns: 1fr;
         max-height: 250px;
@@ -1945,7 +2010,6 @@ body {
     .profile-confirm-actions {
         flex-direction: column-reverse;
     }
-
     .profile-confirm-actions .btn {
         width: 100%;
     }
@@ -2300,21 +2364,14 @@ body {
 .profile-order-item.drop-before::before,
 .profile-order-item.drop-after::after {
     content: '';
-
     position: absolute;
     top: 4px;
     bottom: 24px;
-
     width: 4px;
-
     background-color: #e83bbd;
-
     border-radius: 4px;
-
     box-shadow: 0 0 8px rgba(232, 59, 189, 0.8);
-
     z-index: 5;
-
     pointer-events: none;
 }
 
@@ -2528,20 +2585,103 @@ body {
     height: 20px;
 }
 
+.profile-public-info-card {
+    padding-right: 22px;
+}
+
 .profile-public-name {
+    max-width: calc(100% - 95px);
     margin: 0;
     color: white;
     font-size: 38px;
     font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.profile-public-bio-area {
+    margin-top: 20px;
 }
 
 .profile-public-bio {
-    min-height: 90px;
-    margin: 20px 0 0;
+    margin: 0;
+    overflow: hidden;
     color: #d7d0df;
-    font-size: 17px;
+    font-size: 18px;
     line-height: 1.55;
-    white-space: pre-line;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.profile-public-feedback {
+    max-width: 1250px;
+    margin: 0 auto 12px;
+}
+
+.profile-social-actions {
+    position: absolute;
+    top: 18px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.profile-social-actions form {
+    margin: 0;
+}
+
+.profile-social-action {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background-color: transparent;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    line-height: 1;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+button.profile-social-action:hover,
+button.profile-social-action:focus {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #e83bbd;
+    outline: none;
+}
+
+.profile-social-status {
+    cursor: default;
+}
+
+.profile-social-status-friends,
+.profile-social-action-success {
+    color: #78f39b;
+}
+
+.profile-social-action-chat {
+    color: white;
+}
+
+button.profile-social-action-chat:hover,
+button.profile-social-action-chat:focus {
+    color: white;
+}
+
+button.profile-social-action-success:hover,
+button.profile-social-action-success:focus {
+    color: #9ff0bd;
+}
+
+.profile-social-action-danger:hover,
+.profile-social-action-danger:focus {
+    color: #ff8b8b !important;
 }
 
 .profile-public-game-card {
@@ -2573,27 +2713,31 @@ body {
     .profile-public-name {
         font-size: 30px;
     }
-
     .profile-public-bio {
-        margin-top: 20px;
         font-size: 16px;
     }
-
     .profile-public-games-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 650px) {
+    .profile-public-info-card {
+        padding-right: 22px;
+    }
     .profile-public-name {
+        max-width: calc(100% - 85px);
         font-size: 28px;
     }
-
-    .profile-public-bio {
-        min-height: 0;
-        margin-top: 20px;
+    .profile-social-actions {
+        top: 14px;
+        right: 14px;
     }
-
+    .profile-social-action {
+        width: 34px;
+        height: 34px;
+        font-size: 21px;
+    }
     .profile-public-games-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -2979,7 +3123,6 @@ body {
         pointer-events: none;
         transform: translateY(-3px);
     }
-
     .game-search-card:hover .game-search-profile-action,
     .game-search-card:focus-within .game-search-profile-action {
         opacity: 0.88;
@@ -2987,7 +3130,6 @@ body {
         pointer-events: auto;
         transform: translateY(0);
     }
-
     .game-search-profile-action:hover,
     .game-search-profile-action:focus-visible {
         opacity: 1;
@@ -3078,73 +3220,58 @@ body {
     .catalog-search-toolbar {
         grid-template-columns: 1fr;
     }
-
     .catalog-search-bar {
         height: 54px;
     }
-
     .catalog-filter-toggle {
         width: 100%;
         height: 48px;
     }
-
     .catalog-filter-panel {
         padding: 16px 14px;
     }
-
     .catalog-filter-chip span {
         min-height: 33px;
         padding: 5px 11px;
         font-size: 12px;
     }
-
     .catalog-filter-options-scroll {
         max-height: 180px;
     }
-
     .catalog-filter-actions {
         flex-direction: column-reverse;
         align-items: stretch;
     }
-
     .catalog-filter-clear,
     .catalog-filter-apply {
         width: 100%;
     }
-
     .game-search-panel {
         padding: 20px 15px;
     }
-
     .game-search-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 24px 16px;
     }
-
     .game-search-name,
     .game-search-online {
         font-size: 14px;
     }
-
     .game-online-dot {
         width: 11px;
         height: 11px;
     }
-
     .game-search-profile-action {
         width: 34px;
         height: 34px;
         font-size: 18px;
     }
-
     .game-setup-toolbar {
         grid-template-columns: 1fr;
     }
-
     .game-setup-search {
         height: 54px;
     }
-
     .game-setup-count {
         min-width: 0;
         text-align: left;
@@ -3302,11 +3429,8 @@ body {
 
 .game-level-user-label {
     display: block;
-
     margin-top: 2px;
-
     color: var(--level-color);
-
     font-size: 11px;
     font-weight: 600;
 }
@@ -3483,21 +3607,17 @@ body {
     .game-level-filters {
         gap: 18px;
     }
-
     .game-level-filter {
         width: 118px;
     }
-
     .game-level-image {
         width: 110px;
         height: 110px;
     }
-
     .game-level-image img {
         width: 104px;
         height: 104px;
     }
-
     .game-partners-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
@@ -3507,23 +3627,18 @@ body {
     .game-detail-header {
         max-width: 100%;
     }
-
     .game-detail-main {
         padding: 16px;
     }
-
     .game-detail-main h1 {
         font-size: 26px;
     }
-
     .game-partners-section {
         padding: 18px 15px 24px;
     }
-
     .game-level-panel {
         padding: 16px 10px 18px;
     }
-
     .game-level-filters {
         justify-content: flex-start;
         gap: 16px;
@@ -3531,33 +3646,26 @@ body {
         overflow-x: auto;
         scrollbar-width: none;
     }
-
     .game-level-filters::-webkit-scrollbar {
         display: none;
     }
-
     .game-level-filter {
         flex: 0 0 100px;
     }
-
     .game-level-image {
         width: 92px;
         height: 92px;
     }
-
     .game-level-image img {
         width: 86px;
         height: 86px;
     }
-
     .game-level-tooltip {
         display: none;
     }
-
     .game-partners-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
-
     .game-partner-avatar-wrap,
     .game-partner-avatar {
         width: 88px;
@@ -3644,11 +3752,9 @@ body {
     .squad-pagination-summary {
         font-size: 12px;
     }
-
     .squad-pagination .pagination {
         gap: 4px;
     }
-
     .squad-pagination .page-link {
         min-width: 34px;
         height: 34px;
@@ -4480,102 +4586,71 @@ body {
     font-size: 17px;
 }
 
-.error-button {
-    min-width: 180px;
-    background-color: #650095;
-    color: white;
-    font-weight: 600;
-}
-
-.error-button:hover {
-    background-color: #7c00b5;
-    color: white;
-}
 
 /* Responsividade */
 
 @media (max-height: 850px) and (min-width: 768px) {
-
     .login-container {
         gap: 8px;
     }
-
     .login-logo {
         width: clamp(440px, 38vw, 560px);
     }
-
     .login-subtitle {
         font-size: 18px;
     }
-
     .login-form {
         gap: 8px;
     }
-
     .login-form .form-control {
         height: 46px;
         font-size: 17px;
     }
-
     .login-button {
         height: 46px;
         font-size: 18px;
     }
-
     .google-link,
     .register-link {
         font-size: 17px;
     }
-
     .register-link {
         margin-top: 2px;
     }
-
     .internal-content {
         padding-top: 10px;
         padding-bottom: 10px;
     }
-
     .profile-top {
         grid-template-columns: 255px 1fr;
         gap: 18px;
     }
-
     .profile-avatar-wrapper {
         width: 238px;
         height: 238px;
     }
-
     .profile-info-card {
         min-height: 180px;
         padding-top: 18px;
         padding-bottom: 18px;
     }
-
     .profile-name-input {
         font-size: 32px;
     }
-
     .profile-bio {
-        min-height: 75px;
-        margin-top: 25px;
         font-size: 16px;
     }
-
     .profile-section {
         margin-top: 8px;
         padding: 10px 14px;
     }
-
     .profile-section h2 {
         margin-bottom: 8px;
         font-size: 21px;
     }
-
     .profile-feed {
         min-height: 135px;
     }
-
     .profile-add-card {
         width: 62px;
         height: 62px;
@@ -4584,79 +4659,62 @@ body {
 }
 
 @media (max-width: 1200px) and (min-width: 768px) {
-
     .navbar-nav {
         gap: 25px;
     }
-
     .navbar-nav .nav-link {
         font-size: 19px;
     }
-
     .login-logo {
         width: clamp(430px, 46vw, 570px);
     }
-
     .about-page {
         padding: 25px 20px;
     }
-
     .about-mascot {
         max-width: 560px;
         transform: scale(1.03);
     }
-
     .about-card {
         padding: 25px 30px;
     }
-
     .about-card h1 {
         font-size: 42px;
     }
-
     .about-card p {
         font-size: 17px;
     }
-
     .admin-nav {
         gap: 15px;
     }
 }
 
 @media (max-width: 1000px) {
-
     .admin-ban-form {
         grid-template-columns: 1fr 1fr;
     }
-
     .admin-game-form {
         grid-template-columns: 1fr 1fr;
     }
-
     .profile-games-row {
         flex-direction: column;
     }
-
     .profile-games-list {
         width: 100%;
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
     .profile-game-add {
         width: 90px;
         height: 90px;
         flex: 0 0 90px;
     }
-
     .admin-catalog-create-platform {
         grid-template-columns: 1fr 1fr;
     }
-
     .admin-catalog-create-platform .btn {
         width: 160px;
         grid-column: 1 / -1;
     }
-
     .admin-catalog-platforms,
     .admin-catalog-genres {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4664,69 +4722,54 @@ body {
 }
 
 @media (max-width: 900px) and (min-width: 768px) {
-
     .profile-top {
         grid-template-columns: 235px 1fr;
     }
-
     .profile-avatar-wrapper {
         width: 225px;
         height: 225px;
     }
-
     .profile-info-card {
         min-height: 165px;
     }
-
     .profile-name-input {
         font-size: 30px;
     }
-
     .profile-bio {
-        margin-top: 40px;
         font-size: 16px;
     }
-
     .admin-header {
         padding-left: 18px;
         padding-right: 18px;
     }
-
     .admin-header-title span {
         display: none;
     }
-
     .game-setup-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 767px) {
-
     body {
         background-attachment: scroll;
     }
-
     /* Navbar */
     .squad-navbar {
         height: auto;
         min-height: 64px;
         padding: 4px 0;
     }
-
     .navbar-brand {
         position: static;
     }
-
     .navbar-nav {
         gap: 4px;
         padding: 10px 0;
     }
-
     .navbar-nav .nav-link {
         font-size: 17px;
     }
-
     /* Login */
     .login-page {
         height: auto;
@@ -4734,165 +4777,130 @@ body {
         align-items: flex-start;
         padding: 20px 15px;
     }
-
     .login-container {
         max-width: 420px;
         gap: 10px;
     }
-
     .login-logo {
         width: 88vw;
         max-width: 430px;
     }
-
     .login-subtitle {
         font-size: 17px;
     }
-
     .login-form {
         max-width: 360px;
     }
-
     .login-form .form-control {
         height: 48px;
         font-size: 16px;
     }
-
     .login-button {
         height: 48px;
         font-size: 17px;
     }
-
     .google-link,
     .register-link {
         font-size: 16px;
     }
-
     .register-link {
         margin-top: 4px;
     }
-
     /* Sobre nós */
     .about-page {
         min-height: calc(100dvh - 64px);
         padding: 30px 15px;
     }
-
     .about-mascot {
         width: 100%;
         max-width: 400px;
         margin-bottom: 30px;
         transform: none;
     }
-
     .about-card {
         padding: 25px 20px;
     }
-
     .about-card h1 {
         font-size: 36px;
     }
-
     .about-card p {
         font-size: 16px;
         line-height: 1.6;
     }
-
     .about-button {
         width: 100%;
         max-width: 260px;
         font-size: 18px;
     }
-
     /* Equipe */
     .team-page {
         padding: 30px 15px;
     }
-
     .team-intro {
         margin-bottom: 25px;
         padding: 20px;
     }
-
     .team-intro p {
         font-size: 16px;
     }
-
     .team-title {
         margin-bottom: 25px;
         font-size: 36px;
     }
-
     .team-photo {
         width: 150px;
         height: 150px;
     }
-
     .team-card {
         padding: 25px 20px;
     }
-
     .team-card h2 {
         font-size: 25px;
     }
-
     .team-card p {
         font-size: 16px;
     }
-
     /* Contato */
     .contact-page {
         padding: 30px 15px;
     }
-
     .contact-card {
         padding: 25px 20px;
     }
-
     .contact-info {
         padding-right: 12px;
         margin-bottom: 35px;
     }
-
     .contact-info h1 {
         font-size: 36px;
     }
-
     .contact-form-title {
         font-size: 26px;
     }
-
     .contact-form input {
         height: 48px;
     }
-
     /* Cadastro */
     .register-page {
         align-items: flex-start;
         padding: 20px 15px;
     }
-
     .register-logo {
         max-width: 360px;
     }
-
     .register-card {
         padding: 25px 20px;
     }
-
     .register-card h1 {
         font-size: 30px;
     }
-
     .register-subtitle {
         font-size: 16px;
     }
-
     /* Área interna */
     .internal-body {
         background-attachment: scroll;
     }
-
     .internal-sidebar {
         top: auto;
         bottom: 0;
@@ -4903,30 +4911,25 @@ body {
         border-right: none;
         border-top: 1px solid rgba(255, 255, 255, 0.12);
     }
-
     .sidebar-top {
         width: 100%;
         flex-direction: row;
         justify-content: space-around;
         gap: 0;
     }
-
     .sidebar-bottom,
     .sidebar-logo-link {
         display: none;
     }
-
     .sidebar-item {
         width: 46px;
         height: 46px;
         font-size: 25px;
     }
-
     .internal-content {
         margin-left: 0;
         padding: 18px 15px 85px;
     }
-
     /* Perfil */
     .profile-top {
         display: flex;
@@ -4934,67 +4937,51 @@ body {
         align-items: center;
         gap: 15px;
     }
-
     .profile-avatar-wrapper {
         width: 150px;
         height: 150px;
     }
-
     .profile-avatar-overlay {
         font-size: 13px;
     }
-
     .profile-avatar-overlay i {
         font-size: 24px;
     }
-
     .profile-main-info {
         width: 100%;
     }
-
     .profile-info-card {
         min-height: 180px;
         padding: 20px 55px 20px 20px;
     }
-
     .profile-name-input {
         font-size: 28px;
     }
-
     .profile-bio {
-        margin-top: 40px;
         font-size: 16px;
     }
-
     .profile-genres-card {
         flex-wrap: nowrap;
         font-size: 15px;
     }
-
     .profile-genres-card strong {
         font-size: 14px;
     }
-
     .profile-genre-list {
         overflow-x: auto;
         scrollbar-width: none;
     }
-
     .profile-genre-list::-webkit-scrollbar {
         display: none;
     }
-
     .profile-section h2 {
         font-size: 21px;
     }
-
     .profile-add-card {
         width: 70px;
         height: 70px;
         font-size: 38px;
     }
-
-
     /* Admin */
     .admin-header {
         display: flex;
@@ -5002,46 +4989,37 @@ body {
         gap: 10px;
         padding: 10px 15px;
     }
-
     .admin-header-title {
         flex: 1;
         min-width: 0;
     }
-
     .admin-header-title strong {
         font-size: 17px;
     }
-
     .admin-header-title span {
         font-size: 12px;
     }
-
     .admin-logo {
         width: 44px;
         height: 44px;
     }
-
     .admin-header-user {
         display: flex;
         gap: 8px;
     }
-
     .admin-header-user > span {
         display: none;
     }
-
     .admin-logout-button {
         padding: 7px 10px;
         font-size: 13px;
     }
-
     .admin-nav-wrapper {
         width: 100%;
         display: flex;
         flex-direction: column;
         align-items: stretch;
     }
-
     .admin-nav-toggle {
         width: 100%;
         display: flex;
@@ -5049,15 +5027,12 @@ body {
         align-items: center;
         margin-top: 2px;
     }
-
     .admin-nav.collapse {
         display: none;
     }
-
     .admin-nav.collapse.show {
         display: flex;
     }
-
     .admin-nav {
         position: static;
         width: 100%;
@@ -5070,201 +5045,157 @@ body {
         border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 8px;
     }
-
     .admin-nav a {
         width: 100%;
         padding: 10px 12px;
         border-radius: 5px;
     }
-
     .admin-nav a:hover,
     .admin-nav a.active {
         background-color: #650095;
         color: white;
     }
-
     .admin-content {
         padding: 18px 12px 30px;
     }
-
     .admin-title {
         margin-bottom: 15px;
     }
-
     .admin-title h1 {
         font-size: 27px;
     }
-
     .admin-title p {
         font-size: 14px;
     }
-
     .admin-metrics {
         grid-template-columns: 1fr;
         gap: 12px;
     }
-
     .admin-metric-card {
         min-height: 90px;
         padding: 15px;
     }
-
     .admin-metric-card i {
         font-size: 28px;
     }
-
     .admin-metric-card strong {
         font-size: 25px;
     }
-
     .admin-panel {
         padding: 15px;
     }
-
     .admin-users-table-wrapper {
         width: 100%;
         overflow-x: auto;
     }
-
     .admin-table {
         min-width: 700px;
     }
-
     .admin-ban-form {
         grid-template-columns: 1fr;
     }
-
     .admin-game-actions {
         flex-direction: column;
     }
-
     .admin-steam-form,
     .admin-game-form {
         display: flex;
         flex-direction: column;
     }
-
     .admin-game-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 12px;
     }
-
     .admin-game-card-info {
         padding: 9px;
     }
-
     .admin-game-card-info strong {
         font-size: 13px;
     }
-
     .admin-game-card-info small {
         font-size: 11px;
     }
-
     .admin-game-source {
         padding: 2px 7px;
         font-size: 10px;
     }
-
     .admin-game-edit-form {
         grid-template-columns: 1fr;
     }
-
     .admin-game-edit-description,
     .admin-game-edit-genres {
         grid-column: auto;
     }
-
     .admin-game-delete {
         opacity: 1;
     }
-
     .admin-catalog-create-platform {
         grid-template-columns: 1fr;
     }
-
     .admin-catalog-create-platform .btn {
         width: 100%;
         grid-column: auto;
     }
-
     .admin-catalog-platforms,
     .admin-catalog-genres {
         grid-template-columns: 1fr;
     }
-
     .admin-catalog-platform-actions {
         flex-wrap: wrap;
     }
-
     .admin-catalog-platform-actions .btn {
         min-width: 85px;
     }
-
     .admin-catalog-create-genres .input-group {
         flex-wrap: nowrap;
     }
 }
 
 @media (max-width: 600px) {
-
     .profile-games-list {
         grid-template-columns: 1fr;
     }
-
     .profile-game-add {
         width: 80px;
         height: 80px;
         flex: 0 0 80px;
     }
-
     .profile-platform-options {
         grid-template-columns: repeat(2, 1fr);
     }
-
     .admin-game-grid {
         grid-template-columns: 1fr;
     }
-
     .admin-catalog-genre {
         gap: 6px;
         padding: 7px;
     }
-
     .admin-catalog-genre-form {
         gap: 6px;
     }
-
     .admin-catalog-genre-button {
         width: 36px;
         height: 36px;
         flex-basis: 36px;
     }
-
     .game-setup-page {
         padding: 20px 12px;
     }
-
     .game-setup-container {
         padding: 20px 14px;
     }
-
     .game-setup-toolbar {
         gap: 10px;
     }
-
     .game-setup-grid {
         grid-template-columns: 1fr;
     }
-
     .game-setup-header h1 {
         font-size: 28px;
     }
-
     .game-setup-footer {
         justify-content: stretch;
     }
-
     .game-setup-continue {
         width: 100%;
         justify-content: center;
@@ -5285,42 +5216,33 @@ body {
         flex-direction: column;
         gap: 8px;
     }
-
     .profile-game-manager-count {
         white-space: normal;
     }
-
     .profile-game-search-results {
         grid-template-columns: 1fr;
         max-height: 320px;
     }
-
     .profile-game-manager-body {
         min-height: 410px;
     }
-
     .profile-level-popup {
         padding: 14px;
     }
-
     .profile-level-popup-card {
         padding: 20px 16px;
     }
-
     .profile-level-popup-game img,
     .profile-level-detail-game img {
         width: 125px;
     }
-
     .profile-level-popup-actions {
         flex-wrap: wrap;
     }
-
     .profile-order-list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         max-height: 480px;
     }
-
     .profile-order-remove {
         opacity: 1;
     }
@@ -5330,36 +5252,29 @@ body {
     .profile-game-search-card {
         grid-template-columns: 110px minmax(0, 1fr);
     }
-
     .profile-game-search-card img {
         width: 110px;
     }
-
     .profile-level-popup-game,
     .profile-level-detail-game {
         align-items: flex-start;
         flex-direction: column;
     }
-
     .profile-level-popup-game {
         padding-right: 35px;
     }
-
     .profile-level-popup-game img,
     .profile-level-detail-game img {
         width: 100%;
         max-width: 220px;
     }
-
     .profile-level-popup-actions {
         align-items: stretch;
         flex-direction: column;
     }
-
     .profile-level-popup-actions .btn-danger {
         margin-right: 0;
     }
-
     .profile-order-list {
         grid-template-columns: 1fr;
     }

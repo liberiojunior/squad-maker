@@ -25,11 +25,6 @@
     <p>
         Você não possui permissão para acessar esta área.
     </p>
-
-    <a href="{{ route('login') }}" class="btn error-button">
-        Voltar ao início
-    </a>
-
 </div>
 
 </body>

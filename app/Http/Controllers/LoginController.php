@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Admin;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -25,9 +26,7 @@ class LoginController extends Controller
         if ($admin) {
             if (! Hash::check($data['password'], $admin->senha)) {
                 return back()
-                    ->withErrors([
-                        'email' => 'E-mail ou senha incorretos.',
-                    ])
+                    ->withErrors(['email' => 'E-mail ou senha incorretos.'])
                     ->onlyInput('email');
             }
 
@@ -38,6 +37,12 @@ class LoginController extends Controller
             return redirect()->route('admin.geral');
         }
 
+        $user = User::where('email', $data['email'])->first();
+
+        if ($user) {
+            $user->sincronizarStatusBanimento();
+        }
+
         $logged = Auth::attempt([
             'email' => $data['email'],
             'password' => $data['password'],
@@ -46,9 +51,7 @@ class LoginController extends Controller
 
         if (! $logged) {
             return back()
-                ->withErrors([
-                    'email' => 'E-mail ou senha incorretos.',
-                ])
+                ->withErrors(['email' => 'E-mail ou senha incorretos.',])
                 ->onlyInput('email');
         }
 
