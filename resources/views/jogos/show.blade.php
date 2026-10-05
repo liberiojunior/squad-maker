@@ -1,4 +1,7 @@
 @extends('layouts.internal')
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/games.css') }}">
+@endpush
 
 @section('content')
     <div class="game-detail-page">

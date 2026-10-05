@@ -139,7 +139,7 @@
 >
     <div class="modal-dialog modal-dialog-centered">
 
-        <div class="modal-content account-delete-modal">
+        <div class="modal-content squad-modal account-delete-modal">
 
             <form
                 method="POST"

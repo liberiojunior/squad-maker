@@ -1,0 +1,857 @@
+/* Administração */
+
+.admin-game-search-button {
+    width: 58px;
+    height: 100%;
+    flex: 0 0 58px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background-color: transparent;
+    color: #160038;
+    border: none;
+    font-size: 24px;
+}
+
+.admin-game-search-button:hover {
+    background-color: #f2eef5;
+    color: var(--squad-primary);
+}
+
+.admin-dashboard {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.admin-dashboard-empty {
+    min-height: 350px;
+}
+
+.admin-title {
+    margin-bottom: 20px;
+}
+
+.admin-title h1 {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.admin-title p {
+    margin: 5px 0 0;
+    color: #c3bacd;
+}
+
+.admin-panel {
+    margin-top: 18px;
+    padding: 20px;
+    background-color: rgba(24, 0, 70, 0.9);
+    border-radius: 12px;
+}
+
+.admin-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.admin-panel-header h2 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.admin-panel-header span {
+    min-width: 36px;
+    padding: 5px 10px;
+    background-color: var(--squad-primary);
+    border-radius: 20px;
+    text-align: center;
+}
+
+.admin-catalog-create-platform {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 160px;
+    gap: 15px;
+    align-items: end;
+    margin-bottom: 24px;
+}
+
+.admin-catalog-create-platform .btn {
+    height: 38px;
+}
+
+.admin-catalog-platforms {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.admin-catalog-card {
+    min-width: 0;
+    height: 100%;
+    padding: 16px;
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.admin-catalog-platform {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.admin-catalog-platform img {
+    width: 58px;
+    height: 58px;
+    flex-shrink: 0;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.admin-catalog-platform strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-catalog-platform-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-catalog-platform-form .form-label {
+    margin-bottom: 5px;
+}
+
+.admin-catalog-platform-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.admin-catalog-platform-actions form {
+    margin: 0;
+}
+
+.admin-catalog-platform-actions .btn {
+    min-width: 90px;
+}
+
+.admin-catalog-platform-delete {
+    margin: 0;
+}
+
+.admin-catalog-create-genres {
+    margin-bottom: 24px;
+}
+
+.admin-catalog-create-genres .admin-game-help {
+    display: block;
+    margin-top: 6px;
+}
+
+.admin-catalog-genres {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.admin-catalog-genre {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background-color: rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+}
+
+.admin-catalog-genre-form {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.admin-catalog-genre-form .form-control {
+    min-width: 0;
+    height: 38px;
+}
+
+.admin-catalog-genre-delete {
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.admin-catalog-genre-button {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+}
+
+.admin-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.admin-metric-card {
+    min-height: 110px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 20px;
+    background-color: rgba(24, 0, 70, 0.9);
+    border-radius: 12px;
+}
+
+.admin-metric-card i {
+    font-size: 35px;
+    color: var(--squad-accent);
+}
+
+.admin-metric-card div {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-metric-card span {
+    color: #c3bacd;
+    font-size: 15px;
+}
+
+.admin-metric-card strong {
+    font-size: 30px;
+}
+
+.admin-users-table-wrapper {
+    overflow: visible;
+}
+
+.admin-table {
+    margin: 0;
+    color: white;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 12px;
+    background-color: transparent;
+    color: white;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.admin-user-actions {
+    background-color: var(--squad-primary);
+    color: white;
+    border: none;
+}
+
+.admin-user-actions:hover,
+.admin-user-actions:focus {
+    background-color: var(--squad-primary-hover);
+    color: white;
+}
+
+.admin-user-actions-menu {
+    z-index: 2000;
+    background-color: var(--squad-surface-alt);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.admin-user-actions-menu .dropdown-item {
+    color: white;
+}
+
+.admin-user-actions-menu .dropdown-item:hover {
+    background-color: var(--squad-primary);
+    color: white;
+}
+
+.admin-user-actions-menu .text-danger {
+    color: #ff707d !important;
+}
+
+
+.admin-status {
+    display: inline-block;
+    padding: 4px 9px;
+    border-radius: 15px;
+    font-size: 13px;
+}
+
+.admin-status-ativo {
+    background-color: rgba(25, 135, 84, 0.35);
+}
+
+.admin-status-banido {
+    background-color: rgba(220, 53, 69, 0.35);
+}
+
+.admin-status-pendente {
+    background-color: rgba(255, 193, 7, 0.35);
+}
+
+.admin-ban-form {
+    display: grid;
+    grid-template-columns: 1fr 220px 1.3fr 210px;
+    gap: 15px;
+    align-items: end;
+    padding: 15px 12px;
+}
+
+.admin-ban-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-ban-field .form-label {
+    margin-bottom: 6px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.admin-ban-field .form-control {
+    height: 46px;
+}
+
+.admin-ban-confirm {
+    width: 100%;
+    height: 46px;
+    font-weight: 600;
+}
+
+.admin-report {
+    padding: 15px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-report:last-child {
+    border-bottom: none;
+}
+
+.admin-report > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.admin-report p {
+    margin: 8px 0 0;
+    color: var(--squad-text-soft);
+}
+
+.admin-empty {
+    padding: 25px;
+    color: var(--squad-text-muted);
+    text-align: center;
+}
+
+.admin-game-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.admin-game-add-button,
+.admin-game-steam-button,
+.admin-game-save {
+    background-color: var(--squad-primary);
+    color: white;
+    border: none;
+}
+
+.admin-game-add-button:hover,
+.admin-game-steam-button:hover,
+.admin-game-save:hover {
+    background-color: var(--squad-primary-hover);
+    color: white;
+}
+
+.admin-game-form {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.admin-game-description {
+    grid-column: 1 / -1;
+}
+
+.admin-game-form .admin-game-save {
+    width: 180px;
+}
+
+.admin-game-help {
+    color: #c3bacd;
+}
+
+.admin-steam-form {
+    width: 100%;
+    max-width: 720px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 130px;
+    gap: 10px;
+}
+
+.admin-steam-loading {
+    max-width: 720px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    color: var(--squad-text-soft);
+    font-size: 14px;
+}
+
+.admin-steam-loading[hidden] {
+    display: none;
+}
+
+.admin-steam-loading .spinner-border {
+    width: 16px;
+    height: 16px;
+    color: var(--squad-accent);
+}
+
+.admin-steam-form .admin-game-save:disabled {
+    background-color: #4c2863;
+    color: #c9c1d0;
+    cursor: not-allowed;
+    opacity: 0.85;
+}
+
+.admin-catalog-search-form {
+    margin-bottom: 25px;
+}
+
+.admin-game-search-input {
+    width: 100%;
+}
+
+.admin-game-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.admin-game-card-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.admin-game-card {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.07);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.admin-game-card:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.admin-game-card img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 460 / 215;
+    object-fit: cover;
+}
+
+.admin-game-card-info {
+    height: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 7px;
+    padding: 12px 12px 16px;
+    box-shadow: inset 0 -5px 5px -5px rgba(0, 0, 0, 0.9);
+}
+
+.admin-game-card-info strong,
+.admin-game-card-info small {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-game-card-info small {
+    color: var(--squad-text-muted);
+}
+
+.admin-game-source {
+    width: fit-content;
+    padding: 3px 9px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.admin-game-source.steam {
+    background-color: rgba(31, 107, 181, 0.5);
+}
+
+.admin-game-source.manual {
+    background-color: rgba(108, 117, 125, 0.5);
+}
+
+.admin-game-delete-form {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 3;
+    margin: 0;
+}
+
+.admin-game-delete {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background-color: rgba(220, 53, 69, 0.92);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    opacity: 0;
+    font-size: 15px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.admin-game-card-wrapper:hover .admin-game-delete,
+.admin-game-delete:focus {
+    opacity: 1;
+}
+
+.admin-game-delete:hover {
+    background-color: #dc3545;
+}
+
+
+.admin-game-modal-cover {
+    width: 100%;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+.admin-game-modal-genres {
+    margin-bottom: 20px;
+}
+
+.admin-game-modal-genres > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.admin-game-modal-genres span {
+    padding: 5px 12px;
+    background-color: rgba(101, 0, 149, 0.7);
+    border-radius: 15px;
+    font-size: 14px;
+}
+
+.admin-game-modal-genres .admin-game-no-genres {
+    background-color: transparent;
+    color: var(--squad-text-muted);
+}
+
+.admin-game-modal-description p {
+    margin-top: 8px;
+    margin-bottom: 0;
+    color: var(--squad-text-soft);
+    line-height: 1.6;
+}
+
+.admin-game-modal-date {
+    margin-top: 22px;
+}
+
+.admin-game-modal-date p {
+    margin-top: 8px;
+    margin-bottom: 0;
+    color: var(--squad-text-soft);
+}
+
+.admin-game-edit-button {
+    margin-top: 20px;
+    background-color: var(--squad-primary);
+    color: white;
+}
+
+.admin-game-edit-button:hover {
+    background-color: var(--squad-primary-hover);
+    color: white;
+}
+
+.admin-game-edit-area {
+    margin-top: 20px;
+}
+
+.admin-game-edit-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.admin-game-edit-description,
+.admin-game-edit-genres {
+    grid-column: 1 / -1;
+}
+
+.admin-game-edit-genres > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.admin-game-edit-genres label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+@media (min-width: 1024px) and (max-height: 900px) {
+    .admin-title {
+        margin-bottom: 14px;
+    }
+
+    .admin-title h1 {
+        font-size: 30px;
+    }
+
+    .admin-metrics {
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .admin-metric-card {
+        min-height: 92px;
+        gap: 14px;
+        padding: 15px;
+    }
+
+    .admin-metric-card i {
+        font-size: 30px;
+    }
+
+    .admin-metric-card strong {
+        font-size: 26px;
+    }
+
+    .admin-panel {
+        margin-top: 14px;
+        padding: 16px;
+    }
+
+    .admin-panel-header {
+        margin-bottom: 12px;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 10px;
+    }
+
+    .admin-game-grid {
+        gap: 14px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .admin-ban-form {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .admin-game-form {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .admin-catalog-create-platform {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .admin-catalog-create-platform .btn {
+        width: 160px;
+        grid-column: 1 / -1;
+    }
+
+    .admin-catalog-platforms,
+    .admin-catalog-genres {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767px) {
+    .admin-title {
+        margin-bottom: 15px;
+    }
+
+    .admin-title h1 {
+        font-size: 27px;
+    }
+
+    .admin-title p {
+        font-size: 14px;
+    }
+
+    .admin-metrics {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .admin-metric-card {
+        min-height: 90px;
+        padding: 15px;
+    }
+
+    .admin-metric-card i {
+        font-size: 28px;
+    }
+
+    .admin-metric-card strong {
+        font-size: 25px;
+    }
+
+    .admin-panel {
+        padding: 15px;
+    }
+
+    .admin-users-table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .admin-table {
+        min-width: 700px;
+    }
+
+    .admin-ban-form {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-game-actions {
+        flex-direction: column;
+    }
+
+    .admin-steam-form,
+    .admin-game-form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .admin-game-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .admin-game-card-info {
+        padding: 9px;
+    }
+
+    .admin-game-card-info strong {
+        font-size: 13px;
+    }
+
+    .admin-game-card-info small {
+        font-size: 11px;
+    }
+
+    .admin-game-source {
+        padding: 2px 7px;
+        font-size: 10px;
+    }
+
+    .admin-game-edit-form {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-game-edit-description,
+    .admin-game-edit-genres {
+        grid-column: auto;
+    }
+
+    .admin-game-delete {
+        opacity: 1;
+    }
+
+    .admin-catalog-create-platform {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-catalog-create-platform .btn {
+        width: 100%;
+        grid-column: auto;
+    }
+
+    .admin-catalog-platforms,
+    .admin-catalog-genres {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-catalog-platform-actions {
+        flex-wrap: wrap;
+    }
+
+    .admin-catalog-platform-actions .btn {
+        min-width: 85px;
+    }
+
+    .admin-catalog-create-genres .input-group {
+        flex-wrap: nowrap;
+    }
+}
+
+@media (max-width: 600px) {
+    .admin-game-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-catalog-genre {
+        gap: 6px;
+        padding: 7px;
+    }
+
+    .admin-catalog-genre-form {
+        gap: 6px;
+    }
+
+    .admin-catalog-genre-button {
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
+    }
+}
+
+@media (hover: none), (pointer: coarse) {
+    .admin-game-delete {
+        opacity: 1;
+    }
+}

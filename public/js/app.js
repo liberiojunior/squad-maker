@@ -10,6 +10,105 @@ document.addEventListener('DOMContentLoaded', function() {
     iniciarImportacaoSteam();
 });
 
+const NOMES_NIVEIS_JOGO = {
+    1: 'Iniciante',
+    2: 'Casual',
+    3: 'Engajado',
+    4: 'Competitivo',
+    5: 'Hardcore'
+};
+
+const CORES_NIVEIS_JOGO = {
+    1: '#aaa1b8',
+    2: '#39d353',
+    3: '#25c2e8',
+    4: '#4f7cff',
+    5: '#ec3bbd'
+};
+
+const ATRASO_BUSCA = 300;
+
+function atualizarVisualNivel(range, nomeElemento, descricaoElemento = null, descricoes = {}) {
+    if (!range || !nomeElemento) {
+        return;
+    }
+
+    const nivel = Number(range.value);
+    const percentual = ((nivel - 1) / 4) * 100;
+    const cor = CORES_NIVEIS_JOGO[nivel];
+    const wrapper = range.closest('.game-level-range-wrap');
+
+    nomeElemento.textContent = NOMES_NIVEIS_JOGO[nivel];
+    nomeElemento.style.color = cor;
+
+    if (descricaoElemento) {
+        descricaoElemento.textContent = descricoes[nivel] || '';
+    }
+
+    if (wrapper) {
+        wrapper.style.setProperty('--level-color', cor);
+        wrapper.style.setProperty('--level-percent', percentual + '%');
+    }
+
+    range.style.setProperty('--level-color', cor);
+    range.style.setProperty('--level-percent', percentual + '%');
+}
+
+function atualizarErro(elemento, mensagem = '') {
+    if (!elemento) {
+        return;
+    }
+
+    elemento.textContent = mensagem;
+    elemento.hidden = mensagem === '';
+}
+
+function mensagemDaResposta(data, fallback) {
+    if (data && data.message) {
+        return data.message;
+    }
+
+    if (data && data.errors) {
+        const primeiroErro = Object.values(data.errors)[0];
+
+        if (Array.isArray(primeiroErro) && primeiroErro.length > 0) {
+            return primeiroErro[0];
+        }
+    }
+
+    return fallback;
+}
+
+async function requisicaoJson(url, options = {}, csrf = null, fallback = 'Não foi possível concluir a operação.') {
+    const headers = {
+        'Accept': 'application/json',
+        ...(options.headers || {})
+    };
+
+    if (csrf) {
+        headers['X-CSRF-TOKEN'] = csrf;
+    }
+
+    if (typeof options.body === 'string' && !headers['Content-Type']) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(url, {
+        ...options,
+        headers
+    });
+
+    const data = await response.json().catch(function() {
+        return {};
+    });
+
+    if (!response.ok) {
+        throw new Error(mensagemDaResposta(data, fallback));
+    }
+
+    return data;
+}
+
 function iniciarBuscasCatalogo() {
     const configuracoes = [
         {
@@ -157,22 +256,18 @@ function iniciarBuscaCatalogo(form, configuracao) {
             searchController.abort();
         }
 
-        searchController = new AbortController();
-
+        const controller = new AbortController();
+        searchController = controller;
         mostrarLoading(true);
 
         try {
-            const response = await fetch(
-                url.toString(),
-                {
-                    headers: {
-                        'Accept': 'text/html',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-
-                    signal: searchController.signal
-                }
-            );
+            const response = await fetch(url.toString(), {
+                headers: {
+                    'Accept': 'text/html',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                signal: controller.signal
+            });
 
             if (!response.ok) {
                 throw new Error(
@@ -198,14 +293,12 @@ function iniciarBuscaCatalogo(form, configuracao) {
                 );
             }
 
+            if (searchController !== controller) {
+                return;
+            }
+
             results.innerHTML = novosResultados.innerHTML;
-
-            window.history.replaceState(
-                {},
-                '',
-                url.toString()
-            );
-
+            window.history.replaceState({}, '', url.toString());
             atualizarContadorFiltros();
 
         } catch (error) {
@@ -218,7 +311,9 @@ function iniciarBuscaCatalogo(form, configuracao) {
             mostrarErro();
 
         } finally {
-            mostrarLoading(false);
+            if (searchController === controller) {
+                mostrarLoading(false);
+            }
         }
     }
 
@@ -227,7 +322,7 @@ function iniciarBuscaCatalogo(form, configuracao) {
 
         searchTimer = setTimeout(function() {
             buscar(montarUrl());
-        }, 300);
+        }, ATRASO_BUSCA);
     }
 
     form.addEventListener('submit', function(event) {
@@ -298,69 +393,7 @@ function iniciarBuscaJogosPerfil() {
         ? JSON.parse(page.dataset.levelDescriptions)
         : {};
 
-    const names = {
-        1: 'Iniciante',
-        2: 'Casual',
-        3: 'Engajado',
-        4: 'Competitivo',
-        5: 'Hardcore'
-    };
-
-    const colors = {
-        1: '#aaa1b8',
-        2: '#39d353',
-        3: '#25c2e8',
-        4: '#4f7cff',
-        5: '#ec3bbd'
-    };
-
     let currentButton = null;
-
-    function updateLevel() {
-        const value = Number(levelRange.value);
-        const percent = ((value - 1) / 4) * 100;
-        const wrapper = levelRange.closest('.game-level-range-wrap');
-
-        levelName.textContent = names[value];
-        levelName.style.color = colors[value];
-
-        if (levelDescription) {
-            levelDescription.textContent = descriptions[value] || '';
-        }
-
-        if (wrapper) {
-            wrapper.style.setProperty('--level-color', colors[value]);
-            wrapper.style.setProperty('--level-percent', percent + '%');
-        }
-
-        levelRange.style.setProperty('--level-color', colors[value]);
-        levelRange.style.setProperty('--level-percent', percent + '%');
-    }
-
-    function showError(message = '') {
-        if (!errorElement) {
-            return;
-        }
-
-        errorElement.textContent = message;
-        errorElement.hidden = message === '';
-    }
-
-    function responseMessage(data, fallback) {
-        if (data && data.message) {
-            return data.message;
-        }
-
-        if (data && data.errors) {
-            const firstError = Object.values(data.errors)[0];
-
-            if (Array.isArray(firstError) && firstError.length > 0) {
-                return firstError[0];
-            }
-        }
-
-        return fallback;
-    }
 
     page.addEventListener('click', function(event) {
         const button = event.target.closest('[data-game-profile-action]');
@@ -391,12 +424,14 @@ function iniciarBuscaJogosPerfil() {
             ? 'Salvar nível'
             : 'Adicionar';
 
-        showError();
-        updateLevel();
+        atualizarErro(errorElement);
+        atualizarVisualNivel(levelRange, levelName, levelDescription, descriptions);
         modal.show();
     });
 
-    levelRange.addEventListener('input', updateLevel);
+    levelRange.addEventListener('input', function() {
+        atualizarVisualNivel(levelRange, levelName, levelDescription, descriptions);
+    });
 
     saveButton.addEventListener('click', async function() {
         if (!currentButton) {
@@ -409,33 +444,15 @@ function iniciarBuscaJogosPerfil() {
             : currentButton.dataset.addUrl;
 
         saveButton.disabled = true;
-        showError();
+        atualizarErro(errorElement);
 
         try {
-            const response = await fetch(url, {
+            const data = await requisicaoJson(url, {
                 method: selected ? 'PATCH' : 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrf
-                },
                 body: JSON.stringify({
                     nivel: Number(levelRange.value)
                 })
-            });
-
-            const data = await response.json().catch(function() {
-                return {};
-            });
-
-            if (!response.ok) {
-                throw new Error(
-                    responseMessage(
-                        data,
-                        'Não foi possível atualizar Meus Jogos.'
-                    )
-                );
-            }
+            }, csrf, 'Não foi possível atualizar Meus Jogos.');
 
             currentButton.dataset.selected = '1';
             currentButton.dataset.level = String(data.nivel || levelRange.value);
@@ -455,7 +472,7 @@ function iniciarBuscaJogosPerfil() {
             modal.hide();
 
         } catch (error) {
-            showError(error.message);
+            atualizarErro(errorElement, error.message);
 
         } finally {
             saveButton.disabled = false;
@@ -464,12 +481,11 @@ function iniciarBuscaJogosPerfil() {
 
     modalElement.addEventListener('hidden.bs.modal', function() {
         currentButton = null;
-        showError();
+        atualizarErro(errorElement);
     });
 
-    updateLevel();
+    atualizarVisualNivel(levelRange, levelName, levelDescription, descriptions);
 }
-
 
 function iniciarCadastroJogos() {
     const page = document.getElementById('gameSetupPage');
@@ -517,48 +533,11 @@ function iniciarCadastroJogos() {
         ? JSON.parse(page.dataset.levelDescriptions)
         : {};
 
-    const names = {
-        1: 'Iniciante',
-        2: 'Casual',
-        3: 'Engajado',
-        4: 'Competitivo',
-        5: 'Hardcore'
-    };
-
-    const colors = {
-        1: '#aaa1b8',
-        2: '#39d353',
-        3: '#25c2e8',
-        4: '#4f7cff',
-        5: '#ec3bbd'
-    };
-
     let currentCard = null;
     let selectedCount = Number(page.dataset.selectedCount || 0);
     let searchTimer = null;
     let searchController = null;
     let showCompleteAfterLevel = false;
-
-    function updateRangeVisual() {
-        const value = Number(levelRange.value);
-        const percent = ((value - 1) / 4) * 100;
-        const wrapper = levelRange.closest('.game-level-range-wrap');
-
-        levelName.textContent = names[value];
-        levelName.style.color = colors[value];
-
-        if (levelDescription) {
-            levelDescription.textContent = descriptions[value] || '';
-        }
-
-        if (wrapper) {
-            wrapper.style.setProperty('--level-color', colors[value]);
-            wrapper.style.setProperty('--level-percent', percent + '%');
-        }
-
-        levelRange.style.setProperty('--level-color', colors[value]);
-        levelRange.style.setProperty('--level-percent', percent + '%');
-    }
 
     function updateCount() {
         if (!countElement) {
@@ -611,7 +590,8 @@ function iniciarCadastroJogos() {
             searchController.abort();
         }
 
-        searchController = new AbortController();
+        const controller = new AbortController();
+        searchController = controller;
         showSearchLoading(true);
 
         try {
@@ -620,7 +600,7 @@ function iniciarCadastroJogos() {
                     'Accept': 'text/html',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                signal: searchController.signal
+                signal: controller.signal
             });
 
             if (!response.ok) {
@@ -638,6 +618,10 @@ function iniciarCadastroJogos() {
                 throw new Error('Não foi possível atualizar os resultados.');
             }
 
+            if (searchController !== controller) {
+                return;
+            }
+
             searchResults.innerHTML = newResults.innerHTML;
             window.history.replaceState({}, '', url.toString());
 
@@ -647,7 +631,9 @@ function iniciarCadastroJogos() {
             }
 
         } finally {
-            showSearchLoading(false);
+            if (searchController === controller) {
+                showSearchLoading(false);
+            }
         }
     }
 
@@ -656,7 +642,7 @@ function iniciarCadastroJogos() {
 
         searchTimer = setTimeout(function() {
             searchGames(buildSearchUrl());
-        }, 300);
+        }, ATRASO_BUSCA);
     }
 
     searchInput.addEventListener('input', scheduleSearch);
@@ -703,7 +689,7 @@ function iniciarCadastroJogos() {
         removeButton.hidden = !selected;
         removeButton.disabled = false;
         updateModalLimit(selected);
-        updateRangeVisual();
+        atualizarVisualNivel(levelRange, levelName, levelDescription, descriptions);
     });
 
     modalElement.addEventListener('hidden.bs.modal', function() {
@@ -715,7 +701,9 @@ function iniciarCadastroJogos() {
         }
     });
 
-    levelRange.addEventListener('input', updateRangeVisual);
+    levelRange.addEventListener('input', function() {
+        atualizarVisualNivel(levelRange, levelName, levelDescription, descriptions);
+    });
 
     saveButton.addEventListener('click', async function() {
         if (!currentCard || saveButton.disabled) {
@@ -730,26 +718,13 @@ function iniciarCadastroJogos() {
         saveButton.disabled = true;
 
         try {
-            const response = await fetch(selectUrl, {
+            const data = await requisicaoJson(selectUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrf
-                },
                 body: JSON.stringify({
                     id_jogo: Number(currentCard.dataset.id),
                     nivel: Number(levelRange.value)
                 })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    data.message || 'Não foi possível salvar o jogo.'
-                );
-            }
+            }, csrf, 'Não foi possível salvar o jogo.');
 
             const wasSelected = currentCard.dataset.selected === '1';
 
@@ -807,21 +782,9 @@ function iniciarCadastroJogos() {
         }
 
         try {
-            const response = await fetch(currentCard.dataset.removeUrl, {
-                method: 'DELETE',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrf
-                }
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    data.message || 'Não foi possível remover o jogo.'
-                );
-            }
+            const data = await requisicaoJson(currentCard.dataset.removeUrl, {
+                method: 'DELETE'
+            }, csrf, 'Não foi possível remover o jogo.');
 
             currentCard.dataset.selected = '0';
             currentCard.dataset.level = '1';
@@ -868,10 +831,9 @@ function iniciarCadastroJogos() {
         });
     }
 
-    updateRangeVisual();
+    atualizarVisualNivel(levelRange, levelName, levelDescription, descriptions);
     updateCount();
 }
-
 
 function iniciarImportacaoSteam() {
     const form = document.getElementById(
@@ -942,18 +904,7 @@ function iniciarBioPublica() {
         return;
     }
 
-    let expandida = false;
-
     function atualizar() {
-        if (expandida) {
-            bio.classList.add('is-expanded');
-            toggle.hidden = false;
-            toggle.textContent = 'Ver menos';
-            toggle.setAttribute('aria-expanded', 'true');
-            return;
-        }
-
-        bio.classList.remove('is-expanded');
         toggle.textContent = 'Ver mais';
         toggle.setAttribute('aria-expanded', 'false');
 
@@ -962,16 +913,7 @@ function iniciarBioPublica() {
         });
     }
 
-    toggle.addEventListener('click', function() {
-        expandida = !expandida;
-        atualizar();
-    });
-
-    window.addEventListener('resize', function() {
-        if (!expandida) {
-            atualizar();
-        }
-    });
+    window.addEventListener('resize', atualizar);
 
     atualizar();
 }
@@ -1005,15 +947,6 @@ function iniciarAvatarPerfil() {
     let startOffsetY = 0;
     let saving = false;
 
-    function showError(message = '') {
-        if (!errorElement) {
-            return;
-        }
-
-        errorElement.textContent = message;
-        errorElement.hidden = message === '';
-    }
-
     function clearCrop() {
         if (objectUrl) {
             URL.revokeObjectURL(objectUrl);
@@ -1030,7 +963,7 @@ function iniciarAvatarPerfil() {
 
         canvas.classList.remove('dragging');
         context.clearRect(0, 0, canvas.width, canvas.height);
-        showError();
+        atualizarErro(errorElement);
     }
 
     function limitOffset() {
@@ -1144,7 +1077,7 @@ function iniciarAvatarPerfil() {
         saveButton.disabled = true;
         saveButton.textContent = 'Salvando...';
 
-        showError();
+        atualizarErro(errorElement);
 
         canvas.toBlob(
             function(blob) {
@@ -1152,9 +1085,7 @@ function iniciarAvatarPerfil() {
                     saveButton.disabled = false;
                     saveButton.textContent = 'Salvar foto';
 
-                    showError(
-                        'Não foi possível preparar a imagem. Tente novamente.'
-                    );
+                    atualizarErro(errorElement, 'Não foi possível preparar a imagem. Tente novamente.');
 
                     return;
                 }
@@ -1518,22 +1449,6 @@ function iniciarPerfil() {
             ? JSON.parse(profilePage.dataset.levelDescriptions)
             : {};
 
-    const levelNames = {
-        1: 'Iniciante',
-        2: 'Casual',
-        3: 'Engajado',
-        4: 'Competitivo',
-        5: 'Hardcore'
-    };
-
-    const levelColors = {
-        1: '#aaa1b8',
-        2: '#39d353',
-        3: '#25c2e8',
-        4: '#4f7cff',
-        5: '#ec3bbd'
-    };
-
     const profileForm = document.getElementById('profileForm');
     const nicknameInput = document.getElementById('nicknameInput');
     const bioInput = document.getElementById('bioInput');
@@ -1618,7 +1533,6 @@ function iniciarPerfil() {
     let dropBefore = true;
     let editingProfile = false;
     let pendingRemove = null;
-    let bioExpandida = false;
 
     function atualizarContadorBio() {
         if (!bioInput || !bioCounter) {
@@ -1642,25 +1556,14 @@ function iniciarPerfil() {
         const alturaRecolhida = 84;
         const excede = alturaCompleta > alturaRecolhida + 1;
 
-        if (editingProfile || bioExpandida || !excede) {
-            bioInput.style.height = alturaCompleta + 'px';
-        } else {
-            bioInput.style.height = alturaRecolhida + 'px';
-        }
+        bioInput.style.height = editingProfile || !excede
+            ? alturaCompleta + 'px'
+            : alturaRecolhida + 'px';
 
         if (bioToggle) {
             bioToggle.hidden = editingProfile || !excede;
-
-            if (!editingProfile && excede) {
-                bioToggle.textContent = bioExpandida
-                    ? 'Ver menos'
-                    : 'Ver mais';
-
-                bioToggle.setAttribute(
-                    'aria-expanded',
-                    bioExpandida ? 'true' : 'false'
-                );
-            }
+            bioToggle.textContent = 'Ver mais';
+            bioToggle.setAttribute('aria-expanded', 'false');
         }
 
         if (bioCounter) {
@@ -1707,46 +1610,6 @@ function iniciarPerfil() {
         return copia;
     }
 
-    function updateRangeVisual(range, nameElement, descriptionElement = null) {
-        if (!range || !nameElement) {
-            return;
-        }
-
-        const value = Number(range.value);
-        const percent = ((value - 1) / 4) * 100;
-        const wrapper = range.closest('.game-level-range-wrap');
-
-        nameElement.textContent = levelNames[value];
-        nameElement.style.color = levelColors[value];
-
-        if (descriptionElement) {
-            descriptionElement.textContent =
-                levelDescriptions[value] || '';
-        }
-
-        if (wrapper) {
-            wrapper.style.setProperty(
-                '--level-color',
-                levelColors[value]
-            );
-
-            wrapper.style.setProperty(
-                '--level-percent',
-                percent + '%'
-            );
-        }
-
-        range.style.setProperty(
-            '--level-color',
-            levelColors[value]
-        );
-
-        range.style.setProperty(
-            '--level-percent',
-            percent + '%'
-        );
-    }
-
     function mostrarStatus(element, mensagem, tipo) {
         if (!element) {
             return;
@@ -1762,59 +1625,6 @@ function iniciarPerfil() {
         if (tipo) {
             element.classList.add(tipo);
         }
-    }
-
-    function mensagemDaResposta(data, fallback) {
-        if (data && data.message) {
-            return data.message;
-        }
-
-        if (data && data.errors) {
-            const primeiroErro =
-                Object.values(data.errors)[0];
-
-            if (
-                Array.isArray(primeiroErro)
-                && primeiroErro.length > 0
-            ) {
-                return primeiroErro[0];
-            }
-        }
-
-        return fallback;
-    }
-
-    async function requisicaoJson(url, options = {}) {
-        const response = await fetch(
-            url,
-            {
-                ...options,
-
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrf,
-                    ...(options.headers || {})
-                }
-            }
-        );
-
-        const data = await response
-            .json()
-            .catch(function() {
-                return {};
-            });
-
-        if (!response.ok) {
-            throw new Error(
-                mensagemDaResposta(
-                    data,
-                    'Não foi possível concluir a operação.'
-                )
-            );
-        }
-
-        return data;
     }
 
     function abrirConfirmacaoRemocao(nome, dados) {
@@ -1881,12 +1691,9 @@ function iniciarPerfil() {
         removeButton.disabled = true;
 
         try {
-            const data = await requisicaoJson(
-                item.dataset.removeUrl,
-                {
-                    method: 'DELETE'
-                }
-            );
+            const data = await requisicaoJson(item.dataset.removeUrl, {
+                method: 'DELETE'
+            }, csrf);
 
             const id = Number(item.dataset.gameId);
 
@@ -2148,7 +1955,7 @@ function iniciarPerfil() {
                 !workingGames.has(id);
         }
 
-        updateRangeVisual(
+        atualizarVisualNivel(
             levelRange,
             levelName,
             levelDescription
@@ -2175,8 +1982,8 @@ function iniciarPerfil() {
             searchController.abort();
         }
 
-        searchController = new AbortController();
-
+        const controller = new AbortController();
+        searchController = controller;
         searchResults.innerHTML = '';
 
         const loading = document.createElement('div');
@@ -2204,7 +2011,7 @@ function iniciarPerfil() {
                         'Accept': 'application/json'
                     },
 
-                    signal: searchController.signal
+                    signal: controller.signal
                 }
             );
 
@@ -2219,9 +2026,11 @@ function iniciarPerfil() {
                 );
             }
 
-            lastSearchResults =
-                data.jogos || [];
+            if (searchController !== controller) {
+                return;
+            }
 
+            lastSearchResults = data.jogos || [];
             renderizarResultados();
 
         } catch (error) {
@@ -2286,7 +2095,7 @@ function iniciarPerfil() {
             detailLevelError.textContent = '';
         }
 
-        updateRangeVisual(
+        atualizarVisualNivel(
             detailLevelRange,
             detailLevelName,
             detailLevelDescription
@@ -2586,13 +2395,6 @@ function iniciarPerfil() {
         });
     }
 
-    if (bioToggle && bioInput) {
-        bioToggle.addEventListener('click', function() {
-            bioExpandida = !bioExpandida;
-            ajustarBio();
-        });
-    }
-
     if (bioInput) {
         bioInput.addEventListener('input', function() {
             atualizarContadorBio();
@@ -2624,7 +2426,6 @@ function iniciarPerfil() {
                         'readonly'
                     );
 
-                    bioExpandida = true;
                     atualizarContadorBio();
                     ajustarBio();
 
@@ -2733,7 +2534,7 @@ function iniciarPerfil() {
                     function() {
                         buscarJogos(termo);
                     },
-                    300
+                    ATRASO_BUSCA
                 );
             }
         );
@@ -2743,10 +2544,11 @@ function iniciarPerfil() {
         levelRange.addEventListener(
             'input',
             function() {
-                updateRangeVisual(
+                atualizarVisualNivel(
                     levelRange,
                     levelName,
-                    levelDescription
+                    levelDescription,
+                    levelDescriptions
                 );
             }
         );
@@ -2881,7 +2683,8 @@ function iniciarPerfil() {
                                         jogos: jogos,
                                         niveis: niveis
                                     })
-                            }
+                            },
+                            csrf
                         );
 
                     persistedGames =
@@ -2973,10 +2776,11 @@ function iniciarPerfil() {
         detailLevelRange.addEventListener(
             'input',
             function() {
-                updateRangeVisual(
+                atualizarVisualNivel(
                     detailLevelRange,
                     detailLevelName,
-                    detailLevelDescription
+                    detailLevelDescription,
+                    levelDescriptions
                 );
             }
         );
@@ -3019,7 +2823,8 @@ function iniciarPerfil() {
                                             detailLevelRange.value
                                         )
                                 })
-                        }
+                        },
+                        csrf
                     );
 
                     const nivel =
@@ -3281,7 +3086,8 @@ function iniciarPerfil() {
                                     JSON.stringify({
                                         jogos: jogos
                                     })
-                            }
+                            },
+                            csrf
                         );
 
                     jogos.forEach(

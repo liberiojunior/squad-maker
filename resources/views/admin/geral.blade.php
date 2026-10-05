@@ -95,7 +95,7 @@
             </div>
 
 
-            <div class="admin-users-table-wrapper">
+            <div class="admin-users-table-wrapper squad-scrollbar">
 
                 <table class="table admin-table align-middle">
 
@@ -347,7 +347,7 @@
 
                     <div class="modal-dialog modal-dialog-centered">
 
-                        <div class="modal-content admin-delete-modal">
+                        <div class="modal-content squad-modal admin-delete-modal">
 
                             <form
                                 method="POST"

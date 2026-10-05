@@ -1,4 +1,7 @@
 @extends('layouts.internal')
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/games.css') }}">
+@endpush
 
 @section('content')
 
@@ -220,7 +223,7 @@
                         <div
                             class="
                                 catalog-filter-options
-                                catalog-filter-options-scroll
+                                catalog-filter-options-scroll squad-scrollbar
                             "
                         >
 
@@ -278,7 +281,7 @@
                         <div
                             class="
                                 catalog-filter-options
-                                catalog-filter-options-scroll
+                                catalog-filter-options-scroll squad-scrollbar
                             "
                         >
 
@@ -554,7 +557,7 @@
         aria-hidden="true"
     >
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content profile-games-modal">
+            <div class="modal-content squad-modal profile-games-modal">
 
                 <div class="modal-header">
                     <h2

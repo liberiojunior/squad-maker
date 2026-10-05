@@ -475,7 +475,7 @@
                             <div
                                 class="
                                     catalog-filter-options
-                                    catalog-filter-options-scroll
+                                    catalog-filter-options-scroll squad-scrollbar
                                 "
                             >
                                 @forelse (
@@ -520,7 +520,7 @@
                             <div
                                 class="
                                     catalog-filter-options
-                                    catalog-filter-options-scroll
+                                    catalog-filter-options-scroll squad-scrollbar
                                 "
                             >
                                 @forelse (
@@ -656,7 +656,7 @@
                             aria-hidden="true"
                         >
                             <div class="modal-dialog modal-dialog-centered modal-lg">
-                                <div class="modal-content admin-game-modal">
+                                <div class="modal-content squad-modal admin-game-modal">
                                     <div class="modal-header">
                                         <h2 class="modal-title">
                                             {{ $jogo->nome }}

@@ -1,4 +1,7 @@
 @extends('layouts.internal')
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/profile.css') }}">
+@endpush
 
 @section('content')
     @if (session('success'))
@@ -246,7 +249,7 @@
     @if (! $contaSuspensa)
         <div class="modal fade" id="publicBioModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content profile-bio-modal">
+                <div class="modal-content squad-modal profile-bio-modal">
                     <div class="modal-header">
                         <h2 class="modal-title">Sobre {{ $user->nickname }}</h2>
 
@@ -259,7 +262,7 @@
                     </div>
 
                     <div class="modal-body">
-                        <div class="profile-bio-modal-text">{{ $user->bio ?: 'Este usuário ainda não adicionou uma bio.' }}</div>
+                        <div class="profile-bio-modal-text squad-scrollbar">{{ $user->bio ?: 'Este usuário ainda não adicionou uma bio.' }}</div>
                     </div>
                 </div>
             </div>
@@ -269,7 +272,7 @@
     @if (! $contaSuspensa && $user->jogos->count() > 4)
         <div class="modal fade" id="publicGamesModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-xl">
-                <div class="modal-content profile-games-modal">
+                <div class="modal-content squad-modal profile-games-modal">
                     <div class="modal-header">
                         <div>
                             <h2 class="modal-title">Jogos de {{ $user->nickname }}</h2>

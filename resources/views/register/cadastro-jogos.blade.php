@@ -1,4 +1,7 @@
 @extends('layouts.app')
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
+@endpush
 
 @section('content')
 
@@ -247,7 +250,7 @@
         data-bs-keyboard="false"
     >
         <div class="modal-dialog modal-dialog-centered game-setup-guide-dialog">
-            <div class="modal-content profile-games-modal game-setup-guide-content">
+            <div class="modal-content squad-modal profile-games-modal game-setup-guide-content">
                 <div class="modal-body game-setup-guide-body">
 
                     <div class="game-setup-guide-mascot">
@@ -309,6 +312,7 @@
             <div
                 class="
                     modal-content
+                    squad-modal
                     profile-games-modal
                 "
             >
@@ -453,7 +457,7 @@
         data-bs-keyboard="false"
     >
         <div class="modal-dialog modal-dialog-centered game-setup-guide-dialog">
-            <div class="modal-content profile-games-modal game-setup-guide-content">
+            <div class="modal-content squad-modal profile-games-modal game-setup-guide-content">
                 <div class="modal-body game-setup-guide-body">
 
                     <div class="game-setup-guide-mascot game-setup-guide-mascot-ready">

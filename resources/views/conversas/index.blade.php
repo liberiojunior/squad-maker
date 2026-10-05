@@ -28,7 +28,7 @@
                 >
             </div>
 
-            <div class="chat-sidebar-scroll" id="chatSidebarScroll">
+            <div class="chat-sidebar-scroll squad-scrollbar" id="chatSidebarScroll">
                 @if ($solicitacoes->isNotEmpty())
                     <section class="chat-sidebar-section">
                         <h2>Solicitações</h2>
@@ -247,7 +247,8 @@
                     </div>
                 </header>
 
-                <div class="chat-messages" id="chatMessages">
+                <div class="chat-messages squad-scrollbar" id="chatMessages">
+                    <div class="chat-messages-content" id="chatMessagesContent">
                     @forelse ($conversaAtual->mensagens as $mensagem)
                         <div
                             class="chat-message-row {{ $mensagem->id_remetente === auth()->id() ? 'mine' : 'theirs' }}"
@@ -269,6 +270,7 @@
                     @endforelse
 
                     <div id="chatMessagesEnd"></div>
+                    </div>
                 </div>
 
                 <div class="chat-composer-wrap">
@@ -319,7 +321,7 @@
     @if ($amigos->count() > 3)
         <div class="modal fade" id="chatPartnersModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content chat-partners-modal">
+                <div class="modal-content squad-modal chat-partners-modal">
                     <div class="modal-header">
                         <div>
                             <h2 class="modal-title">Todos os parceiros</h2>
@@ -372,7 +374,7 @@
     @if ($conversaAtual && $outroUsuarioAtual)
         <div class="modal fade" id="deleteConversationModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content chat-delete-modal">
+                <div class="modal-content squad-modal chat-delete-modal">
                     <form method="POST" action="{{ route('conversas.destroy', $conversaAtual) }}">
                         @csrf
                         @method('DELETE')

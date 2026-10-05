@@ -145,9 +145,7 @@ function iniciarEnvioChat() {
                 submit.disabled = false;
             }
 
-            input.focus({
-                preventScroll: true,
-            });
+            input.focus();
         }
     }
 
@@ -217,7 +215,9 @@ function iniciarTempoRealChat() {
             return;
         }
 
-        const item = buscarItemConversa(evento.mensagem.id_conversa);
+        const item = document.querySelector(
+            `[data-conversation-id="${evento.mensagem.id_conversa}"]`
+        );
 
         if (!item) {
             window.location.reload();
@@ -282,12 +282,56 @@ function adicionarMensagemNaConversa(mensagem) {
     bubble.appendChild(horario);
     row.appendChild(bubble);
 
-    content.appendChild(row);
-    content.appendChild(end);
-    rolarConversaParaFinal();
+    content.insertBefore(row, end);
+    rolarConversaParaFinal(true);
 }
 
 function iniciarPosicaoConversa() {
+    const container = document.getElementById('chatMessages');
+    const content = document.getElementById('chatMessagesContent');
+
+    if (!container || !content) {
+        return;
+    }
+
+    let inicializando = true;
+
+    function posicionar() {
+        rolarConversaParaFinal();
+    }
+
+    requestAnimationFrame(posicionar);
+
+    window.addEventListener('load', posicionar, {
+        once: true,
+    });
+
+    window.addEventListener('pageshow', posicionar);
+
+    if (document.fonts?.ready) {
+        document.fonts.ready.then(posicionar);
+    }
+
+    const observer = new ResizeObserver(function() {
+        if (inicializando) {
+            posicionar();
+        }
+    });
+
+    observer.observe(content);
+
+    [50, 150, 300, 600].forEach(function(tempo) {
+        setTimeout(posicionar, tempo);
+    });
+
+    setTimeout(function() {
+        inicializando = false;
+        observer.disconnect();
+        posicionar();
+    }, 900);
+}
+
+function rolarConversaParaFinal(suave = false) {
     const container = document.getElementById('chatMessages');
 
     if (!container) {
@@ -295,36 +339,17 @@ function iniciarPosicaoConversa() {
     }
 
     requestAnimationFrame(function() {
-        requestAnimationFrame(function() {
-            rolarConversaParaFinal();
+        container.scrollTo({
+            top: container.scrollHeight,
+            behavior: suave ? 'smooth' : 'auto',
         });
     });
-
-    window.addEventListener('load', function() {
-        rolarConversaParaFinal();
-    }, {
-        once: true,
-    });
-}
-
-function rolarConversaParaFinal() {
-    const container = document.getElementById('chatMessages');
-
-    if (!container) {
-        return;
-    }
-
-    container.scrollTop = container.scrollHeight;
-}
-
-function buscarItemConversa(idConversa) {
-    return document.querySelector(
-        `.chat-conversation-item[data-conversation-id="${idConversa}"]`
-    );
 }
 
 function atualizarPreviewDaConversa(mensagem) {
-    const item = buscarItemConversa(mensagem.id_conversa);
+    const item = document.querySelector(
+        `[data-conversation-id="${mensagem.id_conversa}"]`
+    );
 
     if (!item) {
         return;
@@ -392,7 +417,9 @@ async function marcarConversaComoLida() {
 
         window.SquadRealtime?.atualizarBadgeChat(data.notificacoes);
 
-        const item = buscarItemConversa(chatPage.dataset.conversationId);
+        const item = document.querySelector(
+            `[data-conversation-id="${chatPage.dataset.conversationId}"]`
+        );
 
         item?.querySelector('.chat-unread-badge')?.remove();
     } catch (error) {

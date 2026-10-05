@@ -1,4 +1,7 @@
 @extends('layouts.internal')
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/profile.css') }}">
+@endpush
 
 @section('content')
     @php
@@ -312,7 +315,7 @@
         aria-hidden="true"
     >
         <div class="modal-dialog modal-dialog-centered profile-genres-dialog">
-            <div class="modal-content profile-genres-modal">
+            <div class="modal-content squad-modal profile-genres-modal">
                 <form
                     method="POST"
                     action="{{ route('perfil.generos.update') }}"
@@ -350,7 +353,7 @@
                             </div>
 
                             <div
-                                class="profile-selected-genres"
+                                class="profile-selected-genres squad-scrollbar"
                                 id="profileSelectedGenres"
                             ></div>
                         </section>
@@ -360,7 +363,7 @@
                         </div>
 
                         <div
-                            class="profile-genre-options"
+                            class="profile-genre-options squad-scrollbar"
                             id="profileGenreOptions"
                         >
                             @foreach ($generos as $genero)
@@ -415,7 +418,7 @@
         aria-hidden="true"
     >
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content profile-games-modal">
+            <div class="modal-content squad-modal profile-games-modal">
                 <div class="modal-header">
                     <div>
                         <h2 class="modal-title">Meus Jogos</h2>
@@ -450,7 +453,7 @@
                     </div>
 
                     <div
-                        class="profile-game-search-results"
+                        class="profile-game-search-results squad-scrollbar"
                         id="profileGameSearchResults"
                     >
                         <div class="profile-game-search-empty">
@@ -582,7 +585,7 @@
         aria-hidden="true"
     >
         <div class="modal-dialog modal-dialog-centered modal-xl">
-            <div class="modal-content profile-games-modal">
+            <div class="modal-content squad-modal profile-games-modal">
                 <div class="modal-header">
                     <div>
                         <h2 class="modal-title">Meus Jogos</h2>
@@ -602,7 +605,7 @@
 
                 <div class="modal-body">
                     <div
-                        class="profile-order-list"
+                        class="profile-order-list squad-scrollbar"
                         id="profileOrderList"
                     >
                         @forelse ($user->jogos as $jogo)
@@ -690,7 +693,7 @@
         aria-hidden="true"
     >
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content profile-games-modal">
+            <div class="modal-content squad-modal profile-games-modal">
                 <div class="modal-header">
                     <h2 class="modal-title">
                         Nível de proficiência
@@ -783,7 +786,7 @@
         aria-hidden="true"
     >
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content profile-games-modal">
+            <div class="modal-content squad-modal profile-games-modal">
                 <form
                     method="POST"
                     action="{{ route('perfil.plataformas.update') }}"
@@ -914,7 +917,7 @@
 
     <div class="modal fade" id="avatarCropModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered avatar-crop-dialog">
-            <div class="modal-content profile-games-modal avatar-crop-modal">
+            <div class="modal-content squad-modal profile-games-modal avatar-crop-modal">
                 <div class="modal-body avatar-crop-body">
                     <div class="avatar-crop-stage">
                         <canvas id="avatarCropCanvas" width="512" height="512"
@@ -941,7 +944,7 @@
     </div>
 <div class="modal fade" id="bioModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content profile-bio-modal">
+        <div class="modal-content squad-modal profile-bio-modal">
             <div class="modal-header">
                 <h2 class="modal-title">Sobre mim</h2>
 
@@ -954,7 +957,7 @@
             </div>
 
             <div class="modal-body">
-                <div class="profile-bio-modal-text">{{ old('bio', $user->bio) ?: 'Você ainda não adicionou uma bio.' }}</div>
+                <div class="profile-bio-modal-text squad-scrollbar">{{ old('bio', $user->bio) ?: 'Você ainda não adicionou uma bio.' }}</div>
             </div>
         </div>
     </div>

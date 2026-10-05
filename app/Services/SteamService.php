@@ -10,6 +10,8 @@ use Throwable;
 
 class SteamService
 {
+    private const JOGADORES_POR_LOTE = 20;
+
     private const GENEROS_ACEITOS = [
         'Ação',
         'Aventura',
@@ -213,55 +215,60 @@ class SteamService
         return $resultados[$appId] ?? null;
     }
 
-    public function buscarJogadoresOnlineEmLote(array $appIds): array
-    {
+    public function buscarJogadoresOnlineEmLote(
+        array $appIds,
+        bool $usarCache = true
+    ): array {
         $appIds = collect($appIds)
             ->filter()
-            ->map(fn($appId) => (int)$appId)
+            ->map(fn($appId) => (int) $appId)
             ->unique()
-            ->values();
+            ->values()
+            ->all();
 
         $resultados = [];
         $faltantes = [];
 
         foreach ($appIds as $appId) {
-            $cacheKey = 'steam_players_' . $appId;
-
-            $cache = Cache::get($cacheKey);
-
-            if (
-                is_array($cache)
-                && array_key_exists('value', $cache)
-            ) {
-                $resultados[$appId] = $cache['value'];
-            } else {
+            if (!$usarCache) {
                 $faltantes[] = $appId;
+                continue;
             }
+
+            $cache = Cache::get('steam_players_' . $appId);
+
+            if (is_array($cache) && array_key_exists('value', $cache)) {
+                $resultados[$appId] = $cache['value'];
+                continue;
+            }
+
+            $faltantes[] = $appId;
         }
 
-        if (!empty($faltantes)) {
-            $responses = Http::pool(
-                function (Pool $pool) use ($faltantes) {
+        foreach (array_chunk($faltantes, self::JOGADORES_POR_LOTE) as $lote) {
+            try {
+                $responses = Http::pool(function (Pool $pool) use ($lote) {
                     $requests = [];
 
-                    foreach ($faltantes as $appId) {
+                    foreach ($lote as $appId) {
                         $requests[] = $pool
-                            ->as((string)$appId)
-                            ->timeout(5)
+                            ->as((string) $appId)
+                            ->connectTimeout(2)
+                            ->timeout(4)
                             ->get(
                                 'https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/',
-                                [
-                                    'appid' => $appId,
-                                ]
+                                ['appid' => $appId]
                             );
                     }
 
                     return $requests;
-                }
-            );
+                });
+            } catch (Throwable) {
+                $responses = [];
+            }
 
-            foreach ($faltantes as $appId) {
-                $response = $responses[(string)$appId] ?? null;
+            foreach ($lote as $appId) {
+                $response = $responses[(string) $appId] ?? null;
                 $quantidade = null;
 
                 if (
@@ -269,21 +276,21 @@ class SteamService
                     && !($response instanceof Throwable)
                     && $response->successful()
                 ) {
-                    $quantidade = $response->json(
-                        'response.player_count'
-                    );
+                    $valor = $response->json('response.player_count');
 
-                    if (is_numeric($quantidade)) {
-                        $quantidade = (int)$quantidade;
-                    } else {
-                        $quantidade = null;
+                    if (is_numeric($valor)) {
+                        $quantidade = (int) $valor;
                     }
                 }
+
+                $expiracao = $quantidade === null
+                    ? now()->addSeconds(30)
+                    : now()->addMinutes(2);
 
                 Cache::put(
                     'steam_players_' . $appId,
                     ['value' => $quantidade],
-                    now()->addMinutes(2)
+                    $expiracao
                 );
 
                 $resultados[$appId] = $quantidade;

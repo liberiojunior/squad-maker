@@ -18,10 +18,14 @@ class Jogo extends Model
         'capa',
         'dt_lancamento',
         'descricao',
+        'jogadores_online',
+        'jogadores_online_atualizado_em',
     ];
 
     protected $casts = [
         'dt_lancamento' => 'date',
+        'jogadores_online' => 'integer',
+        'jogadores_online_atualizado_em' => 'datetime',
     ];
 
     public function generos()
