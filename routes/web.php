@@ -276,6 +276,16 @@ Route::middleware('auth:admin')
             [AdminController::class, 'dashboard']
         )->name('dashboard');
 
+        Route::get(
+            '/usuarios',
+            [AdminController::class, 'usuarios']
+        )->name('usuarios.index');
+
+        Route::get(
+            '/noticias',
+            [AdminController::class, 'noticias']
+        )->name('noticias');
+
         Route::post(
             '/usuarios/{user}/banir',
             [AdminController::class, 'banir']

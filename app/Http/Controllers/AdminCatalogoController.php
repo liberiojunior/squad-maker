@@ -14,11 +14,35 @@ use Illuminate\Support\Facades\DB;
 
 class AdminCatalogoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $plataformas = Plataforma::orderBy('nome')->get();
+        $data = $request->validate([
+            'genero_q' => ['nullable', 'string', 'max:90'],
+            'genero_ordem' => ['nullable', 'in:az,za'],
+        ]);
 
-        $generos = Genero::orderBy('genero')->get();
+        $plataformas = Plataforma::query()
+            ->orderBy('nome')
+            ->paginate(6, ['*'], 'plataformas')
+            ->withQueryString();
+
+        $generosQuery = Genero::query();
+
+        $buscaGenero = trim($data['genero_q'] ?? '');
+
+        if ($buscaGenero !== '') {
+            $generosQuery->where('genero', 'like', '%' . $buscaGenero . '%');
+        }
+
+        if (($data['genero_ordem'] ?? 'az') === 'za') {
+            $generosQuery->orderBy('genero', 'desc');
+        } else {
+            $generosQuery->orderBy('genero');
+        }
+
+        $generos = $generosQuery
+            ->paginate(12, ['*'], 'generos')
+            ->withQueryString();
 
         return view('admin.catalogo', [
             'plataformas' => $plataformas,

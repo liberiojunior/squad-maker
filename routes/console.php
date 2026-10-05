@@ -11,7 +11,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Artisan::command('steam:atualizar-popularidade {--limit=200}', function () {
-    $limite = max(1, min((int)$this->option('limit'), 500));
+    $limite = max(1, min((int) $this->option('limit'), 500));
     $limiteAtualizacao = now()->subMinutes(2);
 
     $jogos = Jogo::query()
@@ -30,6 +30,7 @@ Artisan::command('steam:atualizar-popularidade {--limit=200}', function () {
 
     if ($jogos->isEmpty()) {
         $this->info('Nenhum jogo precisa ser atualizado agora.');
+
         return;
     }
 
@@ -47,8 +48,9 @@ Artisan::command('steam:atualizar-popularidade {--limit=200}', function () {
     foreach ($jogos as $jogo) {
         $quantidade = $resultados[$jogo->steam_app_id] ?? null;
 
-        if (!is_int($quantidade)) {
+        if (! is_int($quantidade)) {
             $falhas++;
+
             continue;
         }
 
@@ -72,8 +74,8 @@ Artisan::command('steam:atualizar-popularidade {--limit=200}', function () {
 
     $this->info(
         count($atualizacoes)
-        . ' jogo(s) atualizado(s). '
-        . $falhas
-        . ' falha(s) mantiveram o último valor conhecido.'
+        .' jogo(s) atualizado(s). '
+        .$falhas
+        .' falha(s) mantiveram o último valor conhecido.'
     );
 })->purpose('Atualiza a popularidade dos jogos usando jogadores online da Steam.');

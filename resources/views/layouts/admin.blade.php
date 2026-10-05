@@ -97,6 +97,13 @@
             </a>
 
             <a
+                href="{{ route('admin.usuarios.index') }}"
+                class="{{ request()->routeIs('admin.usuarios.*') ? 'active' : '' }}"
+            >
+                Usuários
+            </a>
+
+            <a
                 href="{{ route('admin.jogos.index') }}"
                 class="{{ request()->routeIs('admin.jogos.*') ? 'active' : '' }}"
             >
@@ -114,6 +121,13 @@
                 }}"
             >
                 Catálogo
+            </a>
+
+            <a
+                href="{{ route('admin.noticias') }}"
+                class="{{ request()->routeIs('admin.noticias') ? 'active' : '' }}"
+            >
+                Notícias
             </a>
 
         </nav>
@@ -164,6 +178,8 @@
 ></script>
 
 <script src="{{ asset('js/app.js') }}"></script>
+
+@stack('scripts')
 
 </body>
 </html>

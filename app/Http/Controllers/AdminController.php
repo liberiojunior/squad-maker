@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Banimento;
 use App\Models\Denuncia;
 use App\Models\User;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,10 +21,6 @@ class AdminController extends Controller
         $usuariosBanidos = User::where('status_conta', 'banido')->count();
         $denunciasPendentes = Denuncia::where('status_denuncia', 'pendente')->count();
 
-        $usuarios = User::where('status_conta', '!=', 'excluido')
-            ->orderBy('data_criacao', 'desc')
-            ->paginate(10);
-
         $denuncias = Denuncia::with(['denunciante', 'denunciado'])
             ->where('status_denuncia', 'pendente')
             ->orderBy('data_denuncia', 'desc')
@@ -34,14 +32,174 @@ class AdminController extends Controller
             'usuariosAtivos' => $usuariosAtivos,
             'usuariosBanidos' => $usuariosBanidos,
             'denunciasPendentes' => $denunciasPendentes,
-            'usuarios' => $usuarios,
             'denuncias' => $denuncias,
         ]);
     }
 
-    public function dashboard()
+    public function dashboard(Request $request)
     {
-        return view('admin.dashboard');
+        $data = $request->validate([
+            'periodo' => ['nullable', 'in:7,30,90,todos'],
+        ]);
+
+        $periodo = $data['periodo'] ?? '30';
+
+        $inicio = match ($periodo) {
+            '7' => now()->subDays(6)->startOfDay(),
+            '30' => now()->subDays(29)->startOfDay(),
+            '90' => now()->subDays(89)->startOfDay(),
+            default => null,
+        };
+
+        $novosUsuarios = User::where('status_conta', '!=', 'excluido')
+            ->when($inicio, fn($query) => $query->where('data_criacao', '>=', $inicio))
+            ->count();
+
+        $mensagensEnviadas = DB::table('tb_mensagem')
+            ->when($inicio, fn($query) => $query->where('data_envio', '>=', $inicio))
+            ->count();
+
+        $amizadesAceitas = DB::table('tb_amizade')
+            ->where('status_amizade', 'aceita')
+            ->when($inicio, fn($query) => $query->where('data_resposta', '>=', $inicio))
+            ->count();
+
+        $jogosAdicionados = DB::table('tb_jogo_usuario')
+            ->when($inicio, fn($query) => $query->where('data_adicao', '>=', $inicio))
+            ->count();
+
+        if ($periodo === 'todos') {
+            $cadastros = User::query()
+                ->selectRaw("DATE_FORMAT(data_criacao, '%Y-%m') as periodo, COUNT(*) as total")
+                ->where('status_conta', '!=', 'excluido')
+                ->groupByRaw("DATE_FORMAT(data_criacao, '%Y-%m')")
+                ->orderBy('periodo')
+                ->get();
+
+            $cadastrosLabels = $cadastros
+                ->map(fn($item) => Carbon::createFromFormat('Y-m', $item->periodo)->format('m/Y'))
+                ->values();
+
+            $cadastrosValores = $cadastros
+                ->pluck('total')
+                ->map(fn($total) => (int) $total)
+                ->values();
+        } else {
+            $cadastros = User::query()
+                ->selectRaw('DATE(data_criacao) as periodo, COUNT(*) as total')
+                ->where('status_conta', '!=', 'excluido')
+                ->where('data_criacao', '>=', $inicio)
+                ->groupByRaw('DATE(data_criacao)')
+                ->orderBy('periodo')
+                ->get()
+                ->keyBy('periodo');
+
+            $cadastrosLabels = collect();
+            $cadastrosValores = collect();
+
+            foreach (CarbonPeriod::create($inicio, now()->startOfDay()) as $dia) {
+                $chave = $dia->format('Y-m-d');
+                $cadastrosLabels->push($dia->format('d/m'));
+                $cadastrosValores->push((int) ($cadastros[$chave]->total ?? 0));
+            }
+        }
+
+        $jogosPopulares = DB::table('tb_jogo_usuario as jogo_usuario')
+            ->join('tb_jogo as jogo', 'jogo.id_jogo', '=', 'jogo_usuario.id_jogo')
+            ->when($inicio, fn($query) => $query->where('jogo_usuario.data_adicao', '>=', $inicio))
+            ->select('jogo.nome')
+            ->selectRaw('COUNT(*) as total')
+            ->groupBy('jogo.id_jogo', 'jogo.nome')
+            ->orderByDesc('total')
+            ->orderBy('jogo.nome')
+            ->limit(5)
+            ->get();
+
+        $plataformasPopulares = DB::table('tb_usuario_plataforma as usuario_plataforma')
+            ->join('tb_plataforma as plataforma', 'plataforma.id_plataforma', '=', 'usuario_plataforma.id_plataforma')
+            ->when($inicio, fn($query) => $query->where('usuario_plataforma.data_adicao', '>=', $inicio))
+            ->select('plataforma.nome')
+            ->selectRaw('COUNT(*) as total')
+            ->groupBy('plataforma.id_plataforma', 'plataforma.nome')
+            ->orderByDesc('total')
+            ->orderBy('plataforma.nome')
+            ->limit(5)
+            ->get();
+
+        return view('admin.dashboard', [
+            'periodo' => $periodo,
+            'novosUsuarios' => $novosUsuarios,
+            'mensagensEnviadas' => $mensagensEnviadas,
+            'amizadesAceitas' => $amizadesAceitas,
+            'jogosAdicionados' => $jogosAdicionados,
+            'cadastrosLabels' => $cadastrosLabels,
+            'cadastrosValores' => $cadastrosValores,
+            'jogosPopulares' => $jogosPopulares,
+            'plataformasPopulares' => $plataformasPopulares,
+        ]);
+    }
+
+    public function usuarios(Request $request)
+    {
+        $data = $request->validate([
+            'q' => ['nullable', 'string', 'max:150'],
+            'status' => ['nullable', 'in:ativo,banido'],
+            'ordem' => ['nullable', 'in:recentes,antigos,az,za'],
+            'data_inicio' => ['nullable', 'date'],
+            'data_fim' => ['nullable', 'date', 'after_or_equal:data_inicio'],
+        ]);
+
+        $query = User::query()
+            ->where('status_conta', '!=', 'excluido');
+
+        $busca = trim($data['q'] ?? '');
+
+        if ($busca !== '') {
+            $query->where(function ($query) use ($busca) {
+                $query->where('nickname', 'like', '%' . $busca . '%')
+                    ->orWhere('email', 'like', '%' . $busca . '%');
+            });
+        }
+
+        if (!empty($data['status'])) {
+            $query->where('status_conta', $data['status']);
+        }
+
+        if (!empty($data['data_inicio'])) {
+            $query->whereDate('data_criacao', '>=', $data['data_inicio']);
+        }
+
+        if (!empty($data['data_fim'])) {
+            $query->whereDate('data_criacao', '<=', $data['data_fim']);
+        }
+
+        switch ($data['ordem'] ?? 'recentes') {
+            case 'antigos':
+                $query->orderBy('data_criacao');
+                break;
+            case 'az':
+                $query->orderBy('nickname');
+                break;
+            case 'za':
+                $query->orderBy('nickname', 'desc');
+                break;
+            default:
+                $query->orderBy('data_criacao', 'desc');
+                break;
+        }
+
+        $usuarios = $query
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('admin.usuarios', [
+            'usuarios' => $usuarios,
+        ]);
+    }
+
+    public function noticias()
+    {
+        return view('admin.noticias');
     }
 
     public function banir(Request $request, User $user)
