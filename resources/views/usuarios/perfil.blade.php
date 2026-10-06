@@ -141,6 +141,10 @@
                                     </button>
                                 </form>
                             @endif
+
+                            <button type="button" class="profile-social-action profile-social-action-report" title="Denunciar perfil" aria-label="Denunciar perfil" data-bs-toggle="modal" data-bs-target="#reportProfileModal">
+                                <i class="bi bi-flag-fill"></i>
+                            </button>
                         </div>
 
                         <h1 class="profile-public-name">{{ $user->nickname }}</h1>
@@ -247,6 +251,54 @@
     </div>
 
     @if (! $contaSuspensa)
+        <div class="modal fade" id="reportProfileModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content squad-modal profile-report-modal">
+                    <form method="POST" action="{{ route('denuncias.perfil', $user) }}" enctype="multipart/form-data">
+                        @csrf
+
+                        <div class="modal-header">
+                            <div>
+                                <h2 class="modal-title">Denunciar perfil</h2>
+                                <p>Denúncia referente ao perfil de {{ $user->nickname }}.</p>
+                            </div>
+
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        </div>
+
+                        <div class="modal-body profile-report-body">
+                            <div>
+                                <label for="profileReportReason" class="form-label">Motivo</label>
+                                <select id="profileReportReason" name="motivo" class="form-select" required>
+                                    <option value="">Selecione</option>
+                                    @foreach (\App\Models\Denuncia::MOTIVOS_PERFIL as $valor => $rotulo)
+                                        <option value="{{ $valor }}" @selected(old('motivo') === $valor)>{{ $rotulo }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="profileReportDescription" class="form-label">Explique o motivo</label>
+                                <textarea id="profileReportDescription" name="descricao" class="form-control squad-scrollbar" rows="5" minlength="20" maxlength="2000" required>{{ old('descricao') }}</textarea>
+                                <small>O nickname, a bio e a imagem atual do perfil serão preservados para análise.</small>
+                            </div>
+
+                            <div>
+                                <label for="profileReportAttachment" class="form-label">Print ou imagem <span>(opcional)</span></label>
+                                <input type="file" id="profileReportAttachment" name="anexo" class="form-control" accept="image/jpeg,image/png,image/webp">
+                                <small>JPG, PNG ou WebP de até 5 MB.</small>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn profile-report-submit">Enviar denúncia</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <div class="modal fade" id="publicBioModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content squad-modal profile-bio-modal">

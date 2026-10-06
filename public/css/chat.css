@@ -686,8 +686,8 @@
 }
 
 .chat-empty-state img {
-    width: min(190px, 42vw);
-    max-height: 190px;
+    width: min(240px, 48vw);
+    max-height: 240px;
     object-fit: contain;
     margin-bottom: 20px;
     filter: drop-shadow(0 10px 25px rgba(232, 59, 189, 0.18));
@@ -799,3 +799,92 @@
         max-width: 88%;
     }
 }
+
+.chat-report-modal .modal-header,
+.chat-report-modal .modal-body,
+.chat-report-modal .modal-footer {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+.chat-report-modal .modal-header {
+    align-items: flex-start;
+}
+.chat-report-modal .modal-header p {
+    margin: 4px 0 0;
+    color: var(--squad-text-muted);
+    font-size: 13px;
+}
+.chat-report-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.chat-report-body textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+.chat-report-body small {
+    display: block;
+    margin-top: 5px;
+    color: var(--squad-text-muted);
+    font-size: 12px;
+}
+.chat-report-body .form-label span {
+    color: var(--squad-text-muted);
+    font-weight: 400;
+}
+.chat-report-submit {
+    background-color: var(--squad-primary);
+    color: white;
+    border: none;
+}
+.chat-report-submit:hover {
+    background-color: var(--squad-primary-hover);
+    color: white;
+}
+
+.chat-report-context {
+    padding: 14px;
+    background-color: rgba(101, 0, 149, 0.14);
+    border: 1px solid rgba(232, 59, 189, 0.22);
+    border-radius: 9px;
+}
+.chat-report-context-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+}
+.chat-report-context-heading i {
+    color: var(--squad-accent);
+    font-size: 18px;
+}
+.chat-report-context-heading strong {
+    font-size: 14px;
+}
+.chat-report-context p {
+    margin: 0 0 12px;
+    color: var(--squad-text-muted);
+    font-size: 12px;
+    line-height: 1.55;
+}
+.chat-report-context .form-check {
+    margin: 0;
+}
+.chat-report-context .form-check-input {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.32);
+}
+.chat-report-context .form-check-input:checked {
+    background-color: var(--squad-accent);
+    border-color: var(--squad-accent);
+}
+.chat-report-context .form-check-input:focus {
+    border-color: var(--squad-accent);
+    box-shadow: 0 0 0 3px rgba(232, 59, 189, 0.15);
+}
+.chat-report-context .form-check-label {
+    color: var(--squad-text-soft);
+    font-size: 12px;
+    line-height: 1.5;
+}
+

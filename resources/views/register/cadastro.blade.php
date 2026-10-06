@@ -53,7 +53,6 @@
                         @enderror
                     </div>
 
-
                     <div>
                         <label for="email" class="form-label">
                             E-mail
@@ -75,7 +74,6 @@
                         </span>
                         @enderror
                     </div>
-
 
                     <div>
                         <label for="cpf" class="form-label">
@@ -101,7 +99,6 @@
                         @enderror
                     </div>
 
-
                     <div>
                         <label for="password" class="form-label">
                             Senha
@@ -123,7 +120,6 @@
                         @enderror
                     </div>
 
-
                     <div>
                         <label for="password_confirmation" class="form-label">
                             Confirmar senha
@@ -139,7 +135,6 @@
                         >
                     </div>
 
-
                     <div class="form-check register-age">
 
                         <input
@@ -149,6 +144,7 @@
                             value="1"
                             class="form-check-input"
                             {{ old('termos') ? 'checked' : '' }}
+                            required
                         >
 
                         <label
@@ -173,7 +169,6 @@
                     </span>
                     @enderror
 
-
                     <button
                         type="submit"
                         class="btn register-button"
@@ -195,5 +190,7 @@
         </div>
 
     </main>
+
+    <script src="{{ asset('js/cadastro.js') }}"></script>
 
 @endsection

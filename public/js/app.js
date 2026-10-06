@@ -1849,7 +1849,7 @@ function iniciarPerfil() {
             const nivel = atual.nivel;
 
             status.textContent = nivel
-                ? levelNames[nivel]
+                ? NOMES_NIVEIS_JOGO[nivel]
                 : 'Nível não definido';
 
             status.className =

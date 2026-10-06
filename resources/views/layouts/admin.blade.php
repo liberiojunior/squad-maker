@@ -104,6 +104,13 @@
             </a>
 
             <a
+                href="{{ route('admin.denuncias.index') }}"
+                class="{{ request()->routeIs('admin.denuncias.*') ? 'active' : '' }}"
+            >
+                Denúncias
+            </a>
+
+            <a
                 href="{{ route('admin.jogos.index') }}"
                 class="{{ request()->routeIs('admin.jogos.*') ? 'active' : '' }}"
             >

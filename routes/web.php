@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\AdminCatalogoController;
+use App\Http\Controllers\AdminDenunciaController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminJogoController;
 use App\Http\Controllers\AmizadeController;
 use App\Http\Controllers\ConversaController;
+use App\Http\Controllers\DenunciaController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\JogoController;
@@ -167,6 +169,13 @@ Route::middleware([
         [ProfileController::class, 'showPublic']
     )->name('usuarios.perfil');
 
+    Route::post(
+        '/usuarios/{user:nickname}/denuncias',
+        [DenunciaController::class, 'perfil']
+    )
+        ->middleware('throttle:5,10')
+        ->name('denuncias.perfil');
+
     // Amizades
 
     Route::post(
@@ -212,6 +221,14 @@ Route::middleware([
         '/conversas/{conversa}',
         [ConversaController::class, 'show']
     )->name('conversas.show');
+
+
+    Route::post(
+        '/conversas/{conversa}/denuncias',
+        [DenunciaController::class, 'conversa']
+    )
+        ->middleware('throttle:5,10')
+        ->name('denuncias.conversa');
 
     Route::delete(
         '/conversas/{conversa}',
@@ -280,6 +297,32 @@ Route::middleware('auth:admin')
             '/usuarios',
             [AdminController::class, 'usuarios']
         )->name('usuarios.index');
+
+
+        Route::get(
+            '/denuncias',
+            [AdminDenunciaController::class, 'index']
+        )->name('denuncias.index');
+
+        Route::get(
+            '/denuncias/{denuncia}',
+            [AdminDenunciaController::class, 'show']
+        )->name('denuncias.show');
+
+        Route::get(
+            '/denuncias/{denuncia}/arquivo/{tipo}',
+            [AdminDenunciaController::class, 'arquivo']
+        )->whereIn('tipo', ['anexo', 'perfil'])->name('denuncias.arquivo');
+
+        Route::patch(
+            '/denuncias/{denuncia}/aceitar',
+            [AdminDenunciaController::class, 'aceitar']
+        )->name('denuncias.aceitar');
+
+        Route::patch(
+            '/denuncias/{denuncia}/negar',
+            [AdminDenunciaController::class, 'negar']
+        )->name('denuncias.negar');
 
         Route::get(
             '/noticias',

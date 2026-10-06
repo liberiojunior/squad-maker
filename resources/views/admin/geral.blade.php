@@ -44,43 +44,25 @@
             </div>
         </a>
 
-        <div class="admin-metric-card">
+        <a href="{{ route('admin.denuncias.index', ['status' => 'pendente']) }}" class="admin-metric-card admin-metric-link">
             <i class="bi bi-exclamation-triangle-fill"></i>
             <div>
                 <span>Denúncias pendentes</span>
                 <strong>{{ $denunciasPendentes }}</strong>
             </div>
-        </div>
+        </a>
     </section>
 
-    <section class="admin-panel">
-        <div class="admin-panel-header">
-            <h2>Denúncias pendentes</h2>
-            <span>{{ $denunciasPendentes }}</span>
-        </div>
-
-        @forelse ($denuncias as $denuncia)
-            <div class="admin-report">
-                <div>
-                    <strong>Denúncia #{{ $denuncia->id_denuncia }}</strong>
-                    <span>{{ ucfirst($denuncia->tipo_denuncia) }}</span>
-                </div>
-
-                <p>
-                    <strong>Denunciante:</strong>
-                    {{ $denuncia->denunciante?->nickname ?? 'Usuário não encontrado' }}
-                </p>
-
-                <p>
-                    <strong>Denunciado:</strong>
-                    {{ $denuncia->denunciado?->nickname ?? 'Usuário não encontrado' }}
-                </p>
-
-                <p>{{ $denuncia->descricao }}</p>
+    <section class="admin-overview-mascot">
+        @if (file_exists(public_path('images/admin/mascote-responsabilidade.png')))
+            <img src="{{ asset('images/admin/mascote-responsabilidade.png') }}" alt="Mascote da Squad Maker">
+        @else
+            <div class="admin-overview-mascot-placeholder" aria-hidden="true">
+                <i class="bi bi-stars"></i>
             </div>
-        @empty
-            <div class="admin-empty">Não existem denúncias pendentes.</div>
-        @endforelse
+        @endif
+
+        <p>“Com grandes poderes vêm grandes responsabilidades.”</p>
     </section>
 </div>
 @endsection

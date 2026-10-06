@@ -1764,3 +1764,52 @@ button.profile-social-action-danger:focus {
         opacity: 1;
     }
 }
+
+.profile-social-action-report {
+    color: #d9d1df;
+}
+button.profile-social-action-report:hover,
+button.profile-social-action-report:focus {
+    color: #ff9aa8;
+}
+.profile-report-modal .modal-header,
+.profile-report-modal .modal-body,
+.profile-report-modal .modal-footer {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+.profile-report-modal .modal-header {
+    align-items: flex-start;
+}
+.profile-report-modal .modal-header p {
+    margin: 4px 0 0;
+    color: var(--squad-text-muted);
+    font-size: 13px;
+}
+.profile-report-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.profile-report-body textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+.profile-report-body small {
+    display: block;
+    margin-top: 5px;
+    color: var(--squad-text-muted);
+    font-size: 12px;
+}
+.profile-report-body .form-label span {
+    color: var(--squad-text-muted);
+    font-weight: 400;
+}
+.profile-report-submit {
+    background-color: var(--squad-primary);
+    color: white;
+    border: none;
+}
+.profile-report-submit:hover {
+    background-color: var(--squad-primary-hover);
+    color: white;
+}

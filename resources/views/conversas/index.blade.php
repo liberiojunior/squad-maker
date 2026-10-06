@@ -11,6 +11,12 @@
         </div>
     @endif
 
+    @if ($errors->has('denuncia') || $errors->has('motivo') || $errors->has('descricao') || $errors->has('anexo'))
+        <div class="alert alert-danger chat-feedback">
+            {{ $errors->first('denuncia') ?: $errors->first('motivo') ?: $errors->first('descricao') ?: $errors->first('anexo') }}
+        </div>
+    @endif
+
     <div
         class="chat-page"
         id="chatPage"
@@ -223,10 +229,9 @@
                             </li>
 
                             <li>
-                                <button type="button" class="dropdown-item" disabled>
+                                <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#reportConversationModal">
                                     <i class="bi bi-flag-fill"></i>
                                     Denunciar
-                                    <small>Em breve</small>
                                 </button>
                             </li>
 
@@ -372,6 +377,72 @@
     @endif
 
     @if ($conversaAtual && $outroUsuarioAtual)
+        <div class="modal fade" id="reportConversationModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content squad-modal chat-report-modal">
+                    <form method="POST" action="{{ route('denuncias.conversa', $conversaAtual) }}" enctype="multipart/form-data">
+                        @csrf
+
+                        <div class="modal-header">
+                            <div>
+                                <h2 class="modal-title">Denunciar conversa</h2>
+                                <p>Denúncia referente à conversa com {{ $outroUsuarioAtual->nickname }}.</p>
+                            </div>
+
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        </div>
+
+                        <div class="modal-body chat-report-body">
+                            <div>
+                                <label for="chatReportReason" class="form-label">Motivo</label>
+                                <select id="chatReportReason" name="motivo" class="form-select" required>
+                                    <option value="">Selecione</option>
+                                    @foreach (\App\Models\Denuncia::MOTIVOS_CONVERSA as $valor => $rotulo)
+                                        <option value="{{ $valor }}" @selected(old('motivo') === $valor)>{{ $rotulo }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="chatReportDescription" class="form-label">Explique o ocorrido</label>
+                                <textarea id="chatReportDescription" name="descricao" class="form-control squad-scrollbar" rows="5" minlength="20" maxlength="2000" required>{{ old('descricao') }}</textarea>
+                                <small>Informe apenas o necessário para a apuração.</small>
+                            </div>
+
+                            <div>
+                                <label for="chatReportAttachment" class="form-label">Print ou imagem <span>(opcional)</span></label>
+                                <input type="file" id="chatReportAttachment" name="anexo" class="form-control" accept="image/jpeg,image/png,image/webp">
+                                <small>JPG, PNG ou WebP de até 5 MB.</small>
+                            </div>
+
+                            <div class="chat-report-context">
+                                <div class="chat-report-context-heading">
+                                    <i class="bi bi-shield-check"></i>
+                                    <strong>Contexto da denúncia</strong>
+                                </div>
+
+                                <p>
+                                    Para permitir a apuração, até as 20 mensagens mais recentes desta conversa serão anexadas ao registro da denúncia e poderão ser acessadas pela equipe administrativa responsável pela análise.
+                                </p>
+
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="confirmar_contexto" value="1" id="chatReportContextConfirmation" required>
+                                    <label class="form-check-label" for="chatReportContextConfirmation">
+                                        Confirmo que entendi e quero continuar com o envio da denúncia.
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn chat-report-submit">Enviar denúncia</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <div class="modal fade" id="deleteConversationModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content squad-modal chat-delete-modal">

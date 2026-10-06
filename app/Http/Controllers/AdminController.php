@@ -21,18 +21,11 @@ class AdminController extends Controller
         $usuariosBanidos = User::where('status_conta', 'banido')->count();
         $denunciasPendentes = Denuncia::where('status_denuncia', 'pendente')->count();
 
-        $denuncias = Denuncia::with(['denunciante', 'denunciado'])
-            ->where('status_denuncia', 'pendente')
-            ->orderBy('data_denuncia', 'desc')
-            ->limit(5)
-            ->get();
-
         return view('admin.geral', [
             'totalUsuarios' => $totalUsuarios,
             'usuariosAtivos' => $usuariosAtivos,
             'usuariosBanidos' => $usuariosBanidos,
             'denunciasPendentes' => $denunciasPendentes,
-            'denuncias' => $denuncias,
         ]);
     }
 
@@ -207,21 +200,18 @@ class AdminController extends Controller
         $user->sincronizarStatusBanimento();
 
         if ($user->status_conta === 'excluido') {
-            return back()->withErrors([
-                'usuario' => 'Este usuário já foi excluído.',
-            ]);
+            return back()->withErrors(['usuario' => 'Este usuário já foi excluído.']);
         }
 
         if ($user->status_conta === 'banido') {
-            return back()->withErrors([
-                'usuario' => 'Este usuário já possui um banimento ativo.',
-            ]);
+            return back()->withErrors(['usuario' => 'Este usuário já possui um banimento ativo.']);
         }
 
         $data = $request->validate([
             'motivo' => ['required', 'string', 'max:500'],
             'justificativa' => ['required', 'string', 'max:2000'],
             'data_fim' => ['required', 'date', 'after:today'],
+            'id_denuncia' => ['nullable', 'integer', 'exists:tb_denuncia,id_denuncia'],
         ], [
             'motivo.required' => 'Informe o motivo do banimento.',
             'justificativa.required' => 'Informe uma justificativa.',
@@ -230,22 +220,25 @@ class AdminController extends Controller
         ]);
 
         DB::transaction(function () use ($data, $user) {
-            $usuario = User::where('id_usuario', $user->id_usuario)
-                ->lockForUpdate()
-                ->firstOrFail();
-
+            $usuario = User::where('id_usuario', $user->id_usuario)->lockForUpdate()->firstOrFail();
             $usuario->sincronizarStatusBanimento();
 
             if ($usuario->status_conta === 'excluido') {
-                throw ValidationException::withMessages([
-                    'usuario' => 'Este usuário já foi excluído.',
-                ]);
+                throw ValidationException::withMessages(['usuario' => 'Este usuário já foi excluído.']);
             }
 
             if ($usuario->status_conta === 'banido') {
-                throw ValidationException::withMessages([
-                    'usuario' => 'Este usuário já possui um banimento ativo.',
-                ]);
+                throw ValidationException::withMessages(['usuario' => 'Este usuário já possui um banimento ativo.']);
+            }
+
+            $denuncia = null;
+
+            if (! empty($data['id_denuncia'])) {
+                $denuncia = Denuncia::where('id_denuncia', $data['id_denuncia'])->lockForUpdate()->firstOrFail();
+
+                if ($denuncia->id_denunciado !== $usuario->id_usuario || $denuncia->status_denuncia !== 'pendente') {
+                    throw ValidationException::withMessages(['denuncia' => 'Esta denúncia não pode ser vinculada a este banimento.']);
+                }
             }
 
             Banimento::create([
@@ -258,10 +251,21 @@ class AdminController extends Controller
                 'id_usuario_banido' => $usuario->id_usuario,
             ]);
 
-            $usuario->update([
-                'status_conta' => 'banido',
-            ]);
+            $usuario->update(['status_conta' => 'banido']);
+
+            if ($denuncia) {
+                $denuncia->update([
+                    'status_denuncia' => 'aceita',
+                    'data_resolucao' => now(),
+                    'justificativa' => trim($data['justificativa']),
+                    'id_administrador' => Auth::guard('admin')->id(),
+                ]);
+            }
         });
+
+        if (! empty($data['id_denuncia'])) {
+            return redirect()->route('admin.denuncias.show', $data['id_denuncia'])->with('success', 'Usuário banido e denúncia concluída.');
+        }
 
         return back()->with('success', 'Usuário banido com sucesso.');
     }
