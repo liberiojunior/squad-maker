@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Conversa;
 use App\Models\Denuncia;
+use App\Models\Post;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -160,13 +161,89 @@ class DenunciaController extends Controller
         return back()->with('success', 'Denúncia enviada para análise.');
     }
 
-    private function possuiDenunciaPendente(int $idDenunciante, int $idDenunciado, string $tipo, ?int $idConversa = null): bool
+    public function post(Request $request, Post $post)
+    {
+        $usuario = $request->user();
+
+        if ($post->status_post !== 'ativo') {
+            abort(404);
+        }
+
+        if ($usuario->id_usuario === $post->id_usuario) {
+            abort(422, 'Você não pode denunciar a própria publicação.');
+        }
+
+        $denunciado = User::findOrFail($post->id_usuario);
+        $denunciado->sincronizarStatusBanimento();
+
+        if ($denunciado->status_conta !== 'ativo') {
+            return back()->withErrors(['denuncia' => 'Esta publicação não está disponível para denúncia no momento.']);
+        }
+
+        if ($this->possuiDenunciaPendente($usuario->id_usuario, $denunciado->id_usuario, 'post', null, $post->id_post)) {
+            return back()->withErrors(['denuncia' => 'Você já possui uma denúncia pendente para esta publicação.']);
+        }
+
+        $data = $request->validate([
+            'motivo' => ['required', Rule::in(array_keys(Denuncia::MOTIVOS_POST))],
+            'descricao' => ['required', 'string', 'min:20', 'max:2000'],
+            'anexo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=6000,max_height=6000'],
+        ], [
+            'motivo.required' => 'Escolha o motivo da denúncia.',
+            'descricao.required' => 'Explique o motivo da denúncia.',
+            'descricao.min' => 'A justificativa deve ter pelo menos 20 caracteres.',
+            'descricao.max' => 'A justificativa pode ter no máximo 2000 caracteres.',
+            'anexo.image' => 'O anexo precisa ser uma imagem válida.',
+            'anexo.mimes' => 'Envie uma imagem JPG, PNG ou WebP.',
+            'anexo.max' => 'A imagem pode ter no máximo 5 MB.',
+            'anexo.dimensions' => 'A imagem enviada é grande demais.',
+        ]);
+
+        $anexo = $this->salvarAnexo($request);
+        $fotoEvidencia = $this->salvarImagemPublica($post->foto, 'denuncias/posts');
+
+        try {
+            Denuncia::create([
+                'tipo_denuncia' => 'post',
+                'motivo' => $data['motivo'],
+                'descricao' => trim($data['descricao']),
+                'anexo' => $anexo,
+                'contexto' => [
+                    'post' => [
+                        'id_post' => $post->id_post,
+                        'descricao' => $post->descricao,
+                        'data_publicacao' => $post->data_publicacao?->toIso8601String(),
+                        'foto_original' => $post->foto,
+                        'foto_evidencia' => $fotoEvidencia,
+                    ],
+                ],
+                'data_denuncia' => now(),
+                'status_denuncia' => 'pendente',
+                'id_denunciante' => $usuario->id_usuario,
+                'id_denunciado' => $denunciado->id_usuario,
+                'id_post' => $post->id_post,
+            ]);
+        } catch (Throwable $exception) {
+            $arquivos = array_filter([$anexo, $fotoEvidencia]);
+
+            if ($arquivos) {
+                Storage::disk('local')->delete($arquivos);
+            }
+
+            throw $exception;
+        }
+
+        return back()->with('success', 'Denúncia enviada para análise.');
+    }
+
+    private function possuiDenunciaPendente(int $idDenunciante, int $idDenunciado, string $tipo, ?int $idConversa = null, ?int $idPost = null): bool
     {
         return Denuncia::where('id_denunciante', $idDenunciante)
             ->where('id_denunciado', $idDenunciado)
             ->where('tipo_denuncia', $tipo)
             ->where('status_denuncia', 'pendente')
             ->when($tipo === 'conversa', fn($query) => $query->where('id_conversa', $idConversa))
+            ->when($tipo === 'post', fn($query) => $query->where('id_post', $idPost))
             ->exists();
     }
 
@@ -181,11 +258,16 @@ class DenunciaController extends Controller
 
     private function salvarAvatarAtual(User $user): ?string
     {
-        if (! $user->avatar || str_contains($user->avatar, '://')) {
+        return $this->salvarImagemPublica($user->avatar, 'denuncias/perfis');
+    }
+
+    private function salvarImagemPublica(?string $caminho, string $pasta): ?string
+    {
+        if (! $caminho || str_contains($caminho, '://')) {
             return null;
         }
 
-        $relativo = ltrim(str_replace('\\', '/', $user->avatar), '/');
+        $relativo = ltrim(str_replace('\\', '/', $caminho), '/');
         $origem = realpath(public_path($relativo));
         $publico = realpath(public_path());
 
@@ -199,7 +281,7 @@ class DenunciaController extends Controller
             return null;
         }
 
-        $destino = 'denuncias/perfis/' . Str::uuid() . '.' . $extensao;
+        $destino = $pasta . '/' . Str::uuid() . '.' . $extensao;
         Storage::disk('local')->put($destino, file_get_contents($origem));
 
         return $destino;

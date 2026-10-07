@@ -180,18 +180,7 @@
                 </div>
             </div>
 
-            <section class="profile-section profile-feed">
-                <div class="profile-section-title">
-                    <h2>Feed do Usuário</h2>
-                </div>
-
-                <div class="profile-feed-empty">
-                    <i class="bi bi-images"></i>
-                    <p>Nenhuma publicação ainda.</p>
-                </div>
-            </section>
-
-            <section class="profile-section">
+            <section class="profile-section profile-games-summary">
                 <div class="profile-section-title">
                     <h2>Jogos</h2>
 
@@ -207,46 +196,95 @@
                     @endif
                 </div>
 
-                <div class="profile-games-row">
-                    @if ($user->jogos->isNotEmpty())
-                        <div class="profile-games-list">
-                            @foreach ($user->jogos->take(4) as $jogo)
-                                <div class="profile-game-card profile-public-game-card">
-                                    <div class="profile-game-cover">
-                                        <img src="{{ $jogo->capa }}" alt="{{ $jogo->nome }}">
-                                    </div>
-
-                                    <span>{{ $jogo->nome }}</span>
-
-                                    <small class="profile-public-game-level">
-                                        <i class="bi bi-star-fill"></i>
-                                        {{ $niveis[$jogo->pivot->nivel_proficiencia] ?? 'Não definido' }}
-                                    </small>
+                @if ($user->jogos->isNotEmpty())
+                    <div class="profile-games-list profile-games-summary-list">
+                        @foreach ($user->jogos->take(4) as $jogo)
+                            <div class="profile-game-card profile-public-game-card">
+                                <div class="profile-game-cover">
+                                    <img src="{{ $jogo->capa }}" alt="{{ $jogo->nome }}">
                                 </div>
+
+                                <span>{{ $jogo->nome }}</span>
+
+                                <small class="profile-public-game-level">
+                                    <i class="bi bi-star-fill"></i>
+                                    {{ $niveis[$jogo->pivot->nivel_proficiencia] ?? 'Não definido' }}
+                                </small>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <span class="profile-empty-inline">Nenhum jogo adicionado.</span>
+                @endif
+            </section>
+
+            <div class="profile-lower-grid">
+                <section class="profile-section profile-compact-section">
+                    <div class="profile-section-title profile-platform-section-title">
+                        <h2>Plataformas</h2>
+
+                        @if ($user->plataformas->count() > 6)
+                            <button
+                                type="button"
+                                class="profile-view-all"
+                                data-bs-toggle="modal"
+                                data-bs-target="#publicPlatformsModal"
+                            >
+                                Ver todas ({{ $user->plataformas->count() }})
+                            </button>
+                        @endif
+                    </div>
+
+                    @if ($user->plataformas->isNotEmpty())
+                        <div class="profile-platform-summary-wrap">
+                            <div class="profile-platform-summary">
+                            @foreach ($user->plataformas->take(6) as $plataforma)
+                                <div class="profile-platform-card">
+                                    <img src="{{ $plataforma->icone }}" alt="{{ $plataforma->nome }}">
+                                    <span>{{ $plataforma->nome }}</span>
+                                </div>
+                            @endforeach
+                            </div>
+                        </div>
+                    @else
+                        <div class="profile-compact-empty">
+                            <i class="bi bi-controller"></i>
+                            <span>Nenhuma plataforma configurada.</span>
+                        </div>
+                    @endif
+                </section>
+
+                <section class="profile-section profile-compact-section">
+                    <div class="profile-section-title">
+                        <h2>Publicações</h2>
+
+                        @if ($totalPosts > 4)
+                            <a href="{{ route('posts.index', $user) }}" class="profile-view-all">
+                                Ver todas ({{ $totalPosts }})
+                            </a>
+                        @endif
+                    </div>
+
+                    @if ($posts->isNotEmpty())
+                        <div class="profile-post-preview-grid">
+                            @foreach ($posts as $post)
+                                @include('posts.card', [
+                                    'post' => $post,
+                                    'user' => $user,
+                                    'isOwner' => false,
+                                    'podeReagir' => $podeReagir,
+                                    'postsReagidos' => $postsReagidos,
+                                ])
                             @endforeach
                         </div>
                     @else
-                        <span class="profile-empty-inline">Nenhum jogo adicionado.</span>
-                    @endif
-                </div>
-            </section>
-
-            <section class="profile-section">
-                <div class="profile-section-title">
-                    <h2>Plataformas</h2>
-                </div>
-
-                <div class="profile-platforms-list">
-                    @forelse ($user->plataformas as $plataforma)
-                        <div class="profile-platform-card">
-                            <img src="{{ $plataforma->icone }}" alt="{{ $plataforma->nome }}">
-                            <span>{{ $plataforma->nome }}</span>
+                        <div class="profile-compact-empty">
+                            <i class="bi bi-images"></i>
+                            <span>Nenhuma publicação ainda.</span>
                         </div>
-                    @empty
-                        <span class="profile-empty-inline">Nenhuma plataforma configurada.</span>
-                    @endforelse
-                </div>
-            </section>
+                    @endif
+                </section>
+            </div>
         @endif
     </div>
 
@@ -361,4 +399,34 @@
             </div>
         </div>
     @endif
+    @if (! $contaSuspensa && $user->plataformas->count() > 6)
+        <div class="modal fade" id="publicPlatformsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content squad-modal profile-games-modal">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Plataformas de {{ $user->nickname }}</h2>
+
+                        <button
+                            type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"
+                            aria-label="Fechar"
+                        ></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="profile-platforms-list profile-public-platforms-all">
+                            @foreach ($user->plataformas as $plataforma)
+                                <div class="profile-platform-card">
+                                    <img src="{{ $plataforma->icone }}" alt="{{ $plataforma->nome }}">
+                                    <span>{{ $plataforma->nome }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
 @endsection

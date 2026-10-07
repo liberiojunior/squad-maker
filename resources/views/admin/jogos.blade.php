@@ -25,8 +25,12 @@
                 {{ session('success') }}
             </div>
         @endif
-        @if ($errors->any())
-            <div class="alert alert-danger">
+        @if ($errors->any() && ! $errors->has('steam_app_ids'))
+            <div
+                class="alert alert-danger squad-alert-static"
+                data-alert-static="1"
+                role="alert"
+            >
                 @foreach ($errors->all() as $error)
                     <div>{{ $error }}</div>
                 @endforeach
@@ -194,6 +198,25 @@
                     <p class="admin-game-help">
                         Informe um ou mais AppIDs da Steam, separados por vírgula ou ponto e vírgula.
                     </p>
+
+                    @if ($errors->has('steam_app_ids'))
+                        <div
+                            class="alert alert-danger alert-dismissible fade show squad-alert-static"
+                            data-alert-static="1"
+                            role="alert"
+                        >
+                            @foreach ($errors->get('steam_app_ids') as $error)
+                                <div>{{ $error }}</div>
+                            @endforeach
+                            <button
+                                type="button"
+                                class="btn-close btn-close-white"
+                                data-bs-dismiss="alert"
+                                aria-label="Fechar"
+                            ></button>
+                        </div>
+                    @endif
+
                     <form
                         method="POST"
                         action="{{ route('admin.jogos.steam') }}"

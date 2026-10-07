@@ -1,7 +1,10 @@
+iniciarAvisos();
+
 document.addEventListener('DOMContentLoaded', function() {
     iniciarAvisos();
     iniciarBioPublica();
     iniciarPerfil();
+    iniciarOrdenacaoPlataformas();
     iniciarAvatarPerfil();
     iniciarGenerosPerfil();
     iniciarBuscasCatalogo();
@@ -871,29 +874,200 @@ function iniciarImportacaoSteam() {
     });
 }
 
-function iniciarAvisos() {
-    const alerts = document.querySelectorAll('.alert');
+function obterPilhaAvisos() {
+    let stack = document.querySelector(
+        '.squad-notification-stack'
+    );
 
-    alerts.forEach(function(alert) {
-        let tempo = 5000;
+    if (stack) {
+        return stack;
+    }
 
-        if (alert.classList.contains('alert-success')) {
-            tempo = 4000;
-        }
+    stack = document.createElement('div');
+    stack.className = 'squad-notification-stack';
+    stack.setAttribute('aria-live', 'polite');
+    stack.setAttribute('aria-relevant', 'additions');
 
-        if (alert.classList.contains('alert-danger')) {
-            tempo = 7000;
-        }
+    document.body.appendChild(stack);
 
-        setTimeout(function() {
-            alert.classList.add('alert-hide');
+    return stack;
+}
 
-            setTimeout(function() {
-                alert.remove();
-            }, 350);
+function tipoDoAviso(alert) {
+    if (alert.classList.contains('alert-danger')) {
+        return 'danger';
+    }
 
-        }, tempo);
+    if (alert.classList.contains('alert-warning')) {
+        return 'warning';
+    }
+
+    if (alert.classList.contains('alert-info')) {
+        return 'info';
+    }
+
+    return 'success';
+}
+
+function iconeDoAviso(tipo) {
+    const icones = {
+        success: 'bi-check-lg',
+        danger: 'bi-exclamation-lg',
+        warning: 'bi-exclamation-triangle-fill',
+        info: 'bi-info-lg'
+    };
+
+    return icones[tipo] || icones.info;
+}
+
+function tempoDoAviso(tipo) {
+    const tempos = {
+        success: 3500,
+        danger: 6500,
+        warning: 5500,
+        info: 4500
+    };
+
+    return tempos[tipo] || 4500;
+}
+
+function removerAviso(alert) {
+    if (!alert || alert.dataset.removing === '1') {
+        return;
+    }
+
+    alert.dataset.removing = '1';
+    alert.classList.add('alert-hide');
+
+    setTimeout(function() {
+        alert.remove();
+    }, 300);
+}
+
+function iniciarTemporizadorAviso(alert) {
+    if (!alert) {
+        return;
+    }
+
+    clearTimeout(alert._squadNotificationTimer);
+
+    const tipo = alert.dataset.notificationType
+        || tipoDoAviso(alert);
+
+    alert._squadNotificationTimer = setTimeout(
+        function() {
+            removerAviso(alert);
+        },
+        tempoDoAviso(tipo)
+    );
+}
+
+function prepararAviso(alert) {
+    if (
+        !alert
+        || alert.dataset.notificationReady === '1'
+        || alert.dataset.alertStatic === '1'
+    ) {
+        return;
+    }
+
+    const tipo = tipoDoAviso(alert);
+    const content = document.createElement('div');
+    const icon = document.createElement('i');
+
+    content.className = 'squad-notification-text';
+
+    while (alert.firstChild) {
+        content.appendChild(alert.firstChild);
+    }
+
+    icon.className =
+        'bi '
+        + iconeDoAviso(tipo)
+        + ' squad-notification-icon';
+
+    icon.setAttribute('aria-hidden', 'true');
+
+    alert.classList.add('squad-notification');
+    alert.dataset.notificationReady = '1';
+    alert.dataset.notificationType = tipo;
+    alert.tabIndex = 0;
+    alert.setAttribute(
+        'role',
+        tipo === 'danger' ? 'alert' : 'status'
+    );
+
+    alert.appendChild(icon);
+    alert.appendChild(content);
+
+    obterPilhaAvisos().appendChild(alert);
+
+    alert.addEventListener('mouseenter', function() {
+        clearTimeout(alert._squadNotificationTimer);
     });
+
+    alert.addEventListener('mouseleave', function() {
+        if (!alert.classList.contains('squad-notification-open')) {
+            iniciarTemporizadorAviso(alert);
+        }
+    });
+
+    alert.addEventListener('focusin', function() {
+        clearTimeout(alert._squadNotificationTimer);
+    });
+
+    alert.addEventListener('focusout', function() {
+        iniciarTemporizadorAviso(alert);
+    });
+
+    alert.addEventListener('click', function() {
+        alert.classList.toggle('squad-notification-open');
+
+        if (alert.classList.contains('squad-notification-open')) {
+            clearTimeout(alert._squadNotificationTimer);
+            return;
+        }
+
+        iniciarTemporizadorAviso(alert);
+    });
+
+    iniciarTemporizadorAviso(alert);
+}
+
+function mostrarAviso(tipo, mensagem) {
+    const tiposPermitidos = [
+        'success',
+        'danger',
+        'warning',
+        'info'
+    ];
+
+    const tipoNormalizado = tiposPermitidos.includes(tipo)
+        ? tipo
+        : 'info';
+
+    const alert = document.createElement('div');
+
+    alert.className =
+        'alert alert-'
+        + tipoNormalizado;
+
+    alert.textContent = mensagem;
+
+    document.body.appendChild(alert);
+    prepararAviso(alert);
+}
+
+window.SquadAviso = {
+    mostrar: mostrarAviso
+};
+
+function iniciarAvisos() {
+    document
+        .querySelectorAll('.alert')
+        .forEach(function(alert) {
+            prepararAviso(alert);
+        });
 }
 
 function iniciarBioPublica() {
@@ -1016,7 +1190,8 @@ function iniciarAvatarPerfil() {
         ];
 
         if (!allowedTypes.includes(file.type)) {
-            window.alert(
+            mostrarAviso(
+                'danger',
                 'Escolha uma imagem JPG, PNG ou WEBP.'
             );
 
@@ -1026,7 +1201,8 @@ function iniciarAvatarPerfil() {
         }
 
         if (file.size > 5 * 1024 * 1024) {
-            window.alert(
+            mostrarAviso(
+                'danger',
                 'A imagem deve ter no máximo 5 MB.'
             );
 
@@ -1061,7 +1237,8 @@ function iniciarAvatarPerfil() {
 
             input.value = '';
 
-            window.alert(
+            mostrarAviso(
+                'danger',
                 'Não foi possível carregar essa imagem.'
             );
         };
@@ -1540,9 +1717,10 @@ function iniciarPerfil() {
         }
 
         const quantidade = bioInput.value.length;
+        const limite = Number(bioInput.maxLength) || 400;
 
-        bioCounter.textContent = quantidade + ' / 4000';
-        bioCounter.classList.toggle('is-limit', quantidade >= 4000);
+        bioCounter.textContent = quantidade + ' / ' + limite;
+        bioCounter.classList.toggle('is-limit', quantidade >= limite);
     }
 
     function ajustarBio() {
@@ -3190,4 +3368,179 @@ function iniciarPerfil() {
             );
         }
     );
+}
+
+
+function iniciarOrdenacaoPlataformas() {
+    const modal = document.getElementById('plataformasModal');
+    const form = document.getElementById('profilePlatformsForm');
+    const list = document.getElementById('profilePlatformOrderList');
+    const status = document.getElementById('profilePlatformOrderStatus');
+
+    if (!modal || !form || !list) {
+        return;
+    }
+
+    let draggingItem = null;
+    let dropTarget = null;
+    let dropBefore = true;
+    let initialOrder = [];
+    let submitting = false;
+
+    function obterItens() {
+        return Array.from(
+            list.querySelectorAll('.profile-platform-order-item')
+        );
+    }
+
+    function obterOrdem() {
+        return obterItens().map(function(item) {
+            return Number(item.dataset.platformId);
+        });
+    }
+
+    function limparIndicador() {
+        obterItens().forEach(function(item) {
+            item.classList.remove(
+                'drop-before',
+                'drop-after'
+            );
+        });
+
+        dropTarget = null;
+    }
+
+    function restaurarOrdemInicial() {
+        const itens = new Map(
+            obterItens().map(function(item) {
+                return [
+                    Number(item.dataset.platformId),
+                    item
+                ];
+            })
+        );
+
+        initialOrder.forEach(function(id) {
+            const item = itens.get(id);
+
+            if (item) {
+                list.appendChild(item);
+            }
+        });
+
+        if (status) {
+            status.textContent = '';
+        }
+    }
+
+    list.addEventListener('dragstart', function(event) {
+        const item = event.target.closest(
+            '.profile-platform-order-item'
+        );
+
+        if (!item) {
+            return;
+        }
+
+        draggingItem = item;
+        item.classList.add('dragging');
+
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData(
+            'text/plain',
+            item.dataset.platformId || ''
+        );
+    });
+
+    list.addEventListener('dragover', function(event) {
+        if (!draggingItem) {
+            return;
+        }
+
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+
+        const target = event.target.closest(
+            '.profile-platform-order-item:not(.dragging)'
+        );
+
+        limparIndicador();
+
+        if (!target) {
+            return;
+        }
+
+        const box = target.getBoundingClientRect();
+
+        dropTarget = target;
+        dropBefore =
+            event.clientX < box.left + box.width / 2;
+
+        target.classList.add(
+            dropBefore
+                ? 'drop-before'
+                : 'drop-after'
+        );
+    });
+
+    list.addEventListener('drop', function(event) {
+        if (!draggingItem) {
+            return;
+        }
+
+        event.preventDefault();
+
+        if (!dropTarget) {
+            list.appendChild(draggingItem);
+        } else if (dropBefore) {
+            list.insertBefore(
+                draggingItem,
+                dropTarget
+            );
+        } else {
+            list.insertBefore(
+                draggingItem,
+                dropTarget.nextSibling
+            );
+        }
+
+        limparIndicador();
+
+        if (status) {
+            status.textContent =
+                'Ordem alterada. Salve para aplicar.';
+        }
+    });
+
+    list.addEventListener('dragend', function() {
+        if (draggingItem) {
+            draggingItem.classList.remove('dragging');
+        }
+
+        draggingItem = null;
+        limparIndicador();
+    });
+
+    modal.addEventListener('show.bs.modal', function() {
+        initialOrder = obterOrdem();
+        submitting = false;
+
+        if (status) {
+            status.textContent = '';
+        }
+    });
+
+    form.addEventListener('submit', function() {
+        submitting = true;
+    });
+
+    modal.addEventListener('hidden.bs.modal', function() {
+        if (!submitting) {
+            restaurarOrdemInicial();
+        }
+
+        submitting = false;
+        draggingItem = null;
+        limparIndicador();
+    });
 }

@@ -23,6 +23,15 @@ class Denuncia extends Model
         'outro' => 'Outro',
     ];
 
+    public const MOTIVOS_POST = [
+        'conteudo_inadequado_post' => 'Conteúdo sexual ou inadequado',
+        'odio_discriminacao' => 'Ódio ou discriminação',
+        'assedio_ofensa_post' => 'Assédio ou ofensa',
+        'violencia_ameaca' => 'Violência ou ameaça',
+        'spam_enganoso' => 'Spam ou conteúdo enganoso',
+        'outro_post' => 'Outro',
+    ];
+
     protected $table = 'tb_denuncia';
 
     protected $primaryKey = 'id_denuncia';
@@ -42,6 +51,7 @@ class Denuncia extends Model
         'id_denunciante',
         'id_denunciado',
         'id_conversa',
+        'id_post',
         'id_administrador',
     ];
 
@@ -66,9 +76,14 @@ class Denuncia extends Model
         return $this->belongsTo(Conversa::class, 'id_conversa', 'id_conversa');
     }
 
+    public function post()
+    {
+        return $this->belongsTo(Post::class, 'id_post', 'id_post');
+    }
+
     public function motivoTexto(): string
     {
-        $motivos = self::MOTIVOS_CONVERSA + self::MOTIVOS_PERFIL + [
+        $motivos = self::MOTIVOS_CONVERSA + self::MOTIVOS_PERFIL + self::MOTIVOS_POST + [
             'registro_anterior' => 'Registro anterior',
         ];
 
@@ -81,7 +96,7 @@ class Denuncia extends Model
             'conversa' => 'Conversa',
             'perfil' => 'Perfil',
             'mensagem' => 'Mensagem antiga',
-            'post' => 'Publicação antiga',
+            'post' => 'Publicação',
             default => ucfirst((string) $this->tipo_denuncia),
         };
     }

@@ -565,6 +565,12 @@
     border-radius: 8px;
 }
 
+.admin-game-modal-source {
+    margin: -10px 0 18px;
+    color: var(--squad-text-muted);
+    font-size: 12px;
+}
+
 .admin-game-modal-genres {
     margin-bottom: 20px;
 }

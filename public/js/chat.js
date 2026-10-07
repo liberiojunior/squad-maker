@@ -139,7 +139,17 @@ function iniciarEnvioChat() {
                 atualizarPreviewDaConversa(data.mensagem);
             }
         } catch (error) {
-            window.alert(error.message);
+            if (
+                window.SquadAviso
+                && typeof window.SquadAviso.mostrar === 'function'
+            ) {
+                window.SquadAviso.mostrar(
+                    'danger',
+                    error.message
+                );
+            } else {
+                console.error(error);
+            }
         } finally {
             if (submit) {
                 submit.disabled = false;

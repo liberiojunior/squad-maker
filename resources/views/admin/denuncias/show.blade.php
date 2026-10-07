@@ -105,7 +105,31 @@
                 </div>
             @endif
 
-            @if (in_array($denuncia->tipo_denuncia, ['mensagem', 'post'], true))
+            @if ($denuncia->tipo_denuncia === 'post' && ! empty(data_get($denuncia->contexto, 'post')))
+                <div class="admin-report-context">
+                    <h2>Publicação preservada</h2>
+
+                    @if (data_get($denuncia->contexto, 'post.foto_evidencia'))
+                        <div class="admin-report-evidence">
+                            <a href="{{ route('admin.denuncias.arquivo', [$denuncia, 'post']) }}" target="_blank" rel="noopener">
+                                <img src="{{ route('admin.denuncias.arquivo', [$denuncia, 'post']) }}" alt="Imagem preservada da publicação">
+                            </a>
+                        </div>
+                    @endif
+
+                    <div class="admin-report-description">
+                        <p>{{ data_get($denuncia->contexto, 'post.descricao') ?: 'Publicação sem legenda.' }}</p>
+
+                        @if (data_get($denuncia->contexto, 'post.data_publicacao'))
+                            <small>
+                                Publicada em {{ \Carbon\Carbon::parse(data_get($denuncia->contexto, 'post.data_publicacao'))->format('d/m/Y H:i') }}
+                            </small>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
+            @if ($denuncia->tipo_denuncia === 'mensagem' || ($denuncia->tipo_denuncia === 'post' && empty(data_get($denuncia->contexto, 'post'))))
                 <div class="admin-report-context">
                     <h2>Registro anterior</h2>
                     <p>Esta denúncia veio da estrutura antiga do banco e foi preservada durante a atualização.</p>

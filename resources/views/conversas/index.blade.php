@@ -138,7 +138,7 @@
                     <div class="chat-partners-header">
                         <h2>Parceiros</h2>
 
-                        @if ($amigos->count() > 3)
+                        @if ($amigos->count() > 4)
                             <button
                                 type="button"
                                 class="chat-partners-all"
@@ -159,8 +159,8 @@
                                 data-chat-search="{{ mb_strtolower($item['usuario']->nickname) }}"
                                 data-chat-partner
                                 data-chat-partner-user="{{ $item['usuario']->id_usuario }}"
-                                data-chat-partner-default="{{ $loop->index < 3 ? '1' : '0' }}"
-                                @if ($loop->index >= 3) hidden @endif
+                                data-chat-partner-default="{{ $loop->index < 4 ? '1' : '0' }}"
+                                @if ($loop->index >= 4) hidden @endif
                             >
                                 @csrf
 
@@ -323,7 +323,7 @@
         </section>
     </div>
 
-    @if ($amigos->count() > 3)
+    @if ($amigos->count() > 4)
         <div class="modal fade" id="chatPartnersModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content squad-modal chat-partners-modal">

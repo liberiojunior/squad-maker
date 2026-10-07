@@ -32,7 +32,13 @@ class ProfileController extends Controller
                     ->orderBy('tb_jogo_usuario.data_adicao');
             },
 
-            'plataformas',
+            'plataformas' => function ($query) {
+                $query
+                    ->orderByRaw('tb_usuario_plataforma.ordem_perfil IS NULL')
+                    ->orderBy('tb_usuario_plataforma.ordem_perfil')
+                    ->orderBy('tb_usuario_plataforma.data_adicao')
+                    ->orderBy('tb_plataforma.nome');
+            },
         ]);
 
         $generos = Genero::orderBy('genero')->get();
@@ -46,6 +52,31 @@ class ProfileController extends Controller
             })
             ->toArray();
 
+        $posts = $user->posts()
+            ->where('status_post', 'ativo')
+            ->withCount('reacoes')
+            ->orderByRaw('fixado_em IS NULL')
+            ->orderByDesc('fixado_em')
+            ->orderByDesc('data_publicacao')
+            ->orderByDesc('id_post')
+            ->limit(5)
+            ->get();
+
+        $postsReagidos = [];
+
+        if ($posts->isNotEmpty()) {
+            $postsReagidos = DB::table('tb_post_reacao')
+                ->where('id_usuario', $user->id_usuario)
+                ->whereIn('id_post', $posts->pluck('id_post'))
+                ->pluck('id_post')
+                ->map(fn($id) => (int) $id)
+                ->all();
+        }
+
+        $totalPosts = $user->posts()
+            ->where('status_post', 'ativo')
+            ->count();
+
         return view('perfil', [
             'user' => $user,
             'generos' => $generos,
@@ -53,6 +84,9 @@ class ProfileController extends Controller
             'niveis' => NivelProficiencia::todos(),
             'descricoesNiveis' => NivelProficiencia::descricoesSelecao(),
             'niveisJogosUsuario' => $niveisJogosUsuario,
+            'posts' => $posts,
+            'totalPosts' => $totalPosts,
+            'postsReagidos' => $postsReagidos,
         ]);
     }
 
@@ -71,11 +105,11 @@ class ProfileController extends Controller
                     'id_usuario'
                 ),
             ],
-            'bio' => ['nullable', 'string', 'max:4000'],
+            'bio' => ['nullable', 'string', 'max:400'],
         ], [
             'nickname.regex' => 'O nome não pode conter /, \\, ? ou #.',
             'nickname.unique' => 'Este nome de perfil já está em uso.',
-            'bio.max' => 'A bio pode ter no máximo 4000 caracteres.',
+            'bio.max' => 'A bio pode ter no máximo 400 caracteres.',
         ]);
 
         $user->nickname = $data['nickname'];
@@ -540,57 +574,85 @@ class ProfileController extends Controller
     public function updatePlataformas(Request $request)
     {
         $data = $request->validate([
-            'plataformas' => [
-                'nullable',
-                'array',
-            ],
+            'plataformas' => ['nullable', 'array'],
             'plataformas.*' => [
                 'integer',
+                'distinct',
+                'exists:tb_plataforma,id_plataforma',
+            ],
+            'ordem_plataformas' => ['nullable', 'array'],
+            'ordem_plataformas.*' => [
+                'integer',
+                'distinct',
                 'exists:tb_plataforma,id_plataforma',
             ],
         ]);
 
         $user = $request->user();
-        $selecionadas = $data['plataformas'] ?? [];
+
+        $selecionadas = array_values(array_unique(array_map(
+            'intval',
+            $data['plataformas'] ?? []
+        )));
+
+        $ordemRecebida = array_values(array_unique(array_map(
+            'intval',
+            $data['ordem_plataformas'] ?? []
+        )));
 
         $atuais = $user
             ->plataformas()
             ->pluck('tb_plataforma.id_plataforma')
-            ->toArray();
+            ->map(fn ($id) => (int) $id)
+            ->all();
 
-        $adicionar = array_diff(
+        DB::transaction(function () use (
+            $user,
             $selecionadas,
+            $ordemRecebida,
             $atuais
-        );
+        ) {
+            $adicionar = array_diff($selecionadas, $atuais);
+            $remover = array_diff($atuais, $selecionadas);
 
-        $remover = array_diff(
-            $atuais,
-            $selecionadas
-        );
+            if (! empty($remover)) {
+                $user->plataformas()->detach($remover);
+            }
 
-        foreach ($adicionar as $idPlataforma) {
-            $user
-                ->plataformas()
-                ->attach(
+            foreach ($adicionar as $idPlataforma) {
+                $user->plataformas()->attach(
                     $idPlataforma,
                     [
                         'data_adicao' => now(),
+                        'ordem_perfil' => null,
                     ]
                 );
-        }
+            }
 
-        if (!empty($remover)) {
-            $user
-                ->plataformas()
-                ->detach($remover);
-        }
+            $ordemFinal = array_values(array_filter(
+                $ordemRecebida,
+                fn ($id) => in_array($id, $selecionadas, true)
+            ));
+
+            foreach ($selecionadas as $idPlataforma) {
+                if (! in_array($idPlataforma, $ordemFinal, true)) {
+                    $ordemFinal[] = $idPlataforma;
+                }
+            }
+
+            foreach ($ordemFinal as $indice => $idPlataforma) {
+                $user->plataformas()->updateExistingPivot(
+                    $idPlataforma,
+                    [
+                        'ordem_perfil' => $indice + 1,
+                    ]
+                );
+            }
+        });
 
         return redirect()
             ->route('perfil')
-            ->with(
-                'success',
-                'Plataformas atualizadas.'
-            );
+            ->with('success', 'Plataformas atualizadas.');
     }
 
     private function reorganizarOrdemJogos($user): void
@@ -673,9 +735,39 @@ class ProfileController extends Controller
                     ->orderBy('tb_jogo.nome');
             },
             'plataformas' => function ($query) {
-                $query->orderBy('nome');
+                $query
+                    ->orderByRaw('tb_usuario_plataforma.ordem_perfil IS NULL')
+                    ->orderBy('tb_usuario_plataforma.ordem_perfil')
+                    ->orderBy('tb_usuario_plataforma.data_adicao')
+                    ->orderBy('tb_plataforma.nome');
             },
         ]);
+
+        $posts = $user->posts()
+            ->where('status_post', 'ativo')
+            ->withCount('reacoes')
+            ->orderByRaw('fixado_em IS NULL')
+            ->orderByDesc('fixado_em')
+            ->orderByDesc('data_publicacao')
+            ->orderByDesc('id_post')
+            ->limit(4)
+            ->get();
+
+        $totalPosts = $user->posts()
+            ->where('status_post', 'ativo')
+            ->count();
+
+        $podeReagir = $estadoAmizade === 'amigos';
+        $postsReagidos = [];
+
+        if ($podeReagir && $posts->isNotEmpty()) {
+            $postsReagidos = DB::table('tb_post_reacao')
+                ->where('id_usuario', $usuarioAtual->id_usuario)
+                ->whereIn('id_post', $posts->pluck('id_post'))
+                ->pluck('id_post')
+                ->map(fn($id) => (int) $id)
+                ->all();
+        }
 
         return view('usuarios.perfil', [
             'user' => $user,
@@ -684,6 +776,10 @@ class ProfileController extends Controller
             'contaSuspensa' => false,
             'amizade' => $amizade,
             'estadoAmizade' => $estadoAmizade,
+            'posts' => $posts,
+            'totalPosts' => $totalPosts,
+            'podeReagir' => $podeReagir,
+            'postsReagidos' => $postsReagidos,
         ]);
     }
 }

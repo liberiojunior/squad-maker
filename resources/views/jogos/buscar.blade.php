@@ -159,7 +159,26 @@
                                 >
 
                                 <span>
-                                    Populares
+                                    Populares na Steam
+                                </span>
+
+                            </label>
+
+
+                            <label class="catalog-filter-chip">
+
+                                <input
+                                    type="radio"
+                                    name="ordem"
+                                    value="squadmaker"
+                                    @checked(
+                                        $ordemAtual
+                                        === 'squadmaker'
+                                    )
+                                >
+
+                                <span>
+                                    Populares da SquadMaker
                                 </span>
 
                             </label>
@@ -437,7 +456,24 @@
 
                                     <div class="game-search-online">
 
-                                        @if (
+                                        @if ($ordemAtual === 'squadmaker')
+
+                                            <i class="bi bi-people-fill"></i>
+
+                                            <span>
+                                                {{ number_format(
+                                                    $jogo->usuarios_squad_count,
+                                                    0,
+                                                    ',',
+                                                    '.'
+                                                ) }}
+
+                                                {{ $jogo->usuarios_squad_count === 1
+                                                    ? 'jogador na SquadMaker'
+                                                    : 'jogadores na SquadMaker' }}
+                                            </span>
+
+                                        @elseif (
                                             $jogo->steam_app_id
                                             && $jogo->jogadores_online
                                                 !== null

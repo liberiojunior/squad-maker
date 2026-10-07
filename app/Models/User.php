@@ -88,6 +88,15 @@ class User extends Authenticatable
         )->withPivot('data_adicao');
     }
 
+    public function posts()
+    {
+        return $this->hasMany(
+            Post::class,
+            'id_usuario',
+            'id_usuario'
+        );
+    }
+
     public function banimentos()
     {
         return $this->hasMany(
@@ -205,6 +214,32 @@ class User extends Authenticatable
 
     public function excluirConta(): void
     {
+        $posts = $this->posts()
+            ->where('status_post', 'ativo')
+            ->get(['id_post', 'foto']);
+
+        foreach ($posts as $post) {
+            $relativo = ltrim(str_replace('\\', '/', $post->foto), '/');
+
+            if (str_starts_with($relativo, 'uploads/posts/')) {
+                $arquivo = public_path($relativo);
+
+                if (is_file($arquivo)) {
+                    unlink($arquivo);
+                }
+            }
+        }
+
+        if ($posts->isNotEmpty()) {
+            DB::table('tb_post_reacao')
+                ->whereIn('id_post', $posts->pluck('id_post'))
+                ->delete();
+
+            $this->posts()
+                ->where('status_post', 'ativo')
+                ->update(['status_post' => 'removido']);
+        }
+
         $this->nickname = 'Usuário excluído ' . $this->id_usuario;
 
         $this->email = 'excluido_'

@@ -19,7 +19,7 @@ class JogoController extends Controller
     {
         $data = $request->validate([
             'q' => ['nullable', 'string', 'max:150'],
-            'ordem' => ['nullable', 'in:popularidade,az,za'],
+            'ordem' => ['nullable', 'in:popularidade,squadmaker,az,za'],
             'generos' => ['nullable', 'array'],
             'generos.*' => ['integer', 'distinct', 'exists:tb_genero,id_genero'],
             'modos' => ['nullable', 'array'],
@@ -50,7 +50,16 @@ class JogoController extends Controller
             });
         }
 
-        if ($ordem === 'az') {
+        if ($ordem === 'squadmaker') {
+            $query
+                ->withCount([
+                    'usuarios as usuarios_squad_count' => function ($usuariosQuery) {
+                        $usuariosQuery->where('tb_usuario.status_conta', 'ativo');
+                    },
+                ])
+                ->orderByDesc('usuarios_squad_count')
+                ->orderBy('nome');
+        } elseif ($ordem === 'az') {
             $query->orderBy('nome');
         } elseif ($ordem === 'za') {
             $query->orderBy('nome', 'desc');

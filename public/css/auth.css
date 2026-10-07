@@ -192,8 +192,9 @@
 }
 
 .game-setup-page {
-    min-height: calc(100vh - 58px);
+    min-height: calc(100dvh - 64px);
     padding: 45px 20px;
+    background-color: #090511;
     background-image: url("/images/fundo2.jpg");
     background-position: center;
     background-size: cover;

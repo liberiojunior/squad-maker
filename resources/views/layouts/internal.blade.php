@@ -74,8 +74,12 @@
             </span>
         </a>
 
-        <a href="#" class="sidebar-item" title="Publicar">
-            <i class="bi bi-camera-fill"></i>
+        <a
+            href="{{ route('posts.feed') }}"
+            class="sidebar-item {{ request()->routeIs('posts.*') ? 'active' : '' }}"
+            title="Feed de publicações"
+        >
+            <i class="bi bi-images"></i>
         </a>
 
     </div>

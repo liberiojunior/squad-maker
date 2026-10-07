@@ -84,6 +84,7 @@ class AdminDenunciaController extends Controller
         $caminho = match ($tipo) {
             'anexo' => $denuncia->anexo,
             'perfil' => data_get($denuncia->contexto, 'perfil.avatar_evidencia'),
+            'post' => data_get($denuncia->contexto, 'post.foto_evidencia'),
             default => null,
         };
 

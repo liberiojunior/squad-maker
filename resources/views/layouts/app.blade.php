@@ -10,6 +10,12 @@
 
     <title>Squad Maker</title>
 
+    @if (request()->routeIs('cadastro.jogos*'))
+        <link rel="preload" as="image" href="{{ asset('images/fundo2.jpg') }}">
+    @else
+        <link rel="preload" as="image" href="{{ asset('images/fundo.jpg') }}">
+    @endif
+
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
         rel="stylesheet"

@@ -12,6 +12,7 @@ use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\JogoController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MensagemController;
+use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\RegisterJogosController;
@@ -165,6 +166,59 @@ Route::middleware([
     )->name('perfil.plataformas.update');
 
     Route::get(
+        '/publicacoes',
+        [PostController::class, 'feed']
+    )->name('posts.feed');
+
+    Route::post(
+        '/perfil/publicacoes',
+        [PostController::class, 'store']
+    )
+        ->middleware('throttle:10,10')
+        ->name('posts.store');
+
+    Route::delete(
+        '/perfil/publicacoes/{post}',
+        [PostController::class, 'destroy']
+    )->name('posts.destroy');
+
+    Route::patch(
+        '/publicacoes/{post}',
+        [PostController::class, 'update']
+    )->name('posts.update');
+
+    Route::patch(
+        '/publicacoes/{post}/fixacao',
+        [PostController::class, 'toggleFixacao']
+    )->name('posts.pin');
+
+    Route::get(
+        '/usuarios/{user:nickname}/publicacoes',
+        [PostController::class, 'index']
+    )->name('posts.index');
+
+    Route::post(
+        '/publicacoes/{post}/reacoes',
+        [PostController::class, 'reagir']
+    )
+        ->middleware('throttle:60,1')
+        ->name('posts.reacoes.store');
+
+    Route::delete(
+        '/publicacoes/{post}/reacoes',
+        [PostController::class, 'removerReacao']
+    )
+        ->middleware('throttle:60,1')
+        ->name('posts.reacoes.destroy');
+
+    Route::post(
+        '/publicacoes/{post}/denuncias',
+        [DenunciaController::class, 'post']
+    )
+        ->middleware('throttle:5,10')
+        ->name('denuncias.post');
+
+    Route::get(
         '/usuarios/{user:nickname}',
         [ProfileController::class, 'showPublic']
     )->name('usuarios.perfil');
@@ -312,7 +366,7 @@ Route::middleware('auth:admin')
         Route::get(
             '/denuncias/{denuncia}/arquivo/{tipo}',
             [AdminDenunciaController::class, 'arquivo']
-        )->whereIn('tipo', ['anexo', 'perfil'])->name('denuncias.arquivo');
+        )->whereIn('tipo', ['anexo', 'perfil', 'post'])->name('denuncias.arquivo');
 
         Route::patch(
             '/denuncias/{denuncia}/aceitar',
