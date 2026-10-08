@@ -179,6 +179,35 @@
 
 </main>
 
+<div class="modal fade" id="adminConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content squad-modal admin-confirm-modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="adminConfirmTitle">Confirmar ação</h2>
+                <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal"
+                    aria-label="Fechar"
+                ></button>
+            </div>
+
+            <div class="modal-body">
+                <p id="adminConfirmMessage"></p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <button type="button" class="btn btn-danger" id="adminConfirmAccept">
+                    Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"

@@ -1163,11 +1163,11 @@
 }
 
 .profile-order-item.drop-before::before {
-    left: -8px;
+    left: 0;
 }
 
 .profile-order-item.drop-after::after {
-    right: -8px;
+    right: 0;
 }
 
 .profile-order-cover {
@@ -2233,11 +2233,14 @@ button.profile-post-reaction:focus-visible {
 
 .profile-post-caption-footer {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
     margin-top: 5px;
 }
 .profile-post-caption-footer span {
     flex-shrink: 0;
+    margin-left: auto;
     color: var(--squad-text-muted);
     font-size: 12px;
 }
@@ -2739,6 +2742,10 @@ button.profile-post-modal-reaction:focus-visible,
     grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
+.profile-public-page .profile-post-preview-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .profile-post-preview-grid > .profile-post-card {
     width: 100%;
     height: auto;
@@ -2793,40 +2800,30 @@ button.profile-post-modal-reaction:focus-visible,
 
 /* Organização das plataformas dentro do modal. */
 
+.profile-platform-dialog {
+    max-width: 430px;
+}
+
 .profile-platform-order-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 16px;
-    margin-bottom: 12px;
-}
-
-.profile-platform-order-header > div {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.profile-platform-order-header strong {
-    color: white;
-    font-size: 14px;
-}
-
-.profile-platform-order-header small {
-    color: var(--squad-text-muted);
-    font-size: 12px;
+    margin-bottom: 0;
 }
 
 .profile-platform-order-status {
-    min-height: 18px;
+    display: block;
+    margin-bottom: 8px;
     color: var(--squad-accent);
     font-size: 12px;
-    text-align: right;
+}
+
+.profile-platform-order-status:empty {
+    display: none;
 }
 
 .profile-platform-manager-list {
+    width: fit-content;
+    max-width: 100%;
     display: grid;
-    grid-template-columns: repeat(auto-fit, 82px);
+    grid-template-columns: repeat(4, 82px);
     justify-content: start;
     gap: 12px;
 }
@@ -2834,15 +2831,11 @@ button.profile-post-modal-reaction:focus-visible,
 .profile-platform-order-item {
     position: relative;
     width: 82px;
-    padding: 6px;
-    background-color: rgba(17, 0, 55, 0.44);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
+    padding: 0;
+    background-color: transparent;
+    border: none;
     cursor: grab;
-    transition:
-        opacity 0.15s ease,
-        transform 0.15s ease,
-        border-color 0.15s ease;
+    transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .profile-platform-order-item:active {
@@ -2854,43 +2847,44 @@ button.profile-post-modal-reaction:focus-visible,
     transform: scale(0.96);
 }
 
-.profile-platform-order-item.drop-before {
-    border-left-color: var(--squad-accent);
-    box-shadow: -3px 0 0 var(--squad-accent);
+.profile-platform-order-item.drop-before::before,
+.profile-platform-order-item.drop-after::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 20px;
+    z-index: 3;
+    width: 4px;
+    background-color: var(--squad-accent);
+    border-radius: 4px;
+    box-shadow: 0 0 9px rgba(232, 59, 189, 0.85);
+    pointer-events: none;
 }
 
-.profile-platform-order-item.drop-after {
-    border-right-color: var(--squad-accent);
-    box-shadow: 3px 0 0 var(--squad-accent);
+.profile-platform-order-item.drop-before::before {
+    left: 0;
+}
+
+.profile-platform-order-item.drop-after::after {
+    right: 0;
 }
 
 .profile-platform-order-item img {
-    width: 68px;
-    height: 68px;
+    width: 82px;
+    height: 82px;
     margin: 0 auto;
+    object-fit: cover;
+    border-radius: 8px;
 }
 
 .profile-platform-order-item > span:last-child {
-    max-width: 70px;
-    margin-top: 5px;
+    max-width: 82px;
+    margin-top: 6px;
+    overflow: hidden;
     font-size: 11px;
-}
-
-.profile-platform-order-handle {
-    position: absolute;
-    top: 3px;
-    right: 3px;
-    z-index: 2;
-    width: 22px;
-    height: 22px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: rgba(0, 0, 0, 0.48);
-    color: rgba(255, 255, 255, 0.75);
-    border-radius: 6px;
-    font-size: 13px;
-    pointer-events: none;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .profile-platform-manager-add {
@@ -2932,11 +2926,13 @@ button.profile-post-modal-reaction:focus-visible,
         height: 72px;
     }
 
-    .profile-post-preview-owner {
+    .profile-post-preview-owner,
+    .profile-public-page .profile-post-preview-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
-    .profile-post-preview-owner > .profile-post-card:nth-of-type(n + 5) {
+    .profile-post-preview-owner > .profile-post-card:nth-of-type(n + 5),
+    .profile-public-page .profile-post-preview-grid > .profile-post-card:nth-of-type(n + 5) {
         display: none;
     }
 }
@@ -2955,11 +2951,13 @@ button.profile-post-modal-reaction:focus-visible,
         width: 100%;
     }
 
-    .profile-post-preview-owner {
+    .profile-post-preview-owner,
+    .profile-public-page .profile-post-preview-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
-    .profile-post-preview-owner > .profile-post-card:nth-of-type(n + 5) {
+    .profile-post-preview-owner > .profile-post-card:nth-of-type(n + 5),
+    .profile-public-page .profile-post-preview-grid > .profile-post-card:nth-of-type(n + 5) {
         display: none;
     }
 }
@@ -2995,7 +2993,8 @@ button.profile-post-modal-reaction:focus-visible,
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .profile-post-preview-owner > .profile-post-card:nth-of-type(n + 3) {
+    .profile-post-preview-owner > .profile-post-card:nth-of-type(n + 3),
+    .profile-public-page .profile-post-preview-grid > .profile-post-card:nth-of-type(n + 3) {
         display: none;
     }
 
@@ -4060,4 +4059,664 @@ button.profile-post-modal-reaction:focus-visible,
     .profile-post-modal-author-copy time {
         display: none;
     }
+}
+
+/* Ajustes de perfil e publicações */
+.profile-bio[readonly] {
+    cursor: text;
+}
+
+.profile-bio:not([readonly]) {
+    cursor: text;
+}
+
+.profile-bio-tools {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.profile-confirm-warning-icon {
+    background-color: rgba(255, 193, 7, 0.16);
+    color: #ffd76a;
+}
+
+.profile-games-summary-list {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.profile-game-summary-mobile-extra {
+    display: none;
+}
+
+.profile-game-add-tile {
+    min-width: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--squad-text-soft);
+    border: none;
+    font: inherit;
+    text-align: left;
+}
+
+.profile-game-add-cover {
+    width: 100%;
+    aspect-ratio: 460 / 215;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(101, 0, 149, 0.2);
+    color: white;
+    border: 1px dashed rgba(232, 59, 189, 0.45);
+    border-radius: 5px;
+    font-size: 34px;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.profile-game-add-tile > span:last-child {
+    display: block;
+    margin-top: 7px;
+    overflow: hidden;
+    color: var(--squad-text-soft);
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-game-add-tile:hover .profile-game-add-cover,
+.profile-game-add-tile:focus-visible .profile-game-add-cover {
+    background-color: rgba(101, 0, 149, 0.6);
+    border-color: var(--squad-accent);
+}
+
+.profile-game-add-tile:focus-visible {
+    outline: none;
+}
+
+.profile-order-add {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 460 / 215;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    background-color: rgba(101, 0, 149, 0.2);
+    color: white;
+    border: 1px dashed rgba(232, 59, 189, 0.45);
+    border-radius: 7px;
+    font-size: 14px;
+}
+
+.profile-order-add i {
+    font-size: 28px;
+}
+
+.profile-order-add:hover,
+.profile-order-add:focus-visible {
+    background-color: rgba(101, 0, 149, 0.6);
+    border-color: var(--squad-accent);
+    outline: none;
+}
+
+.profile-post-image-preview {
+    min-height: 102px;
+    aspect-ratio: auto;
+}
+
+.profile-post-image-preview.has-image {
+    min-height: 0;
+    aspect-ratio: 3 / 4;
+}
+
+.profile-post-image-empty {
+    min-height: 102px;
+    padding: 18px 16px;
+}
+
+.profile-post-image-empty i {
+    font-size: 32px;
+}
+
+.profile-post-text-open {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 12px;
+    padding: clamp(20px, 6vw, 42px);
+    background: linear-gradient(145deg, rgba(101, 0, 149, 0.42), rgba(18, 0, 47, 0.96));
+    color: white;
+    text-align: left;
+    cursor: pointer;
+}
+
+.profile-post-text-copy {
+    width: 100%;
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: clamp(16px, 2.4vw, 22px);
+    font-weight: 600;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 8;
+}
+
+.profile-post-feed-card.profile-post-without-image .profile-post-media {
+    min-height: 180px;
+    aspect-ratio: auto;
+}
+
+.profile-post-feed-card.profile-post-without-image .profile-post-text-open {
+    min-height: 180px;
+}
+
+.profile-post-text-modal-media {
+    min-height: 0;
+    aspect-ratio: 3 / 4;
+    display: flex;
+    align-items: stretch;
+}
+
+.profile-post-text-modal-copy {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 38px 42px;
+    background: linear-gradient(145deg, rgba(101, 0, 149, 0.42), rgba(18, 0, 47, 0.98));
+    color: white;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+@media (min-width: 601px) and (max-height: 850px) {
+    .profile-post-create-dialog {
+        width: min(92vw, 400px);
+        max-width: 400px;
+    }
+
+    .profile-post-create-modal {
+        --post-create-content-width: 330px;
+    }
+
+    .profile-post-create-modal .modal-body {
+        max-height: min(68dvh, 500px);
+    }
+
+    .profile-post-caption {
+        min-height: 50px !important;
+        max-height: 90px;
+    }
+
+    .profile-game-manager-body {
+        min-height: 270px;
+    }
+
+    .profile-game-search-results {
+        max-height: 280px;
+    }
+
+    .profile-order-list {
+        max-height: 270px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .profile-games-summary-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .profile-games-summary-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .profile-game-summary-mobile-extra {
+        display: block;
+    }
+
+    .profile-post-image-preview,
+    .profile-post-image-empty {
+        min-height: 96px;
+    }
+
+    .profile-post-image-preview.has-image {
+        min-height: 0;
+    }
+
+    .profile-post-text-modal-copy {
+        padding: 28px 24px;
+        font-size: 19px;
+    }
+}
+
+.profile-post-text-modal-copy {
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 0;
+}
+
+.profile-post-text-modal-copy p {
+    margin: 0;
+}
+
+
+/* Ajustes finais de organização e edição */
+.profile-order-footer {
+    justify-content: space-between;
+}
+
+.profile-order-footer .profile-modal-status {
+    flex: 1;
+    margin-right: 0;
+    text-align: center;
+}
+
+.profile-order-add-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.profile-post-edit-tools {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.profile-post-preview-grid .profile-post-text-copy {
+    font-size: clamp(12px, 1.35vw, 15px);
+    line-height: 1.35;
+    -webkit-line-clamp: 9;
+}
+
+.profile-posts-grid .profile-post-content {
+    min-height: 88px;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-posts-grid .profile-post-footer {
+    margin-top: auto;
+}
+
+.profile-post-feed-card .profile-post-content {
+    min-height: 88px;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-post-feed-card .profile-post-footer {
+    margin-top: auto;
+}
+
+@media (min-width: 601px) and (max-height: 850px) {
+    #todosJogosModal .modal-content {
+        max-height: calc(100dvh - 24px);
+    }
+
+    #todosJogosModal .modal-body {
+        overflow: hidden;
+    }
+}
+
+@media (max-width: 600px) {
+    .profile-platform-dialog {
+        width: calc(100vw - 20px);
+        max-width: calc(100vw - 20px);
+        margin-right: auto;
+        margin-left: auto;
+    }
+
+    .profile-platform-manager-list {
+        width: 100%;
+        grid-template-columns: repeat(3, 82px);
+        justify-content: center;
+    }
+
+    .profile-order-footer {
+        align-items: stretch;
+        flex-wrap: wrap;
+    }
+
+    .profile-order-footer .profile-modal-status {
+        order: 3;
+        flex-basis: 100%;
+        text-align: left;
+    }
+}
+
+
+/* Ajustes de acabamento: jogos, plataformas e compositor de publicação */
+.profile-game-add-cover {
+    background-color: var(--squad-primary);
+    border: 1px solid var(--squad-primary-hover);
+}
+
+.profile-game-add-tile > span:last-child {
+    color: white;
+}
+
+.profile-game-add-tile:hover .profile-game-add-cover,
+.profile-game-add-tile:focus-visible .profile-game-add-cover {
+    background-color: var(--squad-primary-hover);
+    border-color: var(--squad-accent);
+}
+
+.profile-order-add-button {
+    background-color: var(--squad-primary);
+    color: white;
+    border: none;
+}
+
+.profile-order-add-button:hover,
+.profile-order-add-button:focus-visible {
+    background-color: var(--squad-primary-hover);
+    color: white;
+}
+
+.profile-post-caption-field {
+    position: relative;
+}
+
+.profile-post-caption-field .profile-post-caption {
+    min-height: 104px;
+    padding: 12px 48px 46px 12px;
+}
+
+.profile-post-emoji-wrap {
+    position: absolute;
+    left: 10px;
+    bottom: 9px;
+    z-index: 2;
+}
+
+.profile-post-emoji-wrap .squad-emoji-picker {
+    top: calc(100% + 8px);
+    right: auto;
+    bottom: auto;
+    left: 0;
+}
+
+.profile-post-caption-counter {
+    position: absolute;
+    right: 11px;
+    bottom: 15px;
+    color: var(--squad-text-muted);
+    font-size: 12px;
+    pointer-events: none;
+}
+
+@media (max-width: 600px) {
+    .profile-post-caption-field .profile-post-caption {
+        min-height: 96px;
+        padding-bottom: 44px;
+    }
+}
+
+.profile-platform-dialog .modal-header {
+    position: relative;
+    padding-right: 52px;
+}
+
+.profile-platform-dialog .modal-header .btn-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    margin: 0;
+}
+
+.profile-platform-footer {
+    justify-content: flex-end;
+}
+
+/* Minhas plataformas: lista única com adição separada. */
+.profile-platform-manager-list {
+    align-items: start;
+}
+
+.profile-platform-order-cover {
+    position: relative;
+    width: 82px;
+    height: 82px;
+}
+
+.profile-platform-order-cover img {
+    display: block;
+}
+
+.profile-platform-remove {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    z-index: 4;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background-color: rgba(220, 53, 69, 0.94);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    opacity: 0;
+    font-size: 14px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.38);
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.profile-platform-order-item:hover .profile-platform-remove,
+.profile-platform-remove:focus-visible {
+    opacity: 1;
+}
+
+.profile-platform-remove:hover,
+.profile-platform-remove:focus-visible {
+    background-color: #dc3545;
+    color: white;
+}
+
+.profile-platform-manager-add {
+    margin-top: 0;
+}
+
+.profile-platform-add-panel[hidden],
+.profile-platform-manager-main[hidden] {
+    display: none;
+}
+
+.profile-platform-add-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.profile-platform-add-heading strong {
+    font-size: 16px;
+}
+
+.profile-platform-add-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background-color: transparent;
+    color: var(--squad-text-soft);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 7px;
+    font-size: 13px;
+}
+
+.profile-platform-add-back:hover,
+.profile-platform-add-back:focus-visible {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: white;
+    border-color: var(--squad-accent);
+}
+
+.profile-platform-add-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.profile-platform-add-option {
+    min-width: 0;
+    padding: 10px 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.profile-platform-add-option:hover,
+.profile-platform-add-option:focus-visible {
+    background-color: rgba(101, 0, 149, 0.35);
+    border-color: var(--squad-accent);
+}
+
+.profile-platform-add-option:disabled {
+    display: none;
+}
+
+.profile-platform-add-option img {
+    display: block;
+    width: 68px;
+    height: 68px;
+    margin: 0 auto;
+    object-fit: cover;
+    border-radius: 9px;
+}
+
+.profile-platform-add-option span {
+    display: block;
+    margin-top: 7px;
+    overflow: hidden;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-platform-add-empty {
+    padding: 28px 12px;
+}
+
+@media (hover: none) {
+    .profile-platform-remove {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 600px) {
+    .profile-platform-add-options {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .profile-platform-add-option img {
+        width: 62px;
+        height: 62px;
+    }
+}
+
+/* Edição da publicação no próprio texto */
+.profile-post-image-modal-caption.profile-post-caption-empty {
+    display: none;
+}
+
+.profile-post-image-modal-caption.profile-post-caption-empty.is-editing {
+    display: block;
+}
+
+.profile-post-inline-edit {
+    width: 100%;
+}
+
+.profile-post-inline-editor {
+    width: 100%;
+    min-height: 92px;
+    max-height: 180px;
+    padding: 10px 12px;
+    resize: vertical;
+    background-color: rgba(255, 255, 255, 0.06);
+    color: white;
+    border: 1px solid rgba(232, 59, 189, 0.45);
+    border-radius: 8px;
+    font: inherit;
+    line-height: 1.5;
+    outline: none;
+}
+
+.profile-post-inline-editor:focus {
+    border-color: var(--squad-accent);
+    box-shadow: 0 0 0 2px rgba(232, 59, 189, 0.12);
+}
+
+.profile-post-inline-editor::placeholder {
+    color: #aaa1b8;
+}
+
+.profile-post-inline-edit-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.profile-post-inline-edit-footer .profile-post-edit-actions {
+    margin-top: 0;
+}
+
+.profile-post-text-modal-copy.is-editing {
+    align-items: stretch;
+}
+
+.profile-post-inline-edit-text {
+    align-self: center;
+}
+
+.profile-post-inline-edit-text .profile-post-inline-editor {
+    min-height: 180px;
+    max-height: 300px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+@media (max-width: 600px) {
+    .profile-post-inline-edit-footer {
+        align-items: flex-end;
+    }
+
+    .profile-post-inline-edit-text .profile-post-inline-editor {
+        min-height: 150px;
+        font-size: 17px;
+    }
+}
+
+
+.profile-continue-editing {
+    background-color: var(--squad-primary);
+    color: white;
+    border: 1px solid var(--squad-primary);
+}
+
+.profile-continue-editing:hover,
+.profile-continue-editing:focus-visible {
+    background-color: var(--squad-primary-hover);
+    color: white;
+    border-color: var(--squad-primary-hover);
 }

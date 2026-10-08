@@ -108,6 +108,9 @@ Route::middleware([
         [RegisterJogosController::class, 'store']
     )->name('cadastro.jogos.store');
 
+    Route::view('/ajuda', 'ajuda')
+        ->name('ajuda');
+
     // Perfil
 
     Route::get(
@@ -295,6 +298,11 @@ Route::middleware([
     )
         ->middleware('throttle:60,1')
         ->name('mensagens.store');
+
+    Route::get(
+        '/chat/atualizacoes',
+        [MensagemController::class, 'atualizacoes']
+    )->name('mensagens.atualizacoes');
 
     Route::patch(
         '/conversas/{conversa}/lidas',

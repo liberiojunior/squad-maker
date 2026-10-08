@@ -1,12 +1,13 @@
 @php
     $reagiu = in_array((int) $post->id_post, $postsReagidos ?? [], true);
     $feedMode = $feedMode ?? false;
+    $temFoto = ! empty($post->foto);
     $perfilAutor = $isOwner
         ? route('perfil')
         : route('usuarios.perfil', ['user' => $user->nickname]);
 @endphp
 
-<article class="profile-post-card {{ $feedMode ? 'profile-post-feed-card' : '' }}">
+<article class="profile-post-card {{ $feedMode ? 'profile-post-feed-card' : '' }} {{ $temFoto ? '' : 'profile-post-without-image' }}">
     @if ($feedMode)
         <header class="profile-post-author">
             <a href="{{ $perfilAutor }}" class="profile-post-author-avatar" aria-label="Abrir perfil de {{ $user->nickname }}">
@@ -27,16 +28,23 @@
             </div>
         </header>
     @endif
-    <div class="profile-post-media">
+
+    <div class="profile-post-media {{ $temFoto ? '' : 'profile-post-text-preview' }}">
         <button
             type="button"
-            class="profile-post-image-open"
+            class="profile-post-image-open {{ $temFoto ? '' : 'profile-post-text-open' }}"
             data-bs-toggle="modal"
             data-bs-target="#postImageModal{{ $post->id_post }}"
-            title="Abrir imagem"
-            aria-label="Abrir imagem da publicação"
+            title="Abrir publicação"
+            aria-label="Abrir publicação de {{ $user->nickname }}"
         >
-            <img src="{{ $post->foto }}" alt="Publicação de {{ $user->nickname }}">
+            @if ($temFoto)
+                <img src="{{ $post->foto }}" alt="Publicação de {{ $user->nickname }}">
+            @else
+                <span class="profile-post-text-copy">
+                    {{ $post->descricao }}
+                </span>
+            @endif
         </button>
 
         <span class="profile-post-hover-likes" aria-hidden="true">
@@ -56,7 +64,7 @@
     </div>
 
     <div class="profile-post-content">
-        @if ($post->descricao)
+        @if ($post->descricao && $temFoto)
             <p class="profile-post-description">{{ $post->descricao }}</p>
         @endif
 
@@ -202,9 +210,7 @@
                                 <button
                                     type="button"
                                     class="dropdown-item"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#postEditPanel{{ $post->id_post }}"
-                                    aria-controls="postEditPanel{{ $post->id_post }}"
+                                    data-post-edit-trigger
                                 >
                                     <i class="bi bi-pencil-fill"></i>
                                     Editar descrição
@@ -215,7 +221,8 @@
                                 <form
                                     method="POST"
                                     action="{{ route('posts.destroy', $post) }}"
-                                    onsubmit="return confirm('Deseja remover esta publicação?')"
+                                    class="profile-post-delete-form"
+                                    data-post-delete-form
                                 >
                                     @csrf
                                     @method('DELETE')
@@ -241,45 +248,74 @@
                 </div>
             </div>
 
-            @if ($post->descricao)
-                <div class="profile-post-image-modal-caption">
-                    <p>{{ $post->descricao }}</p>
+            @if ($temFoto && ($post->descricao || $isOwner))
+                <div
+                    class="profile-post-image-modal-caption {{ ! $post->descricao ? 'profile-post-caption-empty' : '' }}"
+                    data-post-edit-area
+                >
+                    <p data-post-edit-display {{ ! $post->descricao ? 'hidden' : '' }}>{{ $post->descricao }}</p>
+
+                    @if ($isOwner)
+                        <form
+                            method="POST"
+                            action="{{ route('posts.update', $post) }}"
+                            class="profile-post-inline-edit"
+                            data-post-edit-form
+                            hidden
+                        >
+                            @csrf
+                            @method('PATCH')
+
+                            <textarea
+                                name="descricao"
+                                class="profile-post-inline-editor squad-scrollbar"
+                                rows="3"
+                                maxlength="280"
+                                placeholder="Adicione uma descrição..."
+                                data-post-edit-description
+                                data-post-edit-original="{{ $post->descricao }}"
+                            >{{ $post->descricao }}</textarea>
+
+                            <div class="profile-post-inline-edit-footer">
+                                <div class="squad-emoji-wrap" data-post-edit-emoji-wrap>
+                                    <button
+                                        type="button"
+                                        class="squad-emoji-button"
+                                        data-post-edit-emoji-button
+                                        aria-expanded="false"
+                                        aria-label="Adicionar emoji à publicação"
+                                        title="Adicionar emoji"
+                                    >
+                                        <i class="bi bi-emoji-smile"></i>
+                                    </button>
+
+                                    <div class="squad-emoji-picker" data-post-edit-emoji-picker hidden>
+                                        @foreach (['😀', '😂', '😊', '😍', '😎', '😭', '🔥', '❤️', '💜', '👍', '👏', '🎮', '🏆', '🤝', '🎉', '👀'] as $emoji)
+                                            <button type="button" data-emoji="{{ $emoji }}" aria-label="Adicionar {{ $emoji }}">{{ $emoji }}</button>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="profile-post-edit-actions">
+                                    <button
+                                        type="button"
+                                        class="btn btn-secondary"
+                                        data-post-edit-cancel
+                                    >
+                                        Cancelar
+                                    </button>
+
+                                    <button type="submit" class="btn profile-post-submit">
+                                        Salvar
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    @endif
                 </div>
             @endif
 
-            @if ($isOwner)
-                <div class="collapse profile-post-edit-panel" id="postEditPanel{{ $post->id_post }}">
-                    <form method="POST" action="{{ route('posts.update', $post) }}">
-                        @csrf
-                        @method('PATCH')
-
-                        <textarea
-                            name="descricao"
-                            class="form-control squad-scrollbar"
-                            rows="3"
-                            maxlength="280"
-                            placeholder="Adicione uma descrição..."
-                        >{{ $post->descricao }}</textarea>
-
-                        <div class="profile-post-edit-actions">
-                            <button
-                                type="button"
-                                class="btn btn-secondary"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#postEditPanel{{ $post->id_post }}"
-                            >
-                                Cancelar
-                            </button>
-
-                            <button type="submit" class="btn profile-post-submit">
-                                Salvar
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            @endif
-
-            <div class="profile-post-image-modal-media">
+            <div class="profile-post-image-modal-media {{ $temFoto ? '' : 'profile-post-text-modal-media' }}">
                 <button
                     type="button"
                     class="profile-post-modal-nav profile-post-modal-nav-prev"
@@ -290,7 +326,71 @@
                     <i class="bi bi-chevron-left"></i>
                 </button>
 
-                <img src="{{ $post->foto }}" alt="Publicação de {{ $user->nickname }}">
+                @if ($temFoto)
+                    <img src="{{ $post->foto }}" alt="Publicação de {{ $user->nickname }}">
+                @else
+                    <div class="profile-post-text-modal-copy" data-post-edit-area>
+                        <p data-post-edit-display>{{ $post->descricao }}</p>
+
+                        @if ($isOwner)
+                            <form
+                                method="POST"
+                                action="{{ route('posts.update', $post) }}"
+                                class="profile-post-inline-edit profile-post-inline-edit-text"
+                                data-post-edit-form
+                                hidden
+                            >
+                                @csrf
+                                @method('PATCH')
+
+                                <textarea
+                                    name="descricao"
+                                    class="profile-post-inline-editor squad-scrollbar"
+                                    rows="6"
+                                    maxlength="280"
+                                    placeholder="Escreva algo..."
+                                    data-post-edit-description
+                                    data-post-edit-original="{{ $post->descricao }}"
+                                >{{ $post->descricao }}</textarea>
+
+                                <div class="profile-post-inline-edit-footer">
+                                    <div class="squad-emoji-wrap" data-post-edit-emoji-wrap>
+                                        <button
+                                            type="button"
+                                            class="squad-emoji-button"
+                                            data-post-edit-emoji-button
+                                            aria-expanded="false"
+                                            aria-label="Adicionar emoji à publicação"
+                                            title="Adicionar emoji"
+                                        >
+                                            <i class="bi bi-emoji-smile"></i>
+                                        </button>
+
+                                        <div class="squad-emoji-picker" data-post-edit-emoji-picker hidden>
+                                            @foreach (['😀', '😂', '😊', '😍', '😎', '😭', '🔥', '❤️', '💜', '👍', '👏', '🎮', '🏆', '🤝', '🎉', '👀'] as $emoji)
+                                                <button type="button" data-emoji="{{ $emoji }}" aria-label="Adicionar {{ $emoji }}">{{ $emoji }}</button>
+                                            @endforeach
+                                        </div>
+                                    </div>
+
+                                    <div class="profile-post-edit-actions">
+                                        <button
+                                            type="button"
+                                            class="btn btn-secondary"
+                                            data-post-edit-cancel
+                                        >
+                                            Cancelar
+                                        </button>
+
+                                        <button type="submit" class="btn profile-post-submit">
+                                            Salvar
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        @endif
+                    </div>
+                @endif
 
                 <button
                     type="button"
@@ -316,7 +416,7 @@
                     <div class="modal-header">
                         <div>
                             <h2 class="modal-title">Denunciar publicação</h2>
-                            <p>A imagem e o conteúdo atual da publicação serão preservados para análise.</p>
+                            <p>O conteúdo atual da publicação será preservado para análise.</p>
                         </div>
 
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
@@ -356,7 +456,48 @@
     </div>
 @endif
 
-
 @once
+    <div
+        class="profile-confirm-overlay"
+        id="postDeleteConfirm"
+        hidden
+    >
+        <div
+            class="profile-confirm-card"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="postDeleteConfirmTitle"
+            aria-describedby="postDeleteConfirmText"
+        >
+            <div class="profile-confirm-icon">
+                <i class="bi bi-trash3"></i>
+            </div>
+
+            <h2 id="postDeleteConfirmTitle">Excluir publicação?</h2>
+
+            <p id="postDeleteConfirmText">
+                Esta publicação será removida do seu perfil e do mural.
+            </p>
+
+            <div class="profile-confirm-actions">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="postDeleteConfirmCancel"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    id="postDeleteConfirmAccept"
+                >
+                    Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ asset('js/post-gallery.js') }}"></script>
 @endonce

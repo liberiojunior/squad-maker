@@ -26,8 +26,7 @@
                     : 0
             );
 
-        $filtrosAbertos =
-            $quantidadeFiltros > 0;
+        $filtrosAbertos = false;
     @endphp
 
 
@@ -84,7 +83,7 @@
                     type="button"
                     class="
                         catalog-filter-toggle
-                        {{ $filtrosAbertos
+                        {{ $quantidadeFiltros > 0
                             ? 'active'
                             : '' }}
                     "

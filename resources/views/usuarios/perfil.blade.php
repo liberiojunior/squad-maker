@@ -73,7 +73,7 @@
                     <section class="profile-info-card profile-public-info-card">
                         <div class="profile-social-actions" aria-label="Ações de amizade">
                             @if ($estadoAmizade === 'nenhuma')
-                                <form method="POST" action="{{ route('amizades.enviar', $user) }}">
+                                <form method="POST" action="{{ route('amizades.enviar', $user) }}" data-profile-friendship-form>
                                     @csrf
 
                                     <button type="submit" class="profile-social-action" title="Adicionar amigo"
@@ -87,7 +87,7 @@
                                     <i class="bi bi-clock-fill"></i>
                                 </span>
 
-                                <form method="POST" action="{{ route('amizades.cancelar', $amizade) }}">
+                                <form method="POST" action="{{ route('amizades.cancelar', $amizade) }}" data-profile-friendship-form>
                                     @csrf
                                     @method('DELETE')
 
@@ -97,7 +97,7 @@
                                     </button>
                                 </form>
                             @elseif ($estadoAmizade === 'recebida')
-                                <form method="POST" action="{{ route('amizades.aceitar', $amizade) }}">
+                                <form method="POST" action="{{ route('amizades.aceitar', $amizade) }}" data-profile-friendship-form>
                                     @csrf
                                     @method('PATCH')
 
@@ -107,7 +107,7 @@
                                     </button>
                                 </form>
 
-                                <form method="POST" action="{{ route('amizades.recusar', $amizade) }}">
+                                <form method="POST" action="{{ route('amizades.recusar', $amizade) }}" data-profile-friendship-form>
                                     @csrf
                                     @method('DELETE')
 
@@ -131,7 +131,7 @@
                                     <i class="bi bi-people-fill"></i>
                                 </span>
 
-                                <form method="POST" action="{{ route('amizades.remover', $amizade) }}">
+                                <form method="POST" action="{{ route('amizades.remover', $amizade) }}" data-profile-friendship-form>
                                     @csrf
                                     @method('DELETE')
 
@@ -184,7 +184,7 @@
                 <div class="profile-section-title">
                     <h2>Jogos</h2>
 
-                    @if ($user->jogos->count() > 4)
+                    @if ($user->jogos->count() > 5)
                         <button
                             type="button"
                             class="profile-view-all"
@@ -198,7 +198,7 @@
 
                 @if ($user->jogos->isNotEmpty())
                     <div class="profile-games-list profile-games-summary-list">
-                        @foreach ($user->jogos->take(4) as $jogo)
+                        @foreach ($user->jogos->take(5) as $jogo)
                             <div class="profile-game-card profile-public-game-card">
                                 <div class="profile-game-cover">
                                     <img src="{{ $jogo->capa }}" alt="{{ $jogo->nome }}">
@@ -258,7 +258,7 @@
                     <div class="profile-section-title">
                         <h2>Publicações</h2>
 
-                        @if ($totalPosts > 4)
+                        @if ($totalPosts > 5)
                             <a href="{{ route('posts.index', $user) }}" class="profile-view-all">
                                 Ver todas ({{ $totalPosts }})
                             </a>
@@ -359,7 +359,7 @@
         </div>
     @endif
 
-    @if (! $contaSuspensa && $user->jogos->count() > 4)
+    @if (! $contaSuspensa && $user->jogos->count() > 5)
         <div class="modal fade" id="publicGamesModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-xl">
                 <div class="modal-content squad-modal profile-games-modal">

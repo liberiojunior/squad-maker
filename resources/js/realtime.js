@@ -1,26 +1,30 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
+const body = document.body;
 const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+const idUsuario = Number(body.dataset.userId || 0);
+const key = body.dataset.reverbKey || import.meta.env.VITE_REVERB_APP_KEY || '';
+const scheme = body.dataset.reverbScheme
+    || import.meta.env.VITE_REVERB_SCHEME
+    || (window.location.protocol === 'https:' ? 'https' : 'http');
 
-window.Pusher = Pusher;
+let host = body.dataset.reverbHost
+    || import.meta.env.VITE_REVERB_HOST
+    || window.location.hostname;
 
-window.Echo = new Echo({
-    broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: Number(import.meta.env.VITE_REVERB_PORT ?? 80),
-    wssPort: Number(import.meta.env.VITE_REVERB_PORT ?? 443),
-    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
-    enabledTransports: ['ws', 'wss'],
-    authEndpoint: '/broadcasting/auth',
-    auth: {
-        headers: {
-            'X-CSRF-TOKEN': csrf,
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-    },
-});
+if (
+    ['127.0.0.1', 'localhost'].includes(host)
+    && !['127.0.0.1', 'localhost'].includes(window.location.hostname)
+) {
+    host = window.location.hostname;
+}
+
+const port = Number(
+    body.dataset.reverbPort
+    || import.meta.env.VITE_REVERB_PORT
+    || (scheme === 'https' ? 443 : 8080)
+);
 
 function atualizarBadgeChat(total) {
     const badge = document.getElementById('sidebarChatBadge');
@@ -40,9 +44,26 @@ window.SquadRealtime = {
     atualizarBadgeChat,
 };
 
-const idUsuario = Number(document.body.dataset.userId || 0);
+if (idUsuario > 0 && key) {
+    window.Pusher = Pusher;
 
-if (idUsuario > 0) {
+    window.Echo = new Echo({
+        broadcaster: 'reverb',
+        key,
+        wsHost: host,
+        wsPort: port,
+        wssPort: port,
+        forceTLS: scheme === 'https',
+        enabledTransports: ['ws', 'wss'],
+        authEndpoint: '/broadcasting/auth',
+        auth: {
+            headers: {
+                'X-CSRF-TOKEN': csrf,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        },
+    });
+
     window.Echo
         .private(`usuarios.${idUsuario}`)
         .listen('.mensagem.enviada', function(evento) {
@@ -71,10 +92,6 @@ if (idUsuario > 0) {
                     ...evento,
                 },
             }));
-
-            if (window.location.pathname.startsWith('/usuarios/')) {
-                window.location.reload();
-            }
         });
 }
 

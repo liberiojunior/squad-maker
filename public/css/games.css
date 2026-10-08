@@ -731,3 +731,54 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
+
+/* Ajustes para notebooks */
+@media (min-width: 1024px) and (max-width: 1536px) and (max-height: 900px) {
+    .game-search-page,
+    .game-search-form {
+        max-width: 1180px;
+    }
+
+    .catalog-filter-panel {
+        padding: 15px 18px;
+    }
+
+    .catalog-filter-group + .catalog-filter-group {
+        margin-top: 12px;
+        padding-top: 12px;
+    }
+
+    .catalog-filter-title {
+        margin-bottom: 7px;
+    }
+
+    .catalog-filter-options-scroll {
+        max-height: 105px;
+    }
+
+    .catalog-filter-chip span {
+        min-height: 31px;
+        padding: 4px 10px;
+        font-size: 12px;
+    }
+
+    .catalog-filter-actions {
+        margin-top: 14px;
+        padding-top: 12px;
+    }
+
+    .game-search-panel {
+        padding: 18px 22px;
+    }
+
+    .game-search-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px 16px;
+    }
+}
+
+@media (min-width: 1024px) and (max-width: 1280px) and (max-height: 800px) {
+    .game-search-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}

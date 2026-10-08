@@ -143,7 +143,35 @@
                                 >
                                     Ver mais
                                 </button>
-                                <span class="profile-bio-counter" id="bioCounter" hidden>0 / 400</span>
+
+                                <div class="profile-bio-tools">
+                                    <div class="squad-emoji-wrap" id="profileBioEmojiWrap" hidden>
+                                        <button
+                                            type="button"
+                                            class="squad-emoji-button"
+                                            id="profileBioEmojiButton"
+                                            aria-label="Adicionar emoji à bio"
+                                            aria-expanded="false"
+                                            title="Adicionar emoji"
+                                        >
+                                            <i class="bi bi-emoji-smile"></i>
+                                        </button>
+
+                                        <div
+                                            class="squad-emoji-picker"
+                                            id="profileBioEmojiPicker"
+                                            role="group"
+                                            aria-label="Emojis"
+                                            hidden
+                                        >
+                                            @foreach (['😀', '😂', '😊', '😍', '😎', '😭', '🔥', '❤️', '💜', '👍', '👏', '🎮', '🏆', '🤝', '🎉', '👀'] as $emoji)
+                                                <button type="button" data-emoji="{{ $emoji }}" aria-label="Adicionar {{ $emoji }}">{{ $emoji }}</button>
+                                            @endforeach
+                                        </div>
+                                    </div>
+
+                                    <span class="profile-bio-counter" id="bioCounter" hidden>0 / 400</span>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -187,36 +215,48 @@
                     data-bs-toggle="modal"
                     data-bs-target="#todosJogosModal"
                 >
-                    {{ $user->jogos->isNotEmpty() ? 'Ver todos (' . $user->jogos->count() . ')' : 'Gerenciar jogos' }}
+                    Ver todos ({{ $user->jogos->count() }})
                 </button>
             </div>
 
-            @if ($user->jogos->isNotEmpty())
-                <div class="profile-games-list profile-games-summary-list">
-                    @foreach ($user->jogos->take(4) as $jogo)
-                        <div class="profile-game-card">
-                            <button
-                                type="button"
-                                class="profile-game-detail"
-                                data-profile-game-detail
-                                data-game-id="{{ $jogo->id_jogo }}"
-                                data-name="{{ $jogo->nome }}"
-                                data-cover="{{ $jogo->capa }}"
-                                data-level="{{ $jogo->pivot->nivel_proficiencia ?? '' }}"
-                                data-update-url="{{ route('perfil.jogos.nivel.update', $jogo) }}"
-                            >
-                                <div class="profile-game-cover">
-                                    <img src="{{ $jogo->capa }}" alt="{{ $jogo->nome }}">
-                                </div>
+            <div class="profile-games-list profile-games-summary-list">
+                @foreach ($user->jogos->take($user->jogos->count() < 5 ? 4 : 6) as $jogo)
+                    <div class="profile-game-card {{ $loop->iteration === 6 ? 'profile-game-summary-mobile-extra' : '' }}">
+                        <button
+                            type="button"
+                            class="profile-game-detail"
+                            data-profile-game-detail
+                            data-game-id="{{ $jogo->id_jogo }}"
+                            data-name="{{ $jogo->nome }}"
+                            data-cover="{{ $jogo->capa }}"
+                            data-level="{{ $jogo->pivot->nivel_proficiencia ?? '' }}"
+                            data-update-url="{{ route('perfil.jogos.nivel.update', $jogo) }}"
+                        >
+                            <div class="profile-game-cover">
+                                <img src="{{ $jogo->capa }}" alt="{{ $jogo->nome }}">
+                            </div>
 
-                                <span>{{ $jogo->nome }}</span>
-                            </button>
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                <span class="profile-empty-inline">Nenhum jogo adicionado.</span>
-            @endif
+                            <span>{{ $jogo->nome }}</span>
+                        </button>
+                    </div>
+                @endforeach
+
+                @if ($user->jogos->count() < 5)
+                    <button
+                        type="button"
+                        class="profile-game-add-tile"
+                        data-bs-toggle="modal"
+                        data-bs-target="#adicionarJogosModal"
+                        title="Adicionar jogos"
+                        aria-label="Adicionar jogos"
+                    >
+                        <span class="profile-game-add-cover">
+                            <i class="bi bi-plus-lg"></i>
+                        </span>
+                        <span>Adicionar jogo</span>
+                    </button>
+                @endif
+            </div>
         </section>
 
         <div class="profile-lower-grid">
@@ -224,37 +264,37 @@
                 <div class="profile-section-title profile-platform-section-title">
                     <h2>Plataformas</h2>
 
-                    @if ($user->plataformas->count() > 5)
-                        <button
-                            type="button"
-                            class="profile-view-all"
-                            data-bs-toggle="modal"
-                            data-bs-target="#plataformasModal"
-                        >
-                            Ver todas ({{ $user->plataformas->count() }})
-                        </button>
-                    @endif
+                    <button
+                        type="button"
+                        class="profile-view-all"
+                        data-bs-toggle="modal"
+                        data-bs-target="#plataformasModal"
+                    >
+                        Ver todas ({{ $user->plataformas->count() }})
+                    </button>
                 </div>
 
                 <div class="profile-platform-summary-wrap">
                     <div class="profile-platform-summary">
-                        @foreach ($user->plataformas->take(5) as $plataforma)
+                        @foreach ($user->plataformas->take(6) as $plataforma)
                             <div class="profile-platform-card">
                                 <img src="{{ $plataforma->icone }}" alt="{{ $plataforma->nome }}">
                                 <span>{{ $plataforma->nome }}</span>
                             </div>
                         @endforeach
 
-                        <button
-                            type="button"
-                            class="profile-add-card profile-summary-platform-add"
-                            data-bs-toggle="modal"
-                            data-bs-target="#plataformasModal"
-                            title="Adicionar plataforma"
-                            aria-label="Adicionar plataforma"
-                        >
-                            <i class="bi bi-plus-lg"></i>
-                        </button>
+                        @if ($user->plataformas->count() < 6)
+                            <button
+                                type="button"
+                                class="profile-add-card profile-summary-platform-add"
+                                data-bs-toggle="modal"
+                                data-bs-target="#plataformasModal"
+                                title="Adicionar plataforma"
+                                aria-label="Adicionar plataforma"
+                            >
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        @endif
                     </div>
                 </div>
             </section>
@@ -641,20 +681,20 @@
                             </div>
                         @endforeach
 
-                        <button
-                            type="button"
-                            class="profile-add-card profile-order-add"
-                            data-bs-toggle="modal"
-                            data-bs-target="#adicionarJogosModal"
-                            title="Adicionar jogos"
-                            aria-label="Adicionar jogos"
-                        >
-                            <i class="bi bi-plus-lg"></i>
-                        </button>
                     </div>
                 </div>
 
-                <div class="modal-footer">
+                <div class="modal-footer profile-order-footer">
+                    <button
+                        type="button"
+                        class="btn profile-games-save profile-order-add-button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#adicionarJogosModal"
+                    >
+                        <i class="bi bi-plus-lg"></i>
+                        Adicionar jogo
+                    </button>
+
                     <span
                         class="profile-modal-status"
                         id="profileOrderStatus"
@@ -664,9 +704,9 @@
                         type="button"
                         class="btn profile-games-save"
                         id="profileOrderSave"
-                        @disabled($user->jogos->isEmpty())
+                        disabled
                     >
-                        Salvar ordem
+                        Salvar
                     </button>
                 </div>
             </div>
@@ -772,7 +812,7 @@
         tabindex="-1"
         aria-hidden="true"
     >
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered profile-platform-dialog">
             <div class="modal-content squad-modal profile-games-modal">
                 <form
                     method="POST"
@@ -786,7 +826,7 @@
                         <div>
                             <h2 class="modal-title">Minhas Plataformas</h2>
                             <p class="profile-modal-subtitle">
-                                Veja suas plataformas e altere quando precisar.
+                                Arraste as plataformas para definir a ordem em que aparecem no perfil.
                             </p>
                         </div>
 
@@ -799,118 +839,142 @@
                     </div>
 
                     <div class="modal-body">
-                        <div class="profile-platform-order-header">
-                            <div>
-                                <strong>Ordem no perfil</strong>
-                                <small>
-                                    Arraste as plataformas para definir a ordem em que aparecem.
-                                </small>
-                            </div>
-
+                        <div
+                            class="profile-platform-manager-main"
+                            id="profilePlatformManagerMain"
+                        >
                             <span
                                 class="profile-platform-order-status"
                                 id="profilePlatformOrderStatus"
                                 aria-live="polite"
                             ></span>
+
+                            <div
+                                class="profile-platform-manager-list"
+                                id="profilePlatformOrderList"
+                            >
+                                @foreach ($user->plataformas as $plataforma)
+                                    <div
+                                        class="profile-platform-card profile-platform-order-item"
+                                        draggable="true"
+                                        data-platform-id="{{ $plataforma->id_plataforma }}"
+                                    >
+                                        <input
+                                            type="hidden"
+                                            name="ordem_plataformas[]"
+                                            value="{{ $plataforma->id_plataforma }}"
+                                        >
+
+                                        <div class="profile-platform-order-cover">
+                                            <img
+                                                src="{{ $plataforma->icone }}"
+                                                alt="{{ $plataforma->nome }}"
+                                            >
+
+                                            <button
+                                                type="button"
+                                                class="profile-platform-remove"
+                                                data-platform-remove
+                                                title="Remover plataforma"
+                                                aria-label="Remover {{ $plataforma->nome }}"
+                                            >
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
+                                        </div>
+
+                                        <span>{{ $plataforma->nome }}</span>
+                                    </div>
+                                @endforeach
+
+                                <button
+                                    type="button"
+                                    class="profile-add-card profile-platform-add profile-platform-manager-add"
+                                    id="profilePlatformAddOpen"
+                                    title="Adicionar plataforma"
+                                    aria-label="Adicionar plataforma"
+                                >
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <div
-                            class="profile-platform-manager-list"
-                            id="profilePlatformOrderList"
+                            class="profile-platform-add-panel"
+                            id="profilePlatformAddPanel"
+                            hidden
                         >
-                            @forelse ($user->plataformas as $plataforma)
-                                <div
-                                    class="profile-platform-card profile-platform-order-item"
-                                    draggable="true"
-                                    data-platform-id="{{ $plataforma->id_plataforma }}"
+                            <div class="profile-platform-add-heading">
+                                <strong>Adicionar plataforma</strong>
+
+                                <button
+                                    type="button"
+                                    class="profile-platform-add-back"
+                                    id="profilePlatformAddBack"
                                 >
-                                    <input
-                                        type="hidden"
-                                        name="ordem_plataformas[]"
-                                        value="{{ $plataforma->id_plataforma }}"
-                                    >
+                                    <i class="bi bi-arrow-left"></i>
+                                    Voltar
+                                </button>
+                            </div>
 
-                                    <span
-                                        class="profile-platform-order-handle"
-                                        aria-hidden="true"
+                            <div class="profile-platform-add-options">
+                                @foreach ($plataformasDisponiveis as $plataforma)
+                                    <button
+                                        type="button"
+                                        class="profile-platform-add-option"
+                                        data-platform-add
+                                        data-platform-id="{{ $plataforma->id_plataforma }}"
+                                        data-platform-name="{{ $plataforma->nome }}"
+                                        data-platform-icon="{{ $plataforma->icone }}"
+                                        @disabled(
+                                            $user->plataformas->contains(
+                                                'id_plataforma',
+                                                $plataforma->id_plataforma
+                                            )
+                                        )
                                     >
-                                        <i class="bi bi-grip-vertical"></i>
-                                    </span>
+                                        <img
+                                            src="{{ $plataforma->icone }}"
+                                            alt="{{ $plataforma->nome }}"
+                                        >
+                                        <span>{{ $plataforma->nome }}</span>
+                                    </button>
+                                @endforeach
+                            </div>
 
-                                    <img
-                                        src="{{ $plataforma->icone }}"
-                                        alt="{{ $plataforma->nome }}"
-                                    >
-                                    <span>{{ $plataforma->nome }}</span>
-                                </div>
-                            @empty
-                                <div class="profile-games-empty">
-                                    Nenhuma plataforma adicionada.
-                                </div>
-                            @endforelse
+                            <div
+                                class="profile-games-empty profile-platform-add-empty"
+                                id="profilePlatformAddEmpty"
+                                hidden
+                            >
+                                Todas as plataformas já estão no seu perfil.
+                            </div>
                         </div>
 
-                        <button
-                            type="button"
-                            class="profile-add-card profile-platform-add profile-platform-manager-add"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#profilePlatformOptionsCollapse"
-                            aria-expanded="false"
-                            aria-controls="profilePlatformOptionsCollapse"
-                            title="Adicionar ou remover plataformas"
-                            aria-label="Adicionar ou remover plataformas"
-                        >
-                            <i class="bi bi-plus-lg"></i>
-                        </button>
-
-                        <div class="collapse profile-platform-options-collapse" id="profilePlatformOptionsCollapse">
-                            <div class="profile-platform-options-heading">
-                                Adicionar ou remover plataformas
-                            </div>
-
-                            <div class="profile-platform-options">
-                                @forelse ($plataformasDisponiveis as $plataforma)
-                                    <label class="profile-platform-option">
-                                        <input
-                                            type="checkbox"
-                                            name="plataformas[]"
-                                            value="{{ $plataforma->id_plataforma }}"
-                                            @checked(
-                                                $user->plataformas->contains(
-                                                    'id_plataforma',
-                                                    $plataforma->id_plataforma
-                                                )
-                                            )
-                                        >
-
-                                        <div>
-                                            <img src="{{ $plataforma->icone }}" alt="{{ $plataforma->nome }}">
-                                            <span>{{ $plataforma->nome }}</span>
-                                        </div>
-                                    </label>
-                                @empty
-                                    <div class="profile-games-empty">
-                                        Ainda não existem plataformas cadastradas.
-                                    </div>
-                                @endforelse
-                            </div>
+                        <div hidden>
+                            @foreach ($plataformasDisponiveis as $plataforma)
+                                <input
+                                    type="checkbox"
+                                    name="plataformas[]"
+                                    value="{{ $plataforma->id_plataforma }}"
+                                    @checked(
+                                        $user->plataformas->contains(
+                                            'id_plataforma',
+                                            $plataforma->id_plataforma
+                                        )
+                                    )
+                                >
+                            @endforeach
                         </div>
                     </div>
 
-                    <div class="modal-footer">
-                        <button
-                            type="button"
-                            class="btn btn-secondary"
-                            data-bs-dismiss="modal"
-                        >
-                            Cancelar
-                        </button>
-
+                    <div class="modal-footer profile-platform-footer">
                         <button
                             type="submit"
                             class="btn profile-games-save"
+                            id="profilePlatformsSave"
+                            disabled
                         >
-                            Salvar alterações
+                            Salvar
                         </button>
                     </div>
                 </form>
@@ -963,6 +1027,48 @@
                     id="profileRemoveGameAccept"
                 >
                     Remover
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div
+        class="profile-confirm-overlay"
+        id="profileDiscardChangesConfirm"
+        hidden
+    >
+        <div
+            class="profile-confirm-card"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="profileDiscardChangesTitle"
+            aria-describedby="profileDiscardChangesText"
+        >
+            <div class="profile-confirm-icon profile-confirm-warning-icon">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+
+            <h2 id="profileDiscardChangesTitle">Descartar alterações?</h2>
+
+            <p id="profileDiscardChangesText">
+                As alterações que ainda não foram salvas serão perdidas.
+            </p>
+
+            <div class="profile-confirm-actions">
+                <button
+                    type="button"
+                    class="btn profile-continue-editing"
+                    id="profileDiscardChangesCancel"
+                >
+                    Continuar editando
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    id="profileDiscardChangesAccept"
+                >
+                    Descartar
                 </button>
             </div>
         </div>

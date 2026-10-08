@@ -19,6 +19,202 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error(mensagem);
     }
 
+    const deleteConfirm = document.getElementById('postDeleteConfirm');
+    const deleteConfirmCancel = document.getElementById('postDeleteConfirmCancel');
+    const deleteConfirmAccept = document.getElementById('postDeleteConfirmAccept');
+    let pendingDeleteForm = null;
+
+    function fecharConfirmacaoExclusao() {
+        if (!deleteConfirm) {
+            return;
+        }
+
+        deleteConfirm.hidden = true;
+        pendingDeleteForm = null;
+    }
+
+    document.addEventListener('submit', function(event) {
+        const form = event.target.closest('[data-post-delete-form]');
+
+        if (!form || form.dataset.confirmed === '1') {
+            return;
+        }
+
+        event.preventDefault();
+        pendingDeleteForm = form;
+
+        const dropdown = form.closest('.dropdown')
+            ?.querySelector('[data-bs-toggle="dropdown"]');
+
+        if (dropdown) {
+            bootstrap.Dropdown.getInstance(dropdown)?.hide();
+        }
+
+        if (deleteConfirm) {
+            deleteConfirm.hidden = false;
+        }
+    });
+
+    if (deleteConfirmCancel) {
+        deleteConfirmCancel.addEventListener('click', fecharConfirmacaoExclusao);
+    }
+
+    if (deleteConfirmAccept) {
+        deleteConfirmAccept.addEventListener('click', function() {
+            if (!pendingDeleteForm) {
+                return;
+            }
+
+            const form = pendingDeleteForm;
+            form.dataset.confirmed = '1';
+            deleteConfirmAccept.disabled = true;
+            deleteConfirmAccept.textContent = 'Excluindo...';
+            form.requestSubmit();
+        });
+    }
+
+    if (deleteConfirm) {
+        deleteConfirm.addEventListener('click', function(event) {
+            if (event.target === deleteConfirm) {
+                fecharConfirmacaoExclusao();
+            }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && !deleteConfirm.hidden) {
+                fecharConfirmacaoExclusao();
+            }
+        });
+    }
+
+    function abrirEdicaoPublicacao(trigger) {
+        const content = trigger.closest('.modal-content');
+        const area = content?.querySelector('[data-post-edit-area]');
+        const display = area?.querySelector('[data-post-edit-display]');
+        const form = area?.querySelector('[data-post-edit-form]');
+        const textarea = form?.querySelector('[data-post-edit-description]');
+
+        if (!area || !form || !textarea) {
+            return;
+        }
+
+        if (display) {
+            display.hidden = true;
+        }
+
+        form.hidden = false;
+        area.classList.add('is-editing');
+        textarea.focus();
+        textarea.setSelectionRange(
+            textarea.value.length,
+            textarea.value.length
+        );
+    }
+
+    function cancelarEdicaoPublicacao(button) {
+        const area = button.closest('[data-post-edit-area]');
+        const display = area?.querySelector('[data-post-edit-display]');
+        const form = area?.querySelector('[data-post-edit-form]');
+        const textarea = form?.querySelector('[data-post-edit-description]');
+
+        if (!area || !form || !textarea) {
+            return;
+        }
+
+        textarea.value = textarea.dataset.postEditOriginal ?? '';
+        form.hidden = true;
+        area.classList.remove('is-editing');
+
+        if (display) {
+            display.hidden = display.textContent.trim() === '';
+        }
+
+        fecharEmojisEdicao();
+    }
+
+    function fecharEmojisEdicao(excecao = null) {
+        document.querySelectorAll('[data-post-edit-emoji-wrap]').forEach(function(wrap) {
+            if (wrap === excecao) {
+                return;
+            }
+
+            const picker = wrap.querySelector('[data-post-edit-emoji-picker]');
+            const button = wrap.querySelector('[data-post-edit-emoji-button]');
+
+            if (picker) {
+                picker.hidden = true;
+            }
+
+            if (button) {
+                button.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
+    document.addEventListener('click', function(event) {
+        const editTrigger = event.target.closest('[data-post-edit-trigger]');
+
+        if (editTrigger) {
+            abrirEdicaoPublicacao(editTrigger);
+            return;
+        }
+
+        const editCancel = event.target.closest('[data-post-edit-cancel]');
+
+        if (editCancel) {
+            cancelarEdicaoPublicacao(editCancel);
+            return;
+        }
+
+        const emojiButton = event.target.closest('[data-post-edit-emoji-button]');
+
+        if (emojiButton) {
+            const wrap = emojiButton.closest('[data-post-edit-emoji-wrap]');
+            const picker = wrap?.querySelector('[data-post-edit-emoji-picker]');
+
+            if (!wrap || !picker) {
+                return;
+            }
+
+            const abrir = picker.hidden;
+            fecharEmojisEdicao(wrap);
+            picker.hidden = !abrir;
+            emojiButton.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+            return;
+        }
+
+        const emoji = event.target.closest('[data-post-edit-emoji-picker] [data-emoji]');
+
+        if (emoji) {
+            const form = emoji.closest('form');
+            const textarea = form?.querySelector('[data-post-edit-description]');
+
+            if (!textarea) {
+                return;
+            }
+
+            const inicio = textarea.selectionStart ?? textarea.value.length;
+            const fim = textarea.selectionEnd ?? inicio;
+            const novoValor = textarea.value.slice(0, inicio)
+                + emoji.dataset.emoji
+                + textarea.value.slice(fim);
+
+            if (novoValor.length <= textarea.maxLength) {
+                textarea.value = novoValor;
+                const posicao = inicio + emoji.dataset.emoji.length;
+                textarea.focus();
+                textarea.setSelectionRange(posicao, posicao);
+            }
+
+            fecharEmojisEdicao();
+            return;
+        }
+
+        if (!event.target.closest('[data-post-edit-emoji-wrap]')) {
+            fecharEmojisEdicao();
+        }
+    });
+
     function atualizarReacao(postId, reagiu, quantidade) {
         const forms = document.querySelectorAll(
             '.profile-post-reaction-form[data-post-id="' + postId + '"]'

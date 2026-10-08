@@ -26,7 +26,7 @@
                     class="modal-body profile-post-create-body"
                     id="postCreateMainPanel"
                 >
-                    <div>
+                    <div class="profile-post-caption-field">
                         <textarea
                             id="postDescription"
                             name="descricao"
@@ -36,9 +36,39 @@
                             placeholder="O que você quer compartilhar?"
                         >{{ old('descricao') }}</textarea>
 
-                        <div class="profile-post-caption-footer">
-                            <span id="postDescriptionCounter">0 / 280</span>
+                        <div
+                            class="squad-emoji-wrap profile-post-emoji-wrap"
+                            id="postDescriptionEmojiWrap"
+                        >
+                            <button
+                                type="button"
+                                class="squad-emoji-button"
+                                id="postDescriptionEmojiButton"
+                                aria-expanded="false"
+                                aria-controls="postDescriptionEmojiPicker"
+                                aria-label="Adicionar emoji à publicação"
+                                title="Adicionar emoji"
+                            >
+                                <i class="bi bi-emoji-smile"></i>
+                            </button>
+
+                            <div
+                                class="squad-emoji-picker"
+                                id="postDescriptionEmojiPicker"
+                                hidden
+                            >
+                                @foreach (['😀', '😂', '😊', '😍', '😎', '😭', '🔥', '❤️', '💜', '👍', '👏', '🎮', '🏆', '🤝', '🎉', '👀'] as $emoji)
+                                    <button type="button" data-emoji="{{ $emoji }}" aria-label="Adicionar {{ $emoji }}">{{ $emoji }}</button>
+                                @endforeach
+                            </div>
                         </div>
+
+                        <span
+                            class="profile-post-caption-counter"
+                            id="postDescriptionCounter"
+                        >
+                            0 / 280
+                        </span>
                     </div>
 
                     <div class="profile-post-image-area">
@@ -48,7 +78,6 @@
                             name="foto"
                             accept="image/jpeg,image/png,image/webp"
                             hidden
-                            required
                         >
 
                         <div
@@ -61,8 +90,8 @@
                                 id="postImageEmpty"
                             >
                                 <i class="bi bi-images"></i>
-                                <strong>Enviar imagem</strong>
-                                <span>JPG, PNG ou WebP de até 5 MB.</span>
+                                <strong>Adicionar imagem</strong>
+                                <span>Opcional • JPG, PNG ou WebP de até 5 MB.</span>
                             </label>
 
                             <div
@@ -232,7 +261,7 @@
                     <div class="profile-post-discard-actions">
                         <button
                             type="button"
-                            class="btn btn-secondary"
+                            class="btn profile-continue-editing"
                             id="postDiscardKeep"
                         >
                             Continuar editando

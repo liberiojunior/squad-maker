@@ -52,9 +52,8 @@ class AdminController extends Controller
             ->when($inicio, fn($query) => $query->where('data_envio', '>=', $inicio))
             ->count();
 
-        $amizadesAceitas = DB::table('tb_amizade')
-            ->where('status_amizade', 'aceita')
-            ->when($inicio, fn($query) => $query->where('data_resposta', '>=', $inicio))
+        $postsPublicados = DB::table('tb_post')
+            ->when($inicio, fn($query) => $query->where('data_publicacao', '>=', $inicio))
             ->count();
 
         $jogosAdicionados = DB::table('tb_jogo_usuario')
@@ -123,7 +122,7 @@ class AdminController extends Controller
             'periodo' => $periodo,
             'novosUsuarios' => $novosUsuarios,
             'mensagensEnviadas' => $mensagensEnviadas,
-            'amizadesAceitas' => $amizadesAceitas,
+            'postsPublicados' => $postsPublicados,
             'jogosAdicionados' => $jogosAdicionados,
             'cadastrosLabels' => $cadastrosLabels,
             'cadastrosValores' => $cadastrosValores,

@@ -3,6 +3,8 @@ iniciarAvisos();
 document.addEventListener('DOMContentLoaded', function() {
     iniciarAvisos();
     iniciarBioPublica();
+    iniciarAcoesAmizadePerfil();
+    iniciarAtualizacaoAmizadeTempoReal();
     iniciarPerfil();
     iniciarOrdenacaoPlataformas();
     iniciarAvatarPerfil();
@@ -11,6 +13,8 @@ document.addEventListener('DOMContentLoaded', function() {
     iniciarBuscaJogosPerfil();
     iniciarCadastroJogos();
     iniciarImportacaoSteam();
+    iniciarConfirmacoesFormulario();
+    iniciarAtualizacoesChat();
 });
 
 const NOMES_NIVEIS_JOGO = {
@@ -112,6 +116,111 @@ async function requisicaoJson(url, options = {}, csrf = null, fallback = 'Não f
     return data;
 }
 
+async function atualizarAcoesAmizadePerfil() {
+    const areaAtual = document.querySelector('.profile-social-actions');
+
+    if (!areaAtual) {
+        return;
+    }
+
+    const response = await fetch(window.location.href, {
+        headers: {
+            'Accept': 'text/html',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        cache: 'no-store'
+    });
+
+    if (!response.ok) {
+        throw new Error('Não foi possível atualizar as ações do perfil.');
+    }
+
+    const html = await response.text();
+    const documento = new DOMParser().parseFromString(html, 'text/html');
+    const novaArea = documento.querySelector('.profile-social-actions');
+
+    if (!novaArea) {
+        throw new Error('Não foi possível atualizar as ações do perfil.');
+    }
+
+    areaAtual.innerHTML = novaArea.innerHTML;
+    iniciarAcoesAmizadePerfil();
+}
+
+function iniciarAcoesAmizadePerfil() {
+    const forms = document.querySelectorAll('[data-profile-friendship-form]');
+
+    forms.forEach(function(form) {
+        if (form.dataset.friendshipBound === '1') {
+            return;
+        }
+
+        form.dataset.friendshipBound = '1';
+
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const button = form.querySelector('button[type="submit"]');
+
+            if (button?.disabled) {
+                return;
+            }
+
+            if (button) {
+                button.disabled = true;
+            }
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const data = await response.json().catch(function() {
+                    return {};
+                });
+
+                if (!response.ok) {
+                    throw new Error(
+                        mensagemDaResposta(
+                            data,
+                            'Não foi possível atualizar a amizade.'
+                        )
+                    );
+                }
+
+                await atualizarAcoesAmizadePerfil();
+                mostrarAviso('success', data.message || 'Amizade atualizada.');
+            } catch (error) {
+                mostrarAviso(
+                    'danger',
+                    error.message || 'Não foi possível atualizar a amizade.'
+                );
+
+                if (button) {
+                    button.disabled = false;
+                }
+            }
+        });
+    });
+}
+
+function iniciarAtualizacaoAmizadeTempoReal() {
+    if (!document.querySelector('.profile-social-actions')) {
+        return;
+    }
+
+    window.addEventListener('squad:amizade', function() {
+        atualizarAcoesAmizadePerfil().catch(function() {
+            return null;
+        });
+    });
+}
+
 function iniciarBuscasCatalogo() {
     const configuracoes = [
         {
@@ -152,6 +261,7 @@ function iniciarBuscaCatalogo(form, configuracao) {
 
     let searchTimer = null;
     let searchController = null;
+    let appliedUrl = new URL(window.location.href);
 
     function montarUrl() {
         const url = new URL(form.action, window.location.origin);
@@ -254,7 +364,7 @@ function iniciarBuscaCatalogo(form, configuracao) {
         results.prepend(erro);
     }
 
-    async function buscar(url) {
+    async function buscar(url, fecharFiltros = false) {
         if (searchController) {
             searchController.abort();
         }
@@ -301,8 +411,26 @@ function iniciarBuscaCatalogo(form, configuracao) {
             }
 
             results.innerHTML = novosResultados.innerHTML;
-            window.history.replaceState({}, '', url.toString());
+            appliedUrl = new URL(url.toString());
+            window.history.replaceState({}, '', appliedUrl.toString());
             atualizarContadorFiltros();
+
+            if (fecharFiltros) {
+                const filtros = form.querySelector('.catalog-filter-panel')
+                    ?.closest('.collapse');
+
+                if (filtros) {
+                    bootstrap.Collapse.getOrCreateInstance(
+                        filtros,
+                        { toggle: false }
+                    ).hide();
+                }
+
+                window.scrollTo({
+                    top: Math.max(0, form.offsetTop - 18),
+                    behavior: 'smooth'
+                });
+            }
 
         } catch (error) {
             if (error.name === 'AbortError') {
@@ -333,7 +461,10 @@ function iniciarBuscaCatalogo(form, configuracao) {
 
         clearTimeout(searchTimer);
 
-        buscar(montarUrl());
+        const fecharFiltros = event.submitter
+            ?.classList.contains('catalog-filter-apply') === true;
+
+        buscar(montarUrl(), fecharFiltros);
     });
 
     if (input) {
@@ -358,10 +489,19 @@ function iniciarBuscaCatalogo(form, configuracao) {
 
         event.preventDefault();
 
-        const url = new URL(
+        const paginaUrl = new URL(
             link.href,
             window.location.origin
         );
+
+        const url = new URL(appliedUrl.toString());
+        const pagina = paginaUrl.searchParams.get('page');
+
+        if (pagina) {
+            url.searchParams.set('page', pagina);
+        } else {
+            url.searchParams.delete('page');
+        }
 
         buscar(url);
 
@@ -372,6 +512,54 @@ function iniciarBuscaCatalogo(form, configuracao) {
     });
 
     atualizarContadorFiltros();
+}
+
+function iniciarConfirmacoesFormulario() {
+    const modalElement = document.getElementById('adminConfirmModal');
+    const title = document.getElementById('adminConfirmTitle');
+    const message = document.getElementById('adminConfirmMessage');
+    const accept = document.getElementById('adminConfirmAccept');
+
+    if (!modalElement || !message || !accept) {
+        return;
+    }
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    let pendingForm = null;
+
+    document.addEventListener('submit', function(event) {
+        const form = event.target.closest('form[data-confirm-message]');
+
+        if (!form || form.dataset.confirmed === '1') {
+            return;
+        }
+
+        event.preventDefault();
+        pendingForm = form;
+        message.textContent = form.dataset.confirmMessage;
+
+        if (title) {
+            title.textContent = form.dataset.confirmTitle || 'Confirmar ação';
+        }
+
+        modal.show();
+    });
+
+    accept.addEventListener('click', function() {
+        if (!pendingForm) {
+            return;
+        }
+
+        const form = pendingForm;
+        pendingForm = null;
+        form.dataset.confirmed = '1';
+        modal.hide();
+        form.requestSubmit();
+    });
+
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        pendingForm = null;
+    });
 }
 
 function iniciarBuscaJogosPerfil() {
@@ -1633,6 +1821,9 @@ function iniciarPerfil() {
     const profileEditIcon = document.getElementById('profileEditIcon');
     const bioToggle = document.getElementById('bioToggle');
     const bioCounter = document.getElementById('bioCounter');
+    const bioEmojiWrap = document.getElementById('profileBioEmojiWrap');
+    const bioEmojiButton = document.getElementById('profileBioEmojiButton');
+    const bioEmojiPicker = document.getElementById('profileBioEmojiPicker');
 
     const managerModalElement = document.getElementById('adicionarJogosModal');
     const gameSearch = document.getElementById('profileGameSearch');
@@ -1682,6 +1873,12 @@ function iniciarPerfil() {
     const removeConfirmAccept = document.getElementById('profileRemoveGameAccept');
     const removeConfirmError = document.getElementById('profileRemoveGameError');
 
+    const discardConfirmElement = document.getElementById('profileDiscardChangesConfirm');
+    const discardConfirmTitle = document.getElementById('profileDiscardChangesTitle');
+    const discardConfirmText = document.getElementById('profileDiscardChangesText');
+    const discardConfirmCancel = document.getElementById('profileDiscardChangesCancel');
+    const discardConfirmAccept = document.getElementById('profileDiscardChangesAccept');
+
     const stateElement = document.getElementById('profileGamesState');
 
     const initialGames = stateElement
@@ -1710,6 +1907,7 @@ function iniciarPerfil() {
     let dropBefore = true;
     let editingProfile = false;
     let pendingRemove = null;
+    let pendingDiscard = null;
 
     function atualizarContadorBio() {
         if (!bioInput || !bioCounter) {
@@ -1746,6 +1944,150 @@ function iniciarPerfil() {
 
         if (bioCounter) {
             bioCounter.hidden = !editingProfile;
+        }
+    }
+
+    function ativarEdicaoPerfil(focarBio = false) {
+        if (
+            editingProfile
+            || !nicknameInput
+            || !bioInput
+            || !profileEditButton
+            || !profileEditIcon
+        ) {
+            return;
+        }
+
+        editingProfile = true;
+        nicknameInput.removeAttribute('readonly');
+        bioInput.removeAttribute('readonly');
+
+        if (bioEmojiWrap) {
+            bioEmojiWrap.hidden = false;
+        }
+
+        atualizarContadorBio();
+        ajustarBio();
+
+        profileEditIcon.classList.remove('bi-pencil-fill');
+        profileEditIcon.classList.add('bi-check-lg');
+        profileEditButton.title = 'Salvar alterações';
+
+        if (focarBio) {
+            bioInput.focus();
+            const posicao = bioInput.value.length;
+            bioInput.setSelectionRange(posicao, posicao);
+        } else {
+            nicknameInput.focus();
+        }
+    }
+
+    function fecharSeletorEmojiBio() {
+        if (!bioEmojiPicker || !bioEmojiButton) {
+            return;
+        }
+
+        bioEmojiPicker.hidden = true;
+        bioEmojiButton.setAttribute('aria-expanded', 'false');
+    }
+
+    function inserirEmojiBio(emoji) {
+        if (!bioInput || !emoji) {
+            return;
+        }
+
+        const inicio = bioInput.selectionStart ?? bioInput.value.length;
+        const fim = bioInput.selectionEnd ?? inicio;
+        const novoValor = bioInput.value.slice(0, inicio)
+            + emoji
+            + bioInput.value.slice(fim);
+
+        if (novoValor.length > bioInput.maxLength) {
+            return;
+        }
+
+        bioInput.value = novoValor;
+        const novaPosicao = inicio + emoji.length;
+        bioInput.focus();
+        bioInput.setSelectionRange(novaPosicao, novaPosicao);
+        atualizarContadorBio();
+        ajustarBio();
+    }
+
+    function abrirConfirmacaoDescarte(tipo) {
+        if (!discardConfirmElement || !discardConfirmTitle || !discardConfirmText) {
+            return false;
+        }
+
+        pendingDiscard = tipo;
+
+        if (tipo === 'manager') {
+            discardConfirmTitle.textContent = 'Descartar alterações nos jogos?';
+            discardConfirmText.textContent = 'As alterações que ainda não foram salvas em Meus Jogos serão perdidas.';
+        } else {
+            discardConfirmTitle.textContent = 'Descartar nova ordem?';
+            discardConfirmText.textContent = 'A nova ordem dos jogos ainda não foi salva e será perdida.';
+        }
+
+        discardConfirmElement.hidden = false;
+        return true;
+    }
+
+    function fecharConfirmacaoDescarte() {
+        if (!discardConfirmElement) {
+            return;
+        }
+
+        discardConfirmElement.hidden = true;
+        pendingDiscard = null;
+    }
+
+    function restaurarOrdemJogosPersistida() {
+        if (!orderList) {
+            return;
+        }
+
+        const itens = Array.from(
+            orderList.querySelectorAll('.profile-order-item')
+        );
+
+        itens.sort(function(a, b) {
+            const jogoA = persistedGames.get(Number(a.dataset.gameId));
+            const jogoB = persistedGames.get(Number(b.dataset.gameId));
+
+            return (jogoA?.ordem ?? Number.MAX_SAFE_INTEGER)
+                - (jogoB?.ordem ?? Number.MAX_SAFE_INTEGER);
+        });
+
+        itens.forEach(function(item) {
+            orderList.appendChild(item);
+        });
+
+        if (orderSaveButton) {
+            orderSaveButton.disabled = true;
+        }
+    }
+
+    function confirmarDescarte() {
+        const tipo = pendingDiscard;
+
+        if (!tipo) {
+            return;
+        }
+
+        fecharConfirmacaoDescarte();
+
+        if (tipo === 'manager') {
+            managerDirty = false;
+            bootstrap.Modal.getOrCreateInstance(managerModalElement).hide();
+            return;
+        }
+
+        orderDirty = false;
+        restaurarOrdemJogosPersistida();
+
+        if (orderModal) {
+            orderModal.hide();
         }
     }
 
@@ -1887,13 +2229,9 @@ function iniciarPerfil() {
                 'success'
             );
 
-            if (
-                orderSaveButton
-                && orderList
-                    .querySelectorAll('.profile-order-item')
-                    .length === 0
-            ) {
-                orderSaveButton.disabled = true;
+            if (orderSaveButton) {
+                orderDirty = ordemJogosFoiAlterada();
+                orderSaveButton.disabled = !orderDirty;
             }
 
             fecharConfirmacaoRemocao();
@@ -2312,6 +2650,23 @@ function iniciarPerfil() {
             });
     }
 
+    function ordemJogosFoiAlterada() {
+        const atual = idsDaOrdem();
+        const salva = Array.from(persistedGames.values())
+            .sort(function(a, b) {
+                return (a.ordem ?? Number.MAX_SAFE_INTEGER)
+                    - (b.ordem ?? Number.MAX_SAFE_INTEGER);
+            })
+            .map(function(jogo) {
+                return jogo.id;
+            });
+
+        return atual.length !== salva.length
+            || atual.some(function(id, index) {
+                return id !== salva[index];
+            });
+    }
+
     function limparIndicadorDrop() {
         if (!orderList) {
             return;
@@ -2563,12 +2918,20 @@ function iniciarPerfil() {
         });
 
         document.addEventListener('keydown', function(event) {
+            if (event.key !== 'Escape') {
+                return;
+            }
+
             if (
-                event.key === 'Escape'
-                && !removeConfirmElement.hidden
+                !removeConfirmElement.hidden
                 && !(removeConfirmAccept && removeConfirmAccept.disabled)
             ) {
                 fecharConfirmacaoRemocao();
+                return;
+            }
+
+            if (discardConfirmElement && !discardConfirmElement.hidden) {
+                fecharConfirmacaoDescarte();
             }
         });
     }
@@ -2590,42 +2953,61 @@ function iniciarPerfil() {
         && bioInput
         && profileEditIcon
     ) {
-        profileEditButton.addEventListener(
-            'click',
-            function() {
-                if (!editingProfile) {
-                    editingProfile = true;
-
-                    nicknameInput.removeAttribute(
-                        'readonly'
-                    );
-
-                    bioInput.removeAttribute(
-                        'readonly'
-                    );
-
-                    atualizarContadorBio();
-                    ajustarBio();
-
-                    nicknameInput.focus();
-
-                    profileEditIcon.classList.remove(
-                        'bi-pencil-fill'
-                    );
-
-                    profileEditIcon.classList.add(
-                        'bi-check-lg'
-                    );
-
-                    profileEditButton.title =
-                        'Salvar alterações';
-
-                    return;
-                }
-
-                profileForm.requestSubmit();
+        profileEditButton.addEventListener('click', function() {
+            if (!editingProfile) {
+                ativarEdicaoPerfil();
+                return;
             }
-        );
+
+            profileForm.requestSubmit();
+        });
+
+        bioInput.addEventListener('click', function() {
+            if (!editingProfile) {
+                ativarEdicaoPerfil(true);
+            }
+        });
+    }
+
+    if (bioEmojiButton && bioEmojiPicker) {
+        bioEmojiButton.addEventListener('click', function(event) {
+            event.stopPropagation();
+            const abrir = bioEmojiPicker.hidden;
+            bioEmojiPicker.hidden = !abrir;
+            bioEmojiButton.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+        });
+
+        bioEmojiPicker.addEventListener('click', function(event) {
+            const option = event.target.closest('[data-emoji]');
+
+            if (!option) {
+                return;
+            }
+
+            inserirEmojiBio(option.dataset.emoji);
+        });
+
+        document.addEventListener('click', function(event) {
+            if (bioEmojiWrap && !bioEmojiWrap.contains(event.target)) {
+                fecharSeletorEmojiBio();
+            }
+        });
+    }
+
+    if (discardConfirmCancel) {
+        discardConfirmCancel.addEventListener('click', fecharConfirmacaoDescarte);
+    }
+
+    if (discardConfirmAccept) {
+        discardConfirmAccept.addEventListener('click', confirmarDescarte);
+    }
+
+    if (discardConfirmElement) {
+        discardConfirmElement.addEventListener('click', function(event) {
+            if (event.target === discardConfirmElement) {
+                fecharConfirmacaoDescarte();
+            }
+        });
     }
 
     if (managerModalElement) {
@@ -2669,17 +3051,8 @@ function iniciarPerfil() {
                     return;
                 }
 
-                const descartar = window.confirm(
-                    'Descartar as alterações que ainda não foram salvas?'
-                );
-
-                if (!descartar) {
-                    event.preventDefault();
-
-                    return;
-                }
-
-                managerDirty = false;
+                event.preventDefault();
+                abrirConfirmacaoDescarte('manager');
             }
         );
 
@@ -3178,7 +3551,11 @@ function iniciarPerfil() {
                     }
                 );
 
-                orderDirty = true;
+                orderDirty = ordemJogosFoiAlterada();
+
+                if (orderSaveButton) {
+                    orderSaveButton.disabled = !orderDirty;
+                }
 
                 limparIndicadorDrop();
             }
@@ -3284,6 +3661,10 @@ function iniciarPerfil() {
                     orderDirty = false;
                     profileReloadRequired = true;
 
+                    if (orderSaveButton) {
+                        orderSaveButton.disabled = true;
+                    }
+
                     mostrarStatus(
                         orderStatus,
                         data.message
@@ -3303,35 +3684,28 @@ function iniciarPerfil() {
                     );
 
                 } finally {
-                    orderSaveButton.disabled = false;
+                    orderSaveButton.disabled = !orderDirty;
                 }
             }
         );
     }
 
     if (orderModalElement) {
+        orderModalElement.addEventListener('show.bs.modal', function() {
+            if (!orderDirty && orderSaveButton) {
+                orderSaveButton.disabled = true;
+            }
+        });
+
         orderModalElement.addEventListener(
             'hide.bs.modal',
             function(event) {
-                if (openingDetailFromOrder) {
+                if (openingDetailFromOrder || !orderDirty) {
                     return;
                 }
 
-                if (!orderDirty) {
-                    return;
-                }
-
-                const descartar = window.confirm(
-                    'Descartar a nova ordem que ainda não foi salva?'
-                );
-
-                if (!descartar) {
-                    event.preventDefault();
-
-                    return;
-                }
-
-                orderDirty = false;
+                event.preventDefault();
+                abrirConfirmacaoDescarte('order');
             }
         );
 
@@ -3375,22 +3749,36 @@ function iniciarOrdenacaoPlataformas() {
     const modal = document.getElementById('plataformasModal');
     const form = document.getElementById('profilePlatformsForm');
     const list = document.getElementById('profilePlatformOrderList');
+    const main = document.getElementById('profilePlatformManagerMain');
+    const addPanel = document.getElementById('profilePlatformAddPanel');
+    const addOpen = document.getElementById('profilePlatformAddOpen');
+    const addBack = document.getElementById('profilePlatformAddBack');
+    const addEmpty = document.getElementById('profilePlatformAddEmpty');
     const status = document.getElementById('profilePlatformOrderStatus');
+    const saveButton = document.getElementById('profilePlatformsSave');
 
-    if (!modal || !form || !list) {
+    if (!modal || !form || !list || !main || !addPanel || !addOpen || !addBack || !saveButton) {
         return;
     }
+
+    const optionInputs = Array.from(form.querySelectorAll('input[name="plataformas[]"]'));
+    const addOptions = Array.from(form.querySelectorAll('[data-platform-add]'));
+    const selectionInputs = new Map(optionInputs.map(function(input) {
+        return [Number(input.value), input];
+    }));
+    const optionsById = new Map(addOptions.map(function(option) {
+        return [Number(option.dataset.platformId), option];
+    }));
 
     let draggingItem = null;
     let dropTarget = null;
     let dropBefore = true;
     let initialOrder = [];
+    let initialSelection = [];
     let submitting = false;
 
     function obterItens() {
-        return Array.from(
-            list.querySelectorAll('.profile-platform-order-item')
-        );
+        return Array.from(list.querySelectorAll('.profile-platform-order-item'));
     }
 
     function obterOrdem() {
@@ -3399,44 +3787,196 @@ function iniciarOrdenacaoPlataformas() {
         });
     }
 
+    function obterSelecao() {
+        return optionInputs.filter(function(input) {
+            return input.checked;
+        }).map(function(input) {
+            return Number(input.value);
+        }).sort(function(a, b) {
+            return a - b;
+        });
+    }
+
+    function listasIguais(a, b) {
+        return a.length === b.length && a.every(function(valor, indice) {
+            return valor === b[indice];
+        });
+    }
+
+    function haAlteracoes() {
+        return !listasIguais(obterOrdem(), initialOrder)
+            || !listasIguais(obterSelecao(), initialSelection);
+    }
+
+    function atualizarEstado() {
+        const alterado = haAlteracoes();
+        saveButton.disabled = !alterado;
+
+        if (status) {
+            status.textContent = alterado ? 'Alterações pendentes.' : '';
+        }
+    }
+
+    function atualizarOpcoesAdicao() {
+        let disponiveis = 0;
+
+        addOptions.forEach(function(option) {
+            const id = Number(option.dataset.platformId);
+            const input = selectionInputs.get(id);
+            const selecionada = Boolean(input?.checked);
+
+            option.disabled = selecionada;
+
+            if (!selecionada) {
+                disponiveis += 1;
+            }
+        });
+
+        if (addEmpty) {
+            addEmpty.hidden = disponiveis > 0;
+        }
+    }
+
     function limparIndicador() {
         obterItens().forEach(function(item) {
-            item.classList.remove(
-                'drop-before',
-                'drop-after'
-            );
+            item.classList.remove('drop-before', 'drop-after');
         });
 
         dropTarget = null;
     }
 
-    function restaurarOrdemInicial() {
-        const itens = new Map(
-            obterItens().map(function(item) {
-                return [
-                    Number(item.dataset.platformId),
-                    item
-                ];
-            })
+    function criarItem(option) {
+        const id = Number(option.dataset.platformId);
+        const item = document.createElement('div');
+        const orderInput = document.createElement('input');
+        const cover = document.createElement('div');
+        const image = document.createElement('img');
+        const removeButton = document.createElement('button');
+        const removeIcon = document.createElement('i');
+        const name = document.createElement('span');
+
+        item.className = 'profile-platform-card profile-platform-order-item';
+        item.draggable = true;
+        item.dataset.platformId = String(id);
+
+        orderInput.type = 'hidden';
+        orderInput.name = 'ordem_plataformas[]';
+        orderInput.value = String(id);
+
+        cover.className = 'profile-platform-order-cover';
+
+        image.src = option.dataset.platformIcon || '';
+        image.alt = option.dataset.platformName || 'Plataforma';
+
+        removeButton.type = 'button';
+        removeButton.className = 'profile-platform-remove';
+        removeButton.dataset.platformRemove = '';
+        removeButton.title = 'Remover plataforma';
+        removeButton.setAttribute(
+            'aria-label',
+            'Remover ' + (option.dataset.platformName || 'plataforma')
         );
 
-        initialOrder.forEach(function(id) {
-            const item = itens.get(id);
+        removeIcon.className = 'bi bi-trash3';
+        removeButton.appendChild(removeIcon);
+        cover.append(image, removeButton);
 
-            if (item) {
-                list.appendChild(item);
+        name.textContent = option.dataset.platformName || 'Plataforma';
+        item.append(orderInput, cover, name);
+
+        return item;
+    }
+
+    function mostrarLista() {
+        addPanel.hidden = true;
+        main.hidden = false;
+    }
+
+    function mostrarAdicao() {
+        atualizarOpcoesAdicao();
+        main.hidden = true;
+        addPanel.hidden = false;
+    }
+
+    function restaurarEstadoInicial() {
+        obterItens().forEach(function(item) {
+            item.remove();
+        });
+
+        const selecionadas = new Set(initialSelection);
+
+        optionInputs.forEach(function(input) {
+            input.checked = selecionadas.has(Number(input.value));
+        });
+
+        initialOrder.forEach(function(id) {
+            const option = optionsById.get(id);
+
+            if (option) {
+                list.insertBefore(criarItem(option), addOpen);
             }
         });
+
+        atualizarOpcoesAdicao();
+        mostrarLista();
+        saveButton.disabled = true;
 
         if (status) {
             status.textContent = '';
         }
     }
 
+    addOpen.addEventListener('click', mostrarAdicao);
+    addBack.addEventListener('click', mostrarLista);
+
+    addOptions.forEach(function(option) {
+        option.addEventListener('click', function() {
+            const id = Number(option.dataset.platformId);
+            const input = selectionInputs.get(id);
+
+            if (!input || input.checked) {
+                return;
+            }
+
+            input.checked = true;
+            list.insertBefore(criarItem(option), addOpen);
+            atualizarOpcoesAdicao();
+            atualizarEstado();
+        });
+    });
+
+    list.addEventListener('click', function(event) {
+        const removeButton = event.target.closest('[data-platform-remove]');
+
+        if (!removeButton) {
+            return;
+        }
+
+        const item = removeButton.closest('.profile-platform-order-item');
+
+        if (!item) {
+            return;
+        }
+
+        const id = Number(item.dataset.platformId);
+        const input = selectionInputs.get(id);
+
+        if (input) {
+            input.checked = false;
+        }
+
+        item.remove();
+        atualizarOpcoesAdicao();
+        atualizarEstado();
+    });
+
     list.addEventListener('dragstart', function(event) {
-        const item = event.target.closest(
-            '.profile-platform-order-item'
-        );
+        if (event.target.closest('[data-platform-remove]')) {
+            event.preventDefault();
+            return;
+        }
+
+        const item = event.target.closest('.profile-platform-order-item');
 
         if (!item) {
             return;
@@ -3444,12 +3984,8 @@ function iniciarOrdenacaoPlataformas() {
 
         draggingItem = item;
         item.classList.add('dragging');
-
         event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.setData(
-            'text/plain',
-            item.dataset.platformId || ''
-        );
+        event.dataTransfer.setData('text/plain', item.dataset.platformId || '');
     });
 
     list.addEventListener('dragover', function(event) {
@@ -3460,10 +3996,7 @@ function iniciarOrdenacaoPlataformas() {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
 
-        const target = event.target.closest(
-            '.profile-platform-order-item:not(.dragging)'
-        );
-
+        const target = event.target.closest('.profile-platform-order-item:not(.dragging)');
         limparIndicador();
 
         if (!target) {
@@ -3471,16 +4004,9 @@ function iniciarOrdenacaoPlataformas() {
         }
 
         const box = target.getBoundingClientRect();
-
         dropTarget = target;
-        dropBefore =
-            event.clientX < box.left + box.width / 2;
-
-        target.classList.add(
-            dropBefore
-                ? 'drop-before'
-                : 'drop-after'
-        );
+        dropBefore = event.clientX < box.left + box.width / 2;
+        target.classList.add(dropBefore ? 'drop-before' : 'drop-after');
     });
 
     list.addEventListener('drop', function(event) {
@@ -3491,25 +4017,15 @@ function iniciarOrdenacaoPlataformas() {
         event.preventDefault();
 
         if (!dropTarget) {
-            list.appendChild(draggingItem);
+            list.insertBefore(draggingItem, addOpen);
         } else if (dropBefore) {
-            list.insertBefore(
-                draggingItem,
-                dropTarget
-            );
+            list.insertBefore(draggingItem, dropTarget);
         } else {
-            list.insertBefore(
-                draggingItem,
-                dropTarget.nextSibling
-            );
+            list.insertBefore(draggingItem, dropTarget.nextSibling);
         }
 
         limparIndicador();
-
-        if (status) {
-            status.textContent =
-                'Ordem alterada. Salve para aplicar.';
-        }
+        atualizarEstado();
     });
 
     list.addEventListener('dragend', function() {
@@ -3523,24 +4039,148 @@ function iniciarOrdenacaoPlataformas() {
 
     modal.addEventListener('show.bs.modal', function() {
         initialOrder = obterOrdem();
+        initialSelection = obterSelecao();
         submitting = false;
+        saveButton.disabled = true;
+        atualizarOpcoesAdicao();
+        mostrarLista();
 
         if (status) {
             status.textContent = '';
         }
     });
 
-    form.addEventListener('submit', function() {
+    form.addEventListener('submit', function(event) {
+        if (!haAlteracoes()) {
+            event.preventDefault();
+            return;
+        }
+
         submitting = true;
+        saveButton.disabled = true;
     });
 
     modal.addEventListener('hidden.bs.modal', function() {
         if (!submitting) {
-            restaurarOrdemInicial();
+            restaurarEstadoInicial();
         }
 
         submitting = false;
         draggingItem = null;
         limparIndicador();
     });
+}
+
+
+function iniciarAtualizacoesChat() {
+    const url = document.body.dataset.chatUpdatesUrl;
+
+    if (!url || !document.body.dataset.userId) {
+        return;
+    }
+
+    let ultimoId = null;
+    let consultando = false;
+    const mensagensConhecidas = new Set();
+
+    window.addEventListener('squad:mensagem-usuario', function(event) {
+        const idMensagem = Number(event.detail?.mensagem?.id_mensagem || 0);
+
+        if (idMensagem <= 0) {
+            return;
+        }
+
+        mensagensConhecidas.add(idMensagem);
+
+        if (ultimoId !== null) {
+            ultimoId = Math.max(ultimoId, idMensagem);
+        }
+    });
+
+    function atualizarBadge(total) {
+        if (window.SquadRealtime?.atualizarBadgeChat) {
+            window.SquadRealtime.atualizarBadgeChat(total);
+            return;
+        }
+
+        const badge = document.getElementById('sidebarChatBadge');
+
+        if (!badge) {
+            return;
+        }
+
+        const quantidade = Number(total) || 0;
+
+        badge.hidden = quantidade <= 0;
+        badge.textContent = quantidade > 99 ? '99+' : String(quantidade);
+        badge.setAttribute('aria-label', quantidade + ' notificações');
+    }
+
+    async function consultar() {
+        if (consultando) {
+            return;
+        }
+
+        consultando = true;
+
+        try {
+            const endereco = new URL(url, window.location.origin);
+
+            if (ultimoId !== null) {
+                endereco.searchParams.set('apos', String(ultimoId));
+            }
+
+            const response = await fetch(endereco, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                cache: 'no-store'
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+
+            atualizarBadge(data.notificacoes);
+
+            if (Array.isArray(data.mensagens)) {
+                data.mensagens.forEach(function(evento) {
+                    const idMensagem = Number(
+                        evento?.mensagem?.id_mensagem || 0
+                    );
+
+                    if (idMensagem <= 0 || mensagensConhecidas.has(idMensagem)) {
+                        return;
+                    }
+
+                    mensagensConhecidas.add(idMensagem);
+                    evento.notificacoes = data.notificacoes;
+
+                    window.dispatchEvent(
+                        new CustomEvent('squad:mensagem-usuario', {
+                            detail: evento
+                        })
+                    );
+                });
+            }
+
+            const novoUltimoId = Number(data.ultimo_id || 0);
+
+            if (novoUltimoId > 0) {
+                ultimoId = ultimoId === null
+                    ? novoUltimoId
+                    : Math.max(ultimoId, novoUltimoId);
+            }
+        } catch (error) {
+            return;
+        } finally {
+            consultando = false;
+        }
+    }
+
+    consultar();
+    window.setInterval(consultar, 3000);
 }

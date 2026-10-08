@@ -11,6 +11,8 @@ function iniciarNovaPublicacao() {
 
     const description = document.getElementById('postDescription');
     const counter = document.getElementById('postDescriptionCounter');
+    const emojiButton = document.getElementById('postDescriptionEmojiButton');
+    const emojiPicker = document.getElementById('postDescriptionEmojiPicker');
 
     const imageInput = document.getElementById('postImage');
     const imagePreview = document.getElementById('postImagePreviewImage');
@@ -146,6 +148,37 @@ function iniciarNovaPublicacao() {
 
         cropError.textContent = mensagem;
         cropError.hidden = mensagem === '';
+    }
+
+    function fecharSeletorEmoji() {
+        if (!emojiButton || !emojiPicker) {
+            return;
+        }
+
+        emojiPicker.hidden = true;
+        emojiButton.setAttribute('aria-expanded', 'false');
+    }
+
+    function inserirEmoji(emoji) {
+        if (!emoji) {
+            return;
+        }
+
+        const inicio = description.selectionStart ?? description.value.length;
+        const fim = description.selectionEnd ?? inicio;
+        const novoValor = description.value.slice(0, inicio)
+            + emoji
+            + description.value.slice(fim);
+
+        if (novoValor.length > description.maxLength) {
+            return;
+        }
+
+        description.value = novoValor;
+        const posicao = inicio + emoji.length;
+        description.focus();
+        description.setSelectionRange(posicao, posicao);
+        atualizarContador();
     }
 
     function liberarSourceUrl() {
@@ -550,6 +583,7 @@ function iniciarNovaPublicacao() {
         imageEmpty.hidden = true;
         imageSelected.hidden = false;
         imageRemove.hidden = false;
+        imageEmpty.parentElement?.classList.add('has-image');
     }
 
     async function aplicarCrop() {
@@ -685,6 +719,7 @@ function iniciarNovaPublicacao() {
         imageSelected.hidden = true;
         imageRemove.hidden = true;
         imageEmpty.hidden = false;
+        imageEmpty.parentElement?.classList.remove('has-image');
 
         publishButton.disabled = false;
         cropApply.disabled = false;
@@ -836,6 +871,32 @@ function iniciarNovaPublicacao() {
         'input',
         atualizarContador
     );
+
+    if (emojiButton && emojiPicker) {
+        emojiButton.addEventListener('click', function(event) {
+            event.stopPropagation();
+            const abrir = emojiPicker.hidden;
+            emojiPicker.hidden = !abrir;
+            emojiButton.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+        });
+
+        emojiPicker.addEventListener('click', function(event) {
+            const option = event.target.closest('[data-emoji]');
+
+            if (!option) {
+                return;
+            }
+
+            inserirEmoji(option.dataset.emoji);
+            fecharSeletorEmoji();
+        });
+
+        document.addEventListener('click', function(event) {
+            if (!emojiPicker.hidden && !event.target.closest('#postDescriptionEmojiWrap')) {
+                fecharSeletorEmoji();
+            }
+        });
+    }
 
     imageInput.addEventListener(
         'change',
@@ -1036,6 +1097,7 @@ function iniciarNovaPublicacao() {
         discardConfirm.hidden = true;
         discardPreviousFocus = null;
         discardConfirmed = false;
+        fecharSeletorEmoji();
         limparFormulario();
         submitting = false;
     });
@@ -1043,11 +1105,21 @@ function iniciarNovaPublicacao() {
     form.addEventListener(
         'submit',
         function(event) {
+            if (preparingImage) {
+                event.preventDefault();
+                return;
+            }
+
             if (
-                preparingImage
-                || !imageInput.files?.length
+                !imageInput.files?.length
+                && description.value.trim() === ''
             ) {
                 event.preventDefault();
+                mostrarAviso(
+                    'danger',
+                    'Escreva algo ou adicione uma imagem para publicar.'
+                );
+                description.focus();
                 return;
             }
 

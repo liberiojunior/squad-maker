@@ -40,7 +40,7 @@
             </div>
         </div>
 
-        @if ($posts->isNotEmpty() || $isOwner)
+        @if ($posts->isNotEmpty())
             <div class="profile-posts-grid profile-posts-grid-page">
                 @foreach ($posts as $post)
                     @include('posts.card', [

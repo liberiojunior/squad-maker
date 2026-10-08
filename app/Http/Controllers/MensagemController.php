@@ -86,7 +86,11 @@ class MensagemController extends Controller
             return $mensagem;
         });
 
-        event(new MensagemEnviada($mensagem, $usuario, $destinatario));
+        try {
+            event(new MensagemEnviada($mensagem, $usuario, $destinatario));
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -104,6 +108,72 @@ class MensagemController extends Controller
         }
 
         return redirect()->route('conversas.show', $conversa);
+    }
+
+    public function atualizacoes(Request $request)
+    {
+        $usuario = $request->user();
+
+        $data = $request->validate([
+            'apos' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $apos = isset($data['apos'])
+            ? (int) $data['apos']
+            : null;
+
+        $ultimoId = $apos;
+
+        $mensagensQuery = $usuario->mensagensRecebidas()
+            ->with('remetente:id_usuario,nickname,avatar');
+
+        if ($apos === null) {
+            $ultimoId = (int) $usuario->mensagensRecebidas()
+                ->max('id_mensagem');
+
+            $mensagensQuery
+                ->whereNull('lida_em')
+                ->where('id_mensagem', '<=', $ultimoId);
+        } else {
+            $mensagensQuery->where('id_mensagem', '>', $apos);
+        }
+
+        $mensagens = $mensagensQuery
+            ->orderBy('id_mensagem')
+            ->limit(50)
+            ->get();
+
+        if ($mensagens->isNotEmpty()) {
+            $ultimoId = max(
+                (int) $ultimoId,
+                (int) $mensagens->max('id_mensagem')
+            );
+        }
+
+        return response()->json([
+            'notificacoes' => $usuario->fresh()->totalNotificacoesChat(),
+            'ultimo_id' => $ultimoId,
+            'mensagens' => $mensagens->map(function (Mensagem $mensagem) {
+                return [
+                    'conversa' => $mensagem->id_conversa,
+                    'mensagem' => [
+                        'id_mensagem' => $mensagem->id_mensagem,
+                        'id_conversa' => $mensagem->id_conversa,
+                        'mensagem' => $mensagem->mensagem,
+                        'id_remetente' => $mensagem->id_remetente,
+                        'id_destinatario' => $mensagem->id_destinatario,
+                        'data_envio' => $mensagem->data_envio->toIso8601String(),
+                        'hora' => $mensagem->data_envio->format('H:i'),
+                    ],
+                    'remetente' => [
+                        'id_usuario' => $mensagem->remetente->id_usuario,
+                        'nickname' => $mensagem->remetente->nickname,
+                        'avatar' => $mensagem->remetente->avatar
+                            ?: asset('images/icone.png'),
+                    ],
+                ];
+            })->values(),
+        ]);
     }
 
     public function marcarComoLidas(Request $request, Conversa $conversa)

@@ -658,7 +658,8 @@
                                 method="POST"
                                 action="{{ route('admin.jogos.destroy', $jogo) }}"
                                 class="admin-game-delete-form"
-                                onsubmit="return confirm('Deseja realmente excluir este jogo?')"
+                                data-confirm-title="Excluir jogo?"
+                                data-confirm-message="Deseja realmente excluir {{ $jogo->nome }}?"
                             >
                                 @csrf
                                 @method('DELETE')

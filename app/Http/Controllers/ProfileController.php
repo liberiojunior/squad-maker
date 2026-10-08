@@ -750,7 +750,7 @@ class ProfileController extends Controller
             ->orderByDesc('fixado_em')
             ->orderByDesc('data_publicacao')
             ->orderByDesc('id_post')
-            ->limit(4)
+            ->limit(5)
             ->get();
 
         $totalPosts = $user->posts()

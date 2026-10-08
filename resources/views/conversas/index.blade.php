@@ -301,6 +301,31 @@
                                 required
                             >{{ old('mensagem') }}</textarea>
 
+                            <div class="squad-emoji-wrap chat-emoji-wrap">
+                                <button
+                                    type="button"
+                                    class="squad-emoji-button chat-emoji-button"
+                                    id="chatEmojiButton"
+                                    aria-label="Adicionar emoji"
+                                    aria-expanded="false"
+                                    title="Adicionar emoji"
+                                >
+                                    <i class="bi bi-emoji-smile"></i>
+                                </button>
+
+                                <div
+                                    class="squad-emoji-picker chat-emoji-picker"
+                                    id="chatEmojiPicker"
+                                    role="group"
+                                    aria-label="Emojis"
+                                    hidden
+                                >
+                                    @foreach (['😀', '😂', '😊', '😍', '😎', '😭', '🔥', '❤️', '💜', '👍', '👏', '🎮', '🏆', '🤝', '🎉', '👀'] as $emoji)
+                                        <button type="button" data-emoji="{{ $emoji }}" aria-label="Adicionar {{ $emoji }}">{{ $emoji }}</button>
+                                    @endforeach
+                                </div>
+                            </div>
+
                             <button type="submit" class="chat-send-button" title="Enviar mensagem" aria-label="Enviar mensagem">
                                 <i class="bi bi-send-fill"></i>
                             </button>

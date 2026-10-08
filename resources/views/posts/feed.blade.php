@@ -66,7 +66,7 @@
             @endif
         @else
             <div class="profile-feed-empty profile-post-feed-empty">
-                <i class="bi bi-images"></i>
+                <i class="bi bi-house-heart"></i>
                 <strong>Nenhuma publicação por enquanto.</strong>
                 <p>Quando você ou seus parceiros publicarem algo, aparecerá aqui.</p>
             </div>

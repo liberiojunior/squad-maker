@@ -21,7 +21,15 @@
     @stack('styles')
 </head>
 
-<body class="internal-body" data-user-id="{{ auth()->id() }}">
+<body
+    class="internal-body"
+    data-user-id="{{ auth()->id() }}"
+    data-chat-updates-url="{{ route('mensagens.atualizacoes') }}"
+    data-reverb-key="{{ config('broadcasting.connections.reverb.key') }}"
+    data-reverb-host="{{ config('broadcasting.connections.reverb.options.host') }}"
+    data-reverb-port="{{ config('broadcasting.connections.reverb.options.port') }}"
+    data-reverb-scheme="{{ config('broadcasting.connections.reverb.options.scheme') }}"
+>
 
 <aside class="internal-sidebar">
 
@@ -77,16 +85,20 @@
         <a
             href="{{ route('posts.feed') }}"
             class="sidebar-item {{ request()->routeIs('posts.*') ? 'active' : '' }}"
-            title="Feed de publicações"
+            title="Mural de publicações"
         >
-            <i class="bi bi-images"></i>
+            <i class="bi bi-house-fill"></i>
         </a>
 
     </div>
 
     <div class="sidebar-bottom">
 
-        <a href="#" class="sidebar-item" title="Ajuda">
+        <a
+            href="{{ route('ajuda') }}"
+            class="sidebar-item {{ request()->routeIs('ajuda') ? 'active' : '' }}"
+            title="Central de Ajuda"
+        >
             <i class="bi bi-question-circle-fill"></i>
         </a>
 

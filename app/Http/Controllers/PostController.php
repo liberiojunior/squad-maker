@@ -110,10 +110,9 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'foto' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=6000,max_height=6000'],
+            'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=6000,max_height=6000'],
             'descricao' => ['nullable', 'string', 'max:280'],
         ], [
-            'foto.required' => 'Escolha uma imagem para publicar.',
             'foto.image' => 'O arquivo precisa ser uma imagem válida.',
             'foto.mimes' => 'Envie uma imagem JPG, PNG ou WebP.',
             'foto.max' => 'A imagem pode ter no máximo 5 MB.',
@@ -122,22 +121,33 @@ class PostController extends Controller
         ]);
 
         $usuario = $request->user();
+        $descricao = $this->textoOpcional($data['descricao'] ?? null);
         $arquivo = $request->file('foto');
-        $pasta = public_path('uploads/posts');
+        $caminho = null;
 
-        if (! is_dir($pasta)) {
-            mkdir($pasta, 0755, true);
+        if (! $arquivo && ! $descricao) {
+            return back()
+                ->withErrors(['publicacao' => 'Escreva algo ou adicione uma imagem para publicar.'])
+                ->withInput();
         }
 
-        $extensao = strtolower($arquivo->extension());
-        $nomeArquivo = Str::uuid() . '.' . $extensao;
-        $arquivo->move($pasta, $nomeArquivo);
-        $caminho = '/uploads/posts/' . $nomeArquivo;
+        if ($arquivo) {
+            $pasta = public_path('uploads/posts');
+
+            if (! is_dir($pasta)) {
+                mkdir($pasta, 0755, true);
+            }
+
+            $extensao = strtolower($arquivo->extension());
+            $nomeArquivo = Str::uuid() . '.' . $extensao;
+            $arquivo->move($pasta, $nomeArquivo);
+            $caminho = '/uploads/posts/' . $nomeArquivo;
+        }
 
         try {
             Post::create([
                 'foto' => $caminho,
-                'descricao' => $this->textoOpcional($data['descricao'] ?? null),
+                'descricao' => $descricao,
                 'data_publicacao' => now(),
                 'status_post' => 'ativo',
                 'id_usuario' => $usuario->id_usuario,
@@ -161,8 +171,16 @@ class PostController extends Controller
             'descricao.max' => 'A descrição pode ter no máximo 280 caracteres.',
         ]);
 
+        $descricao = $this->textoOpcional($data['descricao'] ?? null);
+
+        if (! $post->foto && ! $descricao) {
+            return back()->withErrors([
+                'descricao' => 'Uma publicação sem imagem precisa ter texto.',
+            ]);
+        }
+
         $post->update([
-            'descricao' => $this->textoOpcional($data['descricao'] ?? null),
+            'descricao' => $descricao,
         ]);
 
         return back()->with('success', 'Publicação atualizada.');

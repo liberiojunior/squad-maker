@@ -79,6 +79,38 @@ function iniciarEnvioChat() {
     }
 
     const submit = form.querySelector('button[type="submit"]');
+    const emojiButton = document.getElementById('chatEmojiButton');
+    const emojiPicker = document.getElementById('chatEmojiPicker');
+
+    function fecharEmojis() {
+        if (!emojiButton || !emojiPicker) {
+            return;
+        }
+
+        emojiPicker.hidden = true;
+        emojiButton.setAttribute('aria-expanded', 'false');
+    }
+
+    function inserirEmoji(emoji) {
+        if (!emoji) {
+            return;
+        }
+
+        const inicio = input.selectionStart ?? input.value.length;
+        const fim = input.selectionEnd ?? inicio;
+        const novoValor = input.value.slice(0, inicio) + emoji + input.value.slice(fim);
+        const limite = Number(input.maxLength) || 1000;
+
+        if (novoValor.length > limite) {
+            return;
+        }
+
+        input.value = novoValor;
+        const novaPosicao = inicio + emoji.length;
+        input.focus({ preventScroll: true });
+        input.setSelectionRange(novaPosicao, novaPosicao);
+        ajustarAltura();
+    }
 
     function ajustarAltura() {
         const limite = 120;
@@ -133,6 +165,7 @@ function iniciarEnvioChat() {
 
             input.value = '';
             ajustarAltura();
+            fecharEmojis();
 
             if (data.mensagem) {
                 adicionarMensagemNaConversa(data.mensagem);
@@ -166,6 +199,30 @@ function iniciarEnvioChat() {
         enviar();
     });
 
+    if (emojiButton && emojiPicker) {
+        emojiButton.addEventListener('click', function() {
+            const abrir = emojiPicker.hidden;
+            emojiPicker.hidden = !abrir;
+            emojiButton.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+        });
+
+        emojiPicker.addEventListener('click', function(event) {
+            const button = event.target.closest('[data-emoji]');
+
+            if (!button) {
+                return;
+            }
+
+            inserirEmoji(button.dataset.emoji);
+        });
+
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.chat-emoji-wrap')) {
+                fecharEmojis();
+            }
+        });
+    }
+
     input.addEventListener('input', ajustarAltura);
 
     input.addEventListener('keydown', function(event) {
@@ -189,37 +246,6 @@ function iniciarTempoRealChat() {
 
     const idConversa = Number(chatPage.dataset.conversationId || 0);
 
-    function assinarConversa() {
-        if (!window.Echo || idConversa <= 0) {
-            return;
-        }
-
-        window.Echo
-            .private(`conversas.${idConversa}`)
-            .listen('.mensagem.enviada', function(evento) {
-                if (!evento.mensagem) {
-                    return;
-                }
-
-                adicionarMensagemNaConversa(evento.mensagem);
-                atualizarPreviewDaConversa(evento.mensagem);
-
-                const idUsuario = Number(document.body.dataset.userId || 0);
-
-                if (Number(evento.mensagem.id_destinatario) === idUsuario) {
-                    marcarConversaComoLida();
-                }
-            });
-    }
-
-    if (window.Echo) {
-        assinarConversa();
-    } else {
-        window.addEventListener('squad:echo-pronto', assinarConversa, {
-            once: true,
-        });
-    }
-
     window.addEventListener('squad:mensagem-usuario', function(event) {
         const evento = event.detail;
 
@@ -227,7 +253,15 @@ function iniciarTempoRealChat() {
             return;
         }
 
-        const item = buscarItemConversa(evento.mensagem.id_conversa);
+        const conversaMensagem = Number(evento.mensagem.id_conversa);
+        const item = buscarItemConversa(conversaMensagem);
+
+        if (conversaMensagem === idConversa) {
+            adicionarMensagemNaConversa(evento.mensagem);
+            atualizarPreviewDaConversa(evento.mensagem);
+            marcarConversaComoLida();
+            return;
+        }
 
         if (!item) {
             window.location.reload();
@@ -235,10 +269,7 @@ function iniciarTempoRealChat() {
         }
 
         atualizarPreviewDaConversa(evento.mensagem);
-
-        if (Number(evento.mensagem.id_conversa) !== idConversa) {
-            incrementarNaoLidas(item);
-        }
+        incrementarNaoLidas(item);
     });
 
     window.addEventListener('squad:amizade', function() {

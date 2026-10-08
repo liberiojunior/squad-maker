@@ -219,6 +219,10 @@ class User extends Authenticatable
             ->get(['id_post', 'foto']);
 
         foreach ($posts as $post) {
+            if (! $post->foto) {
+                continue;
+            }
+
             $relativo = ltrim(str_replace('\\', '/', $post->foto), '/');
 
             if (str_starts_with($relativo, 'uploads/posts/')) {

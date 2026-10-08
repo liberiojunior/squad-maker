@@ -23,7 +23,7 @@
         <div class="admin-metric-card">
             <i class="bi bi-person-plus-fill"></i>
             <div>
-                <span>Cadastros no período</span>
+                <span>Novos Usuários</span>
                 <strong>{{ $novosUsuarios }}</strong>
             </div>
         </div>
@@ -37,10 +37,10 @@
         </div>
 
         <div class="admin-metric-card">
-            <i class="bi bi-people-fill"></i>
+            <i class="bi bi-images"></i>
             <div>
-                <span>Amizades aceitas</span>
-                <strong>{{ $amizadesAceitas }}</strong>
+                <span>Posts publicados</span>
+                <strong>{{ $postsPublicados }}</strong>
             </div>
         </div>
 
@@ -56,7 +56,7 @@
     <section class="admin-dashboard-grid">
         <div class="admin-panel admin-chart-panel admin-chart-wide">
             <div class="admin-panel-header">
-                <h2>Cadastros de usuários</h2>
+                <h2>Métrica de Usuários</h2>
             </div>
             <div class="admin-chart">
                 <canvas id="adminUsersChart"></canvas>

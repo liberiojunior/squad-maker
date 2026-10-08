@@ -68,7 +68,13 @@
                         <div class="admin-catalog-platform-actions">
                             <button type="submit" form="plataformaUpdate{{ $plataforma->id_plataforma }}" class="btn admin-game-save">Salvar</button>
 
-                            <form method="POST" action="{{ route('admin.plataformas.destroy', $plataforma) }}" class="admin-catalog-platform-delete" onsubmit="return confirm('Deseja realmente excluir a plataforma {{ $plataforma->nome }}?')">
+                            <form
+                                method="POST"
+                                action="{{ route('admin.plataformas.destroy', $plataforma) }}"
+                                class="admin-catalog-platform-delete"
+                                data-confirm-title="Excluir plataforma?"
+                                data-confirm-message="Deseja realmente excluir a plataforma {{ $plataforma->nome }}?"
+                            >
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-danger">Excluir</button>
@@ -142,7 +148,13 @@
                             </button>
                         </form>
 
-                        <form method="POST" action="{{ route('admin.generos.destroy', $genero) }}" class="admin-catalog-genre-delete" onsubmit="return confirm('Deseja realmente excluir o gênero {{ $genero->genero }}?')">
+                        <form
+                            method="POST"
+                            action="{{ route('admin.generos.destroy', $genero) }}"
+                            class="admin-catalog-genre-delete"
+                            data-confirm-title="Excluir gênero?"
+                            data-confirm-message="Deseja realmente excluir o gênero {{ $genero->genero }}?"
+                        >
                             @csrf
                             @method('DELETE')
 

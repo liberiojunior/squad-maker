@@ -70,7 +70,7 @@ class AmizadeController extends Controller
 
         event(new SolicitacaoAmizadeRecebida($amizade, $usuario, $user));
 
-        return back()->with('success', 'Solicitação de amizade enviada.');
+        return $this->responderSucesso($request, 'Solicitação de amizade enviada.');
     }
 
     public function aceitar(Request $request, Amizade $amizade)
@@ -126,7 +126,7 @@ class AmizadeController extends Controller
         event(new AmizadeAtualizada($usuario, $outroUsuario, 'aceita', $amizadeAtual->id_amizade));
         event(new AmizadeAtualizada($outroUsuario, $usuario, 'aceita', $amizadeAtual->id_amizade));
 
-        return back()->with('success', 'Solicitação de amizade aceita.');
+        return $this->responderSucesso($request, 'Solicitação de amizade aceita.');
     }
 
     public function recusar(Request $request, Amizade $amizade)
@@ -165,7 +165,7 @@ class AmizadeController extends Controller
         event(new AmizadeAtualizada($usuario, $outroUsuario, 'recusada', $idAmizade));
         event(new AmizadeAtualizada($outroUsuario, $usuario, 'recusada', $idAmizade));
 
-        return back()->with('success', 'Solicitação de amizade recusada.');
+        return $this->responderSucesso($request, 'Solicitação de amizade recusada.');
     }
 
     public function cancelar(Request $request, Amizade $amizade)
@@ -204,7 +204,7 @@ class AmizadeController extends Controller
         event(new AmizadeAtualizada($usuario, $outroUsuario, 'cancelada', $idAmizade));
         event(new AmizadeAtualizada($outroUsuario, $usuario, 'cancelada', $idAmizade));
 
-        return back()->with('success', 'Solicitação de amizade cancelada.');
+        return $this->responderSucesso($request, 'Solicitação de amizade cancelada.');
     }
 
     public function remover(Request $request, Amizade $amizade)
@@ -241,7 +241,16 @@ class AmizadeController extends Controller
         event(new AmizadeAtualizada($usuario, $outroUsuario, 'removida', $idAmizade));
         event(new AmizadeAtualizada($outroUsuario, $usuario, 'removida', $idAmizade));
 
-        return back()->with('success', 'Amizade removida.');
+        return $this->responderSucesso($request, 'Amizade removida.');
+    }
+
+    private function responderSucesso(Request $request, string $mensagem)
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $mensagem]);
+        }
+
+        return back()->with('success', $mensagem);
     }
 
     private function ordenarUsuarios(User $usuario1, User $usuario2): array
