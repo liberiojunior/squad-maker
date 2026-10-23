@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\MensagemEnviada;
+use App\Events\MensagemRemovida;
 use App\Models\Amizade;
 use App\Models\Conversa;
 use App\Models\Mensagem;
@@ -41,6 +42,12 @@ class MensagemController extends Controller
         $destinatario = User::findOrFail($idDestinatario);
         $destinatario->sincronizarStatusBanimento();
 
+        if ($usuario->temBloqueioCom($destinatario)) {
+            throw ValidationException::withMessages([
+                'mensagem' => 'Não é possível enviar mensagens para este usuário.',
+            ]);
+        }
+
         if ($destinatario->status_conta !== 'ativo') {
             throw ValidationException::withMessages([
                 'mensagem' => 'Não é possível enviar mensagens para esta conta no momento.',
@@ -62,6 +69,21 @@ class MensagemController extends Controller
         }
 
         $mensagem = DB::transaction(function () use ($conversa, $usuario, $destinatario, $texto) {
+            DB::table('tb_usuario')
+                ->whereIn('id_usuario', [
+                    min($usuario->id_usuario, $destinatario->id_usuario),
+                    max($usuario->id_usuario, $destinatario->id_usuario),
+                ])
+                ->orderBy('id_usuario')
+                ->lockForUpdate()
+                ->get();
+
+            if ($usuario->temBloqueioCom($destinatario)) {
+                throw ValidationException::withMessages([
+                    'mensagem' => 'Não é possível enviar mensagens para este usuário.',
+                ]);
+            }
+
             $conversaAtual = Conversa::whereKey($conversa->id_conversa)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -103,6 +125,12 @@ class MensagemController extends Controller
                     'id_destinatario' => $mensagem->id_destinatario,
                     'data_envio' => $mensagem->data_envio->toIso8601String(),
                     'hora' => $mensagem->data_envio->format('H:i'),
+                    'removida_em' => null,
+                    'pode_cancelar' => $mensagem->podeCancelarEnvio(),
+                    'cancelamento_expira_em' => $mensagem->cancelamentoExpiraEm()?->toIso8601String(),
+                    'delete_url' => $mensagem->podeCancelarEnvio()
+                        ? route('mensagens.destroy', $mensagem)
+                        : null,
                 ],
             ]);
         }
@@ -159,11 +187,14 @@ class MensagemController extends Controller
                     'mensagem' => [
                         'id_mensagem' => $mensagem->id_mensagem,
                         'id_conversa' => $mensagem->id_conversa,
-                        'mensagem' => $mensagem->mensagem,
+                        'mensagem' => $mensagem->removida_em
+                            ? 'Mensagem removida'
+                            : $mensagem->mensagem,
                         'id_remetente' => $mensagem->id_remetente,
                         'id_destinatario' => $mensagem->id_destinatario,
                         'data_envio' => $mensagem->data_envio->toIso8601String(),
                         'hora' => $mensagem->data_envio->format('H:i'),
+                        'removida_em' => $mensagem->removida_em?->toIso8601String(),
                     ],
                     'remetente' => [
                         'id_usuario' => $mensagem->remetente->id_usuario,
@@ -173,6 +204,75 @@ class MensagemController extends Controller
                     ],
                 ];
             })->values(),
+        ]);
+    }
+
+    public function destroy(Request $request, Mensagem $mensagem)
+    {
+        $usuario = $request->user();
+
+        if ($mensagem->id_remetente !== $usuario->id_usuario) {
+            abort(404);
+        }
+
+        if ($mensagem->removida_em) {
+            return response()->json([
+                'message' => 'Esta mensagem já foi removida.',
+            ]);
+        }
+
+        $mensagem = DB::transaction(function () use ($mensagem, $usuario) {
+            $registro = Mensagem::whereKey($mensagem->id_mensagem)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($registro->id_remetente !== $usuario->id_usuario) {
+                abort(404);
+            }
+
+            if ($registro->removida_em) {
+                return $registro;
+            }
+
+            if (! $registro->podeCancelarEnvio()) {
+                throw ValidationException::withMessages([
+                    'mensagem' => 'O prazo de 3 minutos para cancelar o envio terminou.',
+                ]);
+            }
+
+            $agora = now();
+
+            $registro->removida_em = $agora;
+
+            if (! $registro->lida_em) {
+                $registro->lida_em = $agora;
+            }
+
+            $registro->save();
+
+            return $registro;
+        });
+
+        $destinatario = User::findOrFail($mensagem->id_destinatario);
+
+        try {
+            event(new MensagemRemovida($mensagem, $destinatario));
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+
+        return response()->json([
+            'message' => 'Envio cancelado.',
+            'mensagem' => [
+                'id_mensagem' => $mensagem->id_mensagem,
+                'id_conversa' => $mensagem->id_conversa,
+                'id_remetente' => $mensagem->id_remetente,
+                'id_destinatario' => $mensagem->id_destinatario,
+                'removida_em' => $mensagem->removida_em->toIso8601String(),
+            ],
+            'notificacoes_destinatario' => $destinatario
+                ->fresh()
+                ->totalNotificacoesChat(),
         ]);
     }
 

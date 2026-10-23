@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     iniciarBuscaChat();
     iniciarEnvioChat();
+    iniciarRemocaoMensagem();
+    iniciarPrazoCancelamentoMensagens();
     iniciarTempoRealChat();
     iniciarPosicaoConversa();
 });
@@ -272,6 +274,19 @@ function iniciarTempoRealChat() {
         incrementarNaoLidas(item);
     });
 
+    window.addEventListener('squad:mensagem-removida', function(event) {
+        const detalhe = event.detail;
+
+        if (!detalhe?.id_mensagem) {
+            return;
+        }
+
+        marcarMensagemComoRemovida(
+            detalhe.id_mensagem,
+            detalhe.id_conversa
+        );
+    });
+
     window.addEventListener('squad:amizade', function() {
         window.location.reload();
     });
@@ -304,28 +319,245 @@ function adicionarMensagemNaConversa(mensagem) {
     }
 
     const idUsuario = Number(document.body.dataset.userId || 0);
+    const minha = Number(mensagem.id_remetente) === idUsuario;
+    const removida = Boolean(mensagem.removida_em);
     const row = document.createElement('div');
     const bubble = document.createElement('div');
     const texto = document.createElement('p');
+    const meta = document.createElement('div');
     const horario = document.createElement('time');
 
-    row.className = 'chat-message-row '
-        + (Number(mensagem.id_remetente) === idUsuario ? 'mine' : 'theirs');
+    row.className = 'chat-message-row ' + (minha ? 'mine' : 'theirs');
+
+    if (removida) {
+        row.classList.add('is-removed');
+    }
+
     row.dataset.messageId = mensagem.id_mensagem;
 
     bubble.className = 'chat-message-bubble';
-    texto.textContent = mensagem.mensagem;
+    texto.textContent = removida ? 'Mensagem removida' : mensagem.mensagem;
+    meta.className = 'chat-message-meta';
 
     horario.dateTime = mensagem.data_envio;
     horario.textContent = mensagem.hora;
+    meta.appendChild(horario);
+
+    if (
+        minha
+        && !removida
+        && mensagem.pode_cancelar
+        && mensagem.delete_url
+        && mensagem.cancelamento_expira_em
+    ) {
+        const deleteButton = document.createElement('button');
+        const deleteIcon = document.createElement('i');
+
+        deleteButton.type = 'button';
+        deleteButton.className = 'chat-message-delete';
+        deleteButton.dataset.messageDelete = '';
+        deleteButton.dataset.deleteUrl = mensagem.delete_url;
+        deleteButton.dataset.deleteExpiresAt = mensagem.cancelamento_expira_em;
+        deleteButton.title = 'Cancelar envio';
+        deleteButton.setAttribute('aria-label', 'Cancelar envio');
+
+        deleteIcon.className = 'bi bi-trash3';
+        deleteButton.appendChild(deleteIcon);
+        meta.appendChild(deleteButton);
+        agendarFimPrazoCancelamento(deleteButton);
+    }
 
     bubble.appendChild(texto);
-    bubble.appendChild(horario);
+    bubble.appendChild(meta);
     row.appendChild(bubble);
 
     content.appendChild(row);
     content.appendChild(end);
     rolarConversaParaFinal();
+}
+
+function iniciarPrazoCancelamentoMensagens() {
+    document.querySelectorAll('[data-message-delete]').forEach(function(button) {
+        agendarFimPrazoCancelamento(button);
+    });
+}
+
+function prazoCancelamentoEncerrado(button) {
+    const expiraEm = Date.parse(button?.dataset.deleteExpiresAt || '');
+
+    return Number.isFinite(expiraEm) && expiraEm <= Date.now();
+}
+
+function agendarFimPrazoCancelamento(button) {
+    if (!button) {
+        return;
+    }
+
+    const expiraEm = Date.parse(button.dataset.deleteExpiresAt || '');
+
+    if (!Number.isFinite(expiraEm)) {
+        return;
+    }
+
+    const restante = expiraEm - Date.now();
+
+    if (restante <= 0) {
+        button.remove();
+        return;
+    }
+
+    window.setTimeout(function() {
+        button.remove();
+    }, restante);
+}
+
+function iniciarRemocaoMensagem() {
+    const container = document.getElementById('chatMessages');
+    const modalElement = document.getElementById('deleteMessageModal');
+    const confirmButton = document.getElementById('deleteMessageConfirm');
+    const errorElement = document.getElementById('deleteMessageError');
+
+    if (!container || !modalElement || !confirmButton) {
+        return;
+    }
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    let idMensagem = null;
+    let deleteUrl = '';
+
+    container.addEventListener('click', function(event) {
+        const button = event.target.closest('[data-message-delete]');
+
+        if (!button) {
+            return;
+        }
+
+        const row = button.closest('[data-message-id]');
+
+        if (!row) {
+            return;
+        }
+
+        if (prazoCancelamentoEncerrado(button)) {
+            button.remove();
+
+            window.SquadAviso?.mostrar?.(
+                'warning',
+                'O prazo de 3 minutos para cancelar o envio terminou.'
+            );
+            return;
+        }
+
+        idMensagem = Number(row.dataset.messageId || 0);
+        deleteUrl = button.dataset.deleteUrl || '';
+
+        if (errorElement) {
+            errorElement.hidden = true;
+            errorElement.textContent = '';
+        }
+
+        modal.show();
+    });
+
+    confirmButton.addEventListener('click', async function() {
+        if (!idMensagem || !deleteUrl || confirmButton.disabled) {
+            return;
+        }
+
+        confirmButton.disabled = true;
+
+        if (errorElement) {
+            errorElement.hidden = true;
+            errorElement.textContent = '';
+        }
+
+        try {
+            const response = await fetch(deleteUrl, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector(
+                        'meta[name="csrf-token"]'
+                    )?.content || '',
+                },
+            });
+
+            const data = await response.json().catch(function() {
+                return {};
+            });
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message || 'Não foi possível cancelar o envio.'
+                );
+            }
+
+            marcarMensagemComoRemovida(
+                idMensagem,
+                data.mensagem?.id_conversa
+            );
+
+            modal.hide();
+
+            if (
+                window.SquadAviso
+                && typeof window.SquadAviso.mostrar === 'function'
+            ) {
+                window.SquadAviso.mostrar(
+                    'success',
+                    data.message || 'Envio cancelado.'
+                );
+            }
+        } catch (error) {
+            if (errorElement) {
+                errorElement.textContent = error.message;
+                errorElement.hidden = false;
+            }
+        } finally {
+            confirmButton.disabled = false;
+        }
+    });
+
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        idMensagem = null;
+        deleteUrl = '';
+
+        if (errorElement) {
+            errorElement.hidden = true;
+            errorElement.textContent = '';
+        }
+    });
+}
+
+function marcarMensagemComoRemovida(idMensagem, idConversa) {
+    const row = document.querySelector(
+        `[data-message-id="${Number(idMensagem)}"]`
+    );
+
+    if (row) {
+        row.classList.add('is-removed');
+        row.querySelector('[data-message-delete]')?.remove();
+
+        const texto = row.querySelector('.chat-message-bubble p');
+
+        if (texto) {
+            texto.textContent = 'Mensagem removida';
+        }
+    }
+
+    const item = buscarItemConversa(idConversa);
+
+    if (
+        item
+        && Number(item.dataset.lastMessageId || 0) === Number(idMensagem)
+    ) {
+        const preview = item.querySelector('.chat-conversation-preview');
+
+        if (preview) {
+            preview.textContent = 'Mensagem removida';
+        }
+    }
 }
 
 function iniciarPosicaoConversa() {
@@ -374,8 +606,12 @@ function atualizarPreviewDaConversa(mensagem) {
     const preview = item.querySelector('.chat-conversation-preview');
 
     if (preview) {
-        preview.textContent = mensagem.mensagem;
+        preview.textContent = mensagem.removida_em
+            ? 'Mensagem removida'
+            : mensagem.mensagem;
     }
+
+    item.dataset.lastMessageId = String(mensagem.id_mensagem || '');
 
     const lista = item.parentElement;
 

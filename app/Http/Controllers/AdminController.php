@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Banimento;
 use App\Models\Denuncia;
+use App\Models\Noticia;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -191,7 +194,398 @@ class AdminController extends Controller
 
     public function noticias()
     {
-        return view('admin.noticias');
+        $noticias = Noticia::query()
+            ->with('administrador:id_administrador,nome')
+            ->orderByDesc('data_noticia')
+            ->orderByDesc('id_noticia')
+            ->paginate(10);
+
+        return view('admin.noticias', [
+            'noticias' => $noticias,
+        ]);
+    }
+
+    public function criarNoticia()
+    {
+        return view('admin.noticia-form');
+    }
+
+    public function salvarNoticia(Request $request)
+    {
+        $data = $this->validarNoticia($request, true);
+        $data['imagem'] = $this->salvarImagemNoticia($request->file('imagem'));
+        $data['data_noticia'] = now();
+        $data['id_administrador'] = Auth::guard('admin')->id();
+
+        Noticia::create($data);
+
+        return redirect()
+            ->route('admin.noticias')
+            ->with('success', 'Notícia publicada com sucesso.');
+    }
+
+    public function uploadImagemNoticiaConteudo(Request $request)
+    {
+        $data = $request->validate([
+            'imagem' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=3840,max_height=3840'],
+        ], [
+            'imagem.required' => 'Selecione uma imagem.',
+            'imagem.image' => 'O arquivo precisa ser uma imagem válida.',
+            'imagem.mimes' => 'Envie uma imagem JPG, PNG ou WebP.',
+            'imagem.max' => 'A imagem pode ter no máximo 5 MB.',
+            'imagem.dimensions' => 'A imagem enviada é grande demais.',
+        ]);
+
+        return response()->json([
+            'url' => $this->salvarImagemConteudoNoticia($data['imagem']),
+        ]);
+    }
+
+    public function editarNoticia(Noticia $noticia)
+    {
+        return view('admin.noticia-form', [
+            'noticia' => $noticia,
+        ]);
+    }
+
+    public function atualizarNoticia(Request $request, Noticia $noticia)
+    {
+        $data = $this->validarNoticia($request, false);
+        $imagemAnterior = $noticia->imagem;
+        $imagensConteudoAnteriores = $this->imagensConteudoNoticia($noticia->conteudo);
+
+        if ($request->hasFile('imagem')) {
+            $data['imagem'] = $this->salvarImagemNoticia($request->file('imagem'));
+        }
+
+        $noticia->update($data);
+
+        if (isset($data['imagem'])) {
+            $this->excluirImagemNoticia($imagemAnterior);
+        }
+
+        $imagensMantidas = $this->imagensConteudoNoticia($noticia->conteudo);
+        $this->excluirImagensConteudoNoticia(array_diff($imagensConteudoAnteriores, $imagensMantidas));
+
+        return redirect()
+            ->route('admin.noticias')
+            ->with('success', 'Notícia atualizada com sucesso.');
+    }
+
+    public function excluirNoticia(Noticia $noticia)
+    {
+        $imagem = $noticia->imagem;
+        $imagensConteudo = $this->imagensConteudoNoticia($noticia->conteudo);
+
+        $noticia->delete();
+        $this->excluirImagemNoticia($imagem);
+        $this->excluirImagensConteudoNoticia($imagensConteudo);
+
+        return back()->with('success', 'Notícia excluída com sucesso.');
+    }
+
+    private function validarNoticia(Request $request, bool $imagemObrigatoria): array
+    {
+        $request->merge([
+            'conteudo' => $this->sanitizarConteudoNoticia((string) $request->input('conteudo', '')),
+        ]);
+
+        $regrasImagem = $imagemObrigatoria
+            ? ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=3840,max_height=3840']
+            : ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=3840,max_height=3840'];
+
+        $data = $request->validate([
+            'titulo' => ['required', 'string', 'max:100'],
+            'descricao' => ['required', 'string', 'max:255'],
+            'conteudo' => ['required', 'string', 'max:50000'],
+            'fonte' => ['required', 'string', 'max:255'],
+            'fonte_url' => ['nullable', 'url', 'max:500'],
+            'imagem' => $regrasImagem,
+        ], [
+            'titulo.required' => 'Informe o título da notícia.',
+            'descricao.required' => 'Informe um resumo para a notícia.',
+            'conteudo.required' => 'Informe o conteúdo da notícia.',
+            'fonte.required' => 'Informe a fonte da notícia.',
+            'imagem.required' => 'Adicione uma imagem de capa.',
+            'imagem.image' => 'A capa precisa ser uma imagem válida.',
+            'imagem.mimes' => 'Envie uma capa JPG, PNG ou WebP.',
+            'imagem.max' => 'A imagem pode ter no máximo 5 MB.',
+            'imagem.dimensions' => 'A imagem enviada é grande demais.',
+            'fonte_url.url' => 'Informe uma URL de fonte válida.',
+        ]);
+
+        $texto = trim(html_entity_decode(strip_tags($data['conteudo']), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+
+        if ($texto === '') {
+            throw ValidationException::withMessages([
+                'conteudo' => 'Escreva o conteúdo da notícia antes de publicar.',
+            ]);
+        }
+
+        return $data;
+    }
+
+    private function sanitizarConteudoNoticia(string $html): string
+    {
+        $html = trim($html);
+
+        if ($html === '') {
+            return '';
+        }
+
+        if (! str_contains($html, '<')) {
+            $paragrafos = preg_split('/\r\n|\r|\n/', $html);
+            $saida = [];
+
+            foreach ($paragrafos as $paragrafo) {
+                if (trim($paragrafo) === '') {
+                    continue;
+                }
+
+                $saida[] = '<p>' . htmlspecialchars($paragrafo, ENT_QUOTES | ENT_HTML5, 'UTF-8') . '</p>';
+            }
+
+            return implode('', $saida);
+        }
+
+        $html = preg_replace('~<!--.*?-->~s', '', $html) ?? '';
+        $html = preg_replace('~<(script|style)[^>]*>.*?</\1>~is', '', $html) ?? '';
+        $html = preg_replace_callback(
+            '~<iframe\b([^>]*)>.*?</iframe>~is',
+            function (array $match) {
+                $src = trim($this->atributoHtmlNoticia($match[1] ?? '', 'src'));
+                $youtubeId = $this->youtubeIdDoEmbed($src);
+
+                if (! $youtubeId) {
+                    return '';
+                }
+
+                return '<iframe src="https://www.youtube.com/embed/'
+                    . $youtubeId
+                    . '"></iframe>';
+            },
+            $html
+        ) ?? '';
+        $html = strip_tags(
+            $html,
+            '<div><p><h2><h3><strong><b><em><i><u><ul><ol><li><a><img><br><blockquote><font><span><iframe>'
+        );
+
+        $fontesPermitidas = ['Arial', 'Georgia', 'Trebuchet MS', 'Courier New'];
+
+        $html = preg_replace_callback(
+            '~<([a-z0-9]+)(\s[^>]*)?>~i',
+            function (array $match) use ($fontesPermitidas) {
+                $tag = strtolower($match[1]);
+                $atributos = $match[2] ?? '';
+
+                if ($tag === 'br') {
+                    return '<br>';
+                }
+
+                if ($tag === 'a') {
+                    $href = trim($this->atributoHtmlNoticia($atributos, 'href'));
+
+                    if (! preg_match('~^https?://~i', $href)) {
+                        return '<a>';
+                    }
+
+                    $classe = trim($this->atributoHtmlNoticia($atributos, 'class'));
+                    $tamanho = strtolower($this->atributoHtmlNoticia($atributos, 'data-size'));
+                    $atributosPermitidos = '';
+
+                    if ($classe === 'news-image-link') {
+                        if (! in_array($tamanho, ['small', 'medium', 'large', 'full'], true)) {
+                            $tamanho = 'medium';
+                        }
+
+                        $atributosPermitidos = ' class="news-image-link" data-size="' . $tamanho . '"';
+                    }
+
+                    return '<a href="'
+                        . htmlspecialchars($href, ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                        . '" target="_blank" rel="noopener noreferrer"'
+                        . $atributosPermitidos
+                        . '>';
+                }
+
+                if ($tag === 'iframe') {
+                    $src = trim($this->atributoHtmlNoticia($atributos, 'src'));
+                    $youtubeId = $this->youtubeIdDoEmbed($src);
+
+                    if (! $youtubeId) {
+                        return '';
+                    }
+
+                    return '<iframe class="news-youtube-embed" src="https://www.youtube.com/embed/'
+                        . $youtubeId
+                        . '" title="Vídeo do YouTube" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen>';
+                }
+
+                if ($tag === 'div') {
+                    $classe = $this->atributoHtmlNoticia($atributos, 'class');
+
+                    if (preg_match('/(^|\s)news-video-embed(\s|$)/', $classe)) {
+                        return '<div class="news-video-embed">';
+                    }
+                }
+
+                if ($tag === 'img') {
+                    $src = trim($this->atributoHtmlNoticia($atributos, 'src'));
+                    $caminho = parse_url($src, PHP_URL_PATH) ?: '';
+
+                    if (! str_starts_with($caminho, '/uploads/noticias/conteudo/')) {
+                        return '';
+                    }
+
+                    $alt = mb_substr(trim($this->atributoHtmlNoticia($atributos, 'alt')), 0, 180);
+                    $tamanho = strtolower($this->atributoHtmlNoticia($atributos, 'data-size'));
+
+                    if (! in_array($tamanho, ['small', 'medium', 'large', 'full'], true)) {
+                        $tamanho = 'medium';
+                    }
+
+                    return '<img src="'
+                        . htmlspecialchars($caminho, ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                        . '" alt="'
+                        . htmlspecialchars($alt, ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                        . '" data-size="'
+                        . $tamanho
+                        . '" loading="lazy">';
+                }
+
+                if (in_array($tag, ['div', 'p', 'h2', 'h3', 'blockquote'], true)) {
+                    $estilo = $this->atributoHtmlNoticia($atributos, 'style');
+                    $alinhamento = strtolower($this->atributoHtmlNoticia($atributos, 'align'));
+
+                    if (preg_match('/text-align\s*:\s*(left|center|right|justify)/i', $estilo, $alinhamentoEncontrado)) {
+                        $alinhamento = strtolower($alinhamentoEncontrado[1]);
+                    }
+
+                    if (in_array($alinhamento, ['left', 'center', 'right', 'justify'], true)) {
+                        return '<' . $tag . ' style="text-align: ' . $alinhamento . ';">';
+                    }
+                }
+
+                if ($tag === 'font') {
+                    $tamanho = $this->atributoHtmlNoticia($atributos, 'size');
+                    $fonte = $this->atributoHtmlNoticia($atributos, 'face');
+                    $permitidos = [];
+
+                    if (in_array($tamanho, ['2', '3', '4', '5'], true)) {
+                        $permitidos[] = 'size="' . $tamanho . '"';
+                    }
+
+                    if (in_array($fonte, $fontesPermitidas, true)) {
+                        $permitidos[] = 'face="' . htmlspecialchars($fonte, ENT_QUOTES | ENT_HTML5, 'UTF-8') . '"';
+                    }
+
+                    return '<font' . ($permitidos ? ' ' . implode(' ', $permitidos) : '') . '>';
+                }
+
+                if ($tag === 'span') {
+                    $estilo = $this->atributoHtmlNoticia($atributos, 'style');
+
+                    if (preg_match('/font-size\s*:\s*(\d{1,2})px/i', $estilo, $tamanhoEncontrado)) {
+                        $tamanho = (int) $tamanhoEncontrado[1];
+
+                        if ($tamanho >= 10 && $tamanho <= 48) {
+                            return '<span style="font-size: ' . $tamanho . 'px;">';
+                        }
+                    }
+                }
+
+                return '<' . $tag . '>';
+            },
+            $html
+        ) ?? '';
+
+        return trim($html);
+    }
+
+    private function youtubeIdDoEmbed(string $url): ?string
+    {
+        if (! preg_match(
+            '~^https://(?:www\.)?(?:youtube-nocookie\.com|youtube\.com)/embed/([A-Za-z0-9_-]{11})(?:[?&/#].*)?$~i',
+            $url,
+            $match
+        )) {
+            return null;
+        }
+
+        return $match[1];
+    }
+
+    private function atributoHtmlNoticia(string $atributos, string $nome): string
+    {
+        $nome = preg_quote($nome, '~');
+
+        if (! preg_match(
+            '~\b' . $nome . '\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))~i',
+            $atributos,
+            $match
+        )) {
+            return '';
+        }
+
+        return html_entity_decode($match[1] ?? $match[2] ?? $match[3] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    }
+
+    private function salvarImagemNoticia(UploadedFile $imagem): string
+    {
+        $pasta = public_path('uploads/noticias');
+        File::ensureDirectoryExists($pasta);
+
+        $nome = 'noticia_' . uniqid() . '.' . $imagem->getClientOriginalExtension();
+        $imagem->move($pasta, $nome);
+
+        return '/uploads/noticias/' . $nome;
+    }
+
+    private function salvarImagemConteudoNoticia(UploadedFile $imagem): string
+    {
+        $pasta = public_path('uploads/noticias/conteudo');
+        File::ensureDirectoryExists($pasta);
+
+        $nome = 'conteudo_' . uniqid() . '.' . $imagem->getClientOriginalExtension();
+        $imagem->move($pasta, $nome);
+
+        return '/uploads/noticias/conteudo/' . $nome;
+    }
+
+    private function imagensConteudoNoticia(?string $conteudo): array
+    {
+        if (! $conteudo) {
+            return [];
+        }
+
+        preg_match_all(
+            '~<img[^>]+src=["\'](/uploads/noticias/conteudo/[^"\']+)["\']~i',
+            $conteudo,
+            $matches
+        );
+
+        return array_values(array_unique($matches[1] ?? []));
+    }
+
+    private function excluirImagensConteudoNoticia(array $imagens): void
+    {
+        foreach ($imagens as $imagem) {
+            if (! str_starts_with($imagem, '/uploads/noticias/conteudo/')) {
+                continue;
+            }
+
+            File::delete(public_path(ltrim($imagem, '/')));
+        }
+    }
+
+    private function excluirImagemNoticia(?string $imagem): void
+    {
+        if (! $imagem || ! str_starts_with($imagem, '/uploads/noticias/')) {
+            return;
+        }
+
+        File::delete(public_path(ltrim($imagem, '/')));
     }
 
     public function banir(Request $request, User $user)

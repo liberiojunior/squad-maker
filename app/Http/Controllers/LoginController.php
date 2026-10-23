@@ -57,6 +57,10 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
+        if (! $request->user()->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+
         return redirect()->route('perfil');
     }
 }

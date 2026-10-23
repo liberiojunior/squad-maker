@@ -6,6 +6,7 @@ use App\Events\AmizadeAtualizada;
 use App\Events\SolicitacaoAmizadeRecebida;
 use App\Models\Amizade;
 use App\Models\User;
+use App\Models\UsuarioBloqueio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -18,6 +19,12 @@ class AmizadeController extends Controller
 
         if ($usuario->id_usuario === $user->id_usuario) {
             abort(422, 'Você não pode enviar uma solicitação de amizade para si mesmo.');
+        }
+
+        if ($this->existeBloqueioEntre($usuario, $user)) {
+            throw ValidationException::withMessages([
+                'amizade' => 'Não é possível enviar uma solicitação para este usuário.',
+            ]);
         }
 
         $user->sincronizarStatusBanimento();
@@ -36,6 +43,24 @@ class AmizadeController extends Controller
                 ->orderBy('id_usuario')
                 ->lockForUpdate()
                 ->get();
+
+            $bloqueado = UsuarioBloqueio::where(function ($query) use ($idUsuario1, $idUsuario2) {
+                $query
+                    ->where('id_bloqueador', $idUsuario1)
+                    ->where('id_bloqueado', $idUsuario2);
+            })
+                ->orWhere(function ($query) use ($idUsuario1, $idUsuario2) {
+                    $query
+                        ->where('id_bloqueador', $idUsuario2)
+                        ->where('id_bloqueado', $idUsuario1);
+                })
+                ->exists();
+
+            if ($bloqueado) {
+                throw ValidationException::withMessages([
+                    'amizade' => 'Não é possível enviar uma solicitação para este usuário.',
+                ]);
+            }
 
             $existente = Amizade::where('id_usuario_1', $idUsuario1)
                 ->where('id_usuario_2', $idUsuario2)
@@ -68,7 +93,9 @@ class AmizadeController extends Controller
             ]);
         });
 
-        event(new SolicitacaoAmizadeRecebida($amizade, $usuario, $user));
+        $this->transmitirEventos(
+            new SolicitacaoAmizadeRecebida($amizade, $usuario, $user)
+        );
 
         return $this->responderSucesso($request, 'Solicitação de amizade enviada.');
     }
@@ -102,6 +129,24 @@ class AmizadeController extends Controller
                 ->lockForUpdate()
                 ->get();
 
+            $bloqueado = UsuarioBloqueio::where(function ($query) use ($amizade) {
+                $query
+                    ->where('id_bloqueador', $amizade->id_usuario_1)
+                    ->where('id_bloqueado', $amizade->id_usuario_2);
+            })
+                ->orWhere(function ($query) use ($amizade) {
+                    $query
+                        ->where('id_bloqueador', $amizade->id_usuario_2)
+                        ->where('id_bloqueado', $amizade->id_usuario_1);
+                })
+                ->exists();
+
+            if ($bloqueado) {
+                throw ValidationException::withMessages([
+                    'amizade' => 'Esta solicitação não pode ser aceita.',
+                ]);
+            }
+
             $registro = Amizade::whereKey($amizade->id_amizade)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -123,8 +168,10 @@ class AmizadeController extends Controller
             return $registro->fresh();
         });
 
-        event(new AmizadeAtualizada($usuario, $outroUsuario, 'aceita', $amizadeAtual->id_amizade));
-        event(new AmizadeAtualizada($outroUsuario, $usuario, 'aceita', $amizadeAtual->id_amizade));
+        $this->transmitirEventos(
+            new AmizadeAtualizada($usuario, $outroUsuario, 'aceita', $amizadeAtual->id_amizade),
+            new AmizadeAtualizada($outroUsuario, $usuario, 'aceita', $amizadeAtual->id_amizade)
+        );
 
         return $this->responderSucesso($request, 'Solicitação de amizade aceita.');
     }
@@ -162,8 +209,10 @@ class AmizadeController extends Controller
             $registro->delete();
         });
 
-        event(new AmizadeAtualizada($usuario, $outroUsuario, 'recusada', $idAmizade));
-        event(new AmizadeAtualizada($outroUsuario, $usuario, 'recusada', $idAmizade));
+        $this->transmitirEventos(
+            new AmizadeAtualizada($usuario, $outroUsuario, 'recusada', $idAmizade),
+            new AmizadeAtualizada($outroUsuario, $usuario, 'recusada', $idAmizade)
+        );
 
         return $this->responderSucesso($request, 'Solicitação de amizade recusada.');
     }
@@ -201,8 +250,10 @@ class AmizadeController extends Controller
             $registro->delete();
         });
 
-        event(new AmizadeAtualizada($usuario, $outroUsuario, 'cancelada', $idAmizade));
-        event(new AmizadeAtualizada($outroUsuario, $usuario, 'cancelada', $idAmizade));
+        $this->transmitirEventos(
+            new AmizadeAtualizada($usuario, $outroUsuario, 'cancelada', $idAmizade),
+            new AmizadeAtualizada($outroUsuario, $usuario, 'cancelada', $idAmizade)
+        );
 
         return $this->responderSucesso($request, 'Solicitação de amizade cancelada.');
     }
@@ -238,10 +289,130 @@ class AmizadeController extends Controller
             $registro->delete();
         });
 
-        event(new AmizadeAtualizada($usuario, $outroUsuario, 'removida', $idAmizade));
-        event(new AmizadeAtualizada($outroUsuario, $usuario, 'removida', $idAmizade));
+        $this->transmitirEventos(
+            new AmizadeAtualizada($usuario, $outroUsuario, 'removida', $idAmizade),
+            new AmizadeAtualizada($outroUsuario, $usuario, 'removida', $idAmizade)
+        );
 
         return $this->responderSucesso($request, 'Amizade removida.');
+    }
+
+    public function bloquear(Request $request, User $user)
+    {
+        $usuario = $request->user();
+
+        if ($usuario->id_usuario === $user->id_usuario) {
+            abort(422);
+        }
+
+        DB::transaction(function () use ($usuario, $user) {
+            DB::table('tb_usuario')
+                ->whereIn('id_usuario', [
+                    $usuario->id_usuario,
+                    $user->id_usuario,
+                ])
+                ->orderBy('id_usuario')
+                ->lockForUpdate()
+                ->get();
+
+            UsuarioBloqueio::firstOrCreate(
+                [
+                    'id_bloqueador' => $usuario->id_usuario,
+                    'id_bloqueado' => $user->id_usuario,
+                ],
+                [
+                    'data_bloqueio' => now(),
+                ]
+            );
+
+            [$idUsuario1, $idUsuario2] = $this->ordenarUsuarios(
+                $usuario,
+                $user
+            );
+
+            Amizade::where('id_usuario_1', $idUsuario1)
+                ->where('id_usuario_2', $idUsuario2)
+                ->delete();
+
+            DB::table('tb_mensagem')
+                ->whereNull('lida_em')
+                ->where(function ($query) use ($usuario, $user) {
+                    $query
+                        ->where(function ($subquery) use ($usuario, $user) {
+                            $subquery
+                                ->where('id_remetente', $user->id_usuario)
+                                ->where('id_destinatario', $usuario->id_usuario);
+                        })
+                        ->orWhere(function ($subquery) use ($usuario, $user) {
+                            $subquery
+                                ->where('id_remetente', $usuario->id_usuario)
+                                ->where('id_destinatario', $user->id_usuario);
+                        });
+                })
+                ->update([
+                    'lida_em' => now(),
+                ]);
+        });
+
+        $this->transmitirEventos(
+            new AmizadeAtualizada($usuario, $user, 'bloqueada', null),
+            new AmizadeAtualizada($user, $usuario, 'bloqueada', null)
+        );
+
+        return $this->responderSucesso(
+            $request,
+            'Usuário bloqueado.'
+        );
+    }
+
+    public function desbloquear(Request $request, User $user)
+    {
+        $usuario = $request->user();
+
+        UsuarioBloqueio::where(
+            'id_bloqueador',
+            $usuario->id_usuario
+        )
+            ->where('id_bloqueado', $user->id_usuario)
+            ->delete();
+
+        $this->transmitirEventos(
+            new AmizadeAtualizada($usuario, $user, 'desbloqueada', null),
+            new AmizadeAtualizada($user, $usuario, 'desbloqueada', null)
+        );
+
+        return $this->responderSucesso(
+            $request,
+            'Usuário desbloqueado.'
+        );
+    }
+
+    private function existeBloqueioEntre(
+        User $usuario1,
+        User $usuario2
+    ): bool {
+        return UsuarioBloqueio::where(function ($query) use ($usuario1, $usuario2) {
+            $query
+                ->where('id_bloqueador', $usuario1->id_usuario)
+                ->where('id_bloqueado', $usuario2->id_usuario);
+        })
+            ->orWhere(function ($query) use ($usuario1, $usuario2) {
+                $query
+                    ->where('id_bloqueador', $usuario2->id_usuario)
+                    ->where('id_bloqueado', $usuario1->id_usuario);
+            })
+            ->exists();
+    }
+
+    private function transmitirEventos(object ...$eventos): void
+    {
+        foreach ($eventos as $evento) {
+            try {
+                event($evento);
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
     }
 
     private function responderSucesso(Request $request, string $mensagem)

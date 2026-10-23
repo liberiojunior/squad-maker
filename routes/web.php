@@ -12,12 +12,14 @@ use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\JogoController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MensagemController;
+use App\Http\Controllers\NoticiaController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\RegisterJogosController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Middleware\VerificarStatusUsuario;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -69,6 +71,11 @@ Route::post(
     [ForgotPasswordController::class, 'send']
 )->name('password.email');
 
+Route::view(
+    '/esqueci-senha/enviado',
+    'auth.email-recuperacao-enviado'
+)->name('password.sent');
+
 Route::get(
     '/redefinir-senha/{token}',
     [ResetPasswordController::class, 'show']
@@ -79,11 +86,63 @@ Route::post(
     [ResetPasswordController::class, 'update']
 )->name('password.update');
 
+// Verificação de e-mail
+
+Route::middleware([
+    'auth',
+    VerificarStatusUsuario::class,
+])->group(function () {
+    Route::get('/email/verificar', function (Request $request) {
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect()->route('perfil');
+        }
+
+        return view('auth.verificar-email');
+    })->name('verification.notice');
+
+    Route::get(
+        '/email/verificar/{id}/{hash}',
+        function (EmailVerificationRequest $request) {
+            $request->fulfill();
+
+            return redirect()
+                ->route('cadastro.jogos')
+                ->with('success', 'E-mail confirmado com sucesso.');
+        }
+    )
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
+
+    Route::post('/email/verificacao-notificacao', function (Request $request) {
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect()->route('perfil');
+        }
+
+        try {
+            $request->user()->sendEmailVerificationNotification();
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors([
+                'email' => 'Não foi possível enviar o e-mail agora. Tente novamente em alguns instantes.',
+            ]);
+        }
+
+        return back()->with(
+            'status',
+            'Enviamos um novo link de confirmação para o seu e-mail.'
+        );
+    })
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
+});
+
 // Rotas do usuário autenticado
 
 Route::middleware([
     'auth',
     VerificarStatusUsuario::class,
+    'verified',
 ])->group(function () {
 
     // Etapa de jogos do cadastro
@@ -111,6 +170,12 @@ Route::middleware([
     Route::view('/ajuda', 'ajuda')
         ->name('ajuda');
 
+    Route::get('/noticias', [NoticiaController::class, 'index'])
+        ->name('noticias.index');
+
+    Route::get('/noticias/{noticia}', [NoticiaController::class, 'show'])
+        ->name('noticias.show');
+
     // Perfil
 
     Route::get(
@@ -122,6 +187,11 @@ Route::middleware([
         '/perfil',
         [ProfileController::class, 'update']
     )->name('perfil.update');
+
+    Route::patch(
+        '/senha',
+        [ProfileController::class, 'updatePassword']
+    )->name('senha.update');
 
     Route::patch(
         '/perfil/avatar',
@@ -233,7 +303,17 @@ Route::middleware([
         ->middleware('throttle:5,10')
         ->name('denuncias.perfil');
 
-    // Amizades
+    // Amizades e bloqueios
+
+    Route::post(
+        '/usuarios/{user:nickname}/bloquear',
+        [AmizadeController::class, 'bloquear']
+    )->name('usuarios.bloquear');
+
+    Route::delete(
+        '/usuarios/{user:nickname}/bloquear',
+        [AmizadeController::class, 'desbloquear']
+    )->name('usuarios.desbloquear');
 
     Route::post(
         '/usuarios/{user:nickname}/amizade',
@@ -298,6 +378,11 @@ Route::middleware([
     )
         ->middleware('throttle:60,1')
         ->name('mensagens.store');
+
+    Route::delete(
+        '/mensagens/{mensagem}',
+        [MensagemController::class, 'destroy']
+    )->name('mensagens.destroy');
 
     Route::get(
         '/chat/atualizacoes',
@@ -386,10 +471,26 @@ Route::middleware('auth:admin')
             [AdminDenunciaController::class, 'negar']
         )->name('denuncias.negar');
 
-        Route::get(
-            '/noticias',
-            [AdminController::class, 'noticias']
-        )->name('noticias');
+        Route::get('/noticias', [AdminController::class, 'noticias'])
+            ->name('noticias');
+
+        Route::get('/noticias/nova', [AdminController::class, 'criarNoticia'])
+            ->name('noticias.create');
+
+        Route::post('/noticias', [AdminController::class, 'salvarNoticia'])
+            ->name('noticias.store');
+
+        Route::post('/noticias/imagem', [AdminController::class, 'uploadImagemNoticiaConteudo'])
+            ->name('noticias.imagem');
+
+        Route::get('/noticias/{noticia}/editar', [AdminController::class, 'editarNoticia'])
+            ->name('noticias.edit');
+
+        Route::patch('/noticias/{noticia}', [AdminController::class, 'atualizarNoticia'])
+            ->name('noticias.update');
+
+        Route::delete('/noticias/{noticia}', [AdminController::class, 'excluirNoticia'])
+            ->name('noticias.destroy');
 
         Route::post(
             '/usuarios/{user}/banir',

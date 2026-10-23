@@ -6196,3 +6196,42 @@ body {
         border-radius: 10px;
     }
 }
+
+.sidebar-password {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    border-radius: 5px;
+}
+
+.sidebar-password:hover,
+.sidebar-password:focus {
+    background-color: #650095;
+    color: white;
+}
+
+.settings-password-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settings-password-error {
+    display: block;
+    margin-top: 5px;
+    color: #ff9aa5;
+    font-size: 13px;
+}
+
+.squad-primary-button {
+    background-color: var(--squad-primary);
+    color: white;
+    border: none;
+}
+
+.squad-primary-button:hover,
+.squad-primary-button:focus {
+    background-color: var(--squad-primary-hover);
+    color: white;
+}

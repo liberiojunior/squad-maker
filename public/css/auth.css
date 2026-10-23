@@ -852,3 +852,76 @@
         justify-content: center;
     }
 }
+
+
+.email-verification-card {
+    text-align: center;
+}
+
+.email-verification-icon {
+    display: block;
+    margin-bottom: 12px;
+    color: var(--squad-accent);
+    font-size: 48px;
+}
+
+.email-verification-card strong {
+    color: white;
+}
+
+.email-verification-actions {
+    margin-top: 14px;
+}
+
+.email-verification-logout {
+    width: 100%;
+    padding: 0;
+    background: transparent;
+    border: none;
+    text-align: center;
+}
+
+.password-sent-card {
+    max-width: 500px;
+}
+
+.password-sent-icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 18px;
+    background-color: rgba(232, 59, 189, 0.14);
+    color: var(--squad-accent);
+    border: 1px solid rgba(232, 59, 189, 0.35);
+    border-radius: 16px;
+    font-size: 30px;
+}
+
+.password-sent-note {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0 0 20px;
+    padding: 11px 13px;
+    background-color: rgba(255, 255, 255, 0.06);
+    color: var(--squad-text-soft);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: left;
+}
+
+.password-sent-note i {
+    flex-shrink: 0;
+    color: var(--squad-accent);
+}
+
+.password-sent-button {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+}

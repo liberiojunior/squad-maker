@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -11,7 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 #[Hidden(['senha'])]
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
 
@@ -33,6 +35,7 @@ class User extends Authenticatable
         'senha',
         'google_id',
         'avatar',
+        'email_verified_at',
         'bio',
         'status_conta',
         'data_criacao',
@@ -47,11 +50,17 @@ class User extends Authenticatable
         'data_criacao' => 'datetime',
         'ultima_atividade' => 'datetime',
         'data_exclusao' => 'datetime',
+        'email_verified_at' => 'datetime',
     ];
 
     public function getAuthPassword()
     {
         return $this->senha;
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 
     public function generos()
@@ -158,6 +167,39 @@ class User extends Authenticatable
             'id_destinatario',
             'id_usuario'
         );
+    }
+
+    public function bloqueiosFeitos()
+    {
+        return $this->hasMany(
+            UsuarioBloqueio::class,
+            'id_bloqueador',
+            'id_usuario'
+        );
+    }
+
+    public function bloqueiosRecebidos()
+    {
+        return $this->hasMany(
+            UsuarioBloqueio::class,
+            'id_bloqueado',
+            'id_usuario'
+        );
+    }
+
+    public function temBloqueioCom(User $user): bool
+    {
+        return UsuarioBloqueio::where(function ($query) use ($user) {
+            $query
+                ->where('id_bloqueador', $this->id_usuario)
+                ->where('id_bloqueado', $user->id_usuario);
+        })
+            ->orWhere(function ($query) use ($user) {
+                $query
+                    ->where('id_bloqueador', $user->id_usuario)
+                    ->where('id_bloqueado', $this->id_usuario);
+            })
+            ->exists();
     }
 
     public function totalNotificacoesChat(): int

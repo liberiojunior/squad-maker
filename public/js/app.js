@@ -193,8 +193,14 @@ function iniciarAcoesAmizadePerfil() {
                     );
                 }
 
+                const modalElement = form.closest('.modal');
+
+                if (modalElement) {
+                    bootstrap.Modal.getInstance(modalElement)?.hide();
+                }
+
                 await atualizarAcoesAmizadePerfil();
-                mostrarAviso('success', data.message || 'Amizade atualizada.');
+                mostrarAviso('success', data.message || 'Ação concluída.');
             } catch (error) {
                 mostrarAviso(
                     'danger',

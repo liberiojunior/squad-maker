@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Amizade;
 use App\Models\Conversa;
 use App\Models\User;
+use App\Models\UsuarioBloqueio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -22,6 +23,12 @@ class ConversaController extends Controller
 
         if ($usuario->id_usuario === $user->id_usuario) {
             abort(404);
+        }
+
+        if ($usuario->temBloqueioCom($user)) {
+            throw ValidationException::withMessages([
+                'conversa' => 'Não é possível iniciar uma conversa com este usuário.',
+            ]);
         }
 
         $user->sincronizarStatusBanimento();
@@ -51,6 +58,24 @@ class ConversaController extends Controller
                 ->orderBy('id_usuario')
                 ->lockForUpdate()
                 ->get();
+
+            $bloqueado = UsuarioBloqueio::where(function ($query) use ($idUsuario1, $idUsuario2) {
+                $query
+                    ->where('id_bloqueador', $idUsuario1)
+                    ->where('id_bloqueado', $idUsuario2);
+            })
+                ->orWhere(function ($query) use ($idUsuario1, $idUsuario2) {
+                    $query
+                        ->where('id_bloqueador', $idUsuario2)
+                        ->where('id_bloqueado', $idUsuario1);
+                })
+                ->exists();
+
+            if ($bloqueado) {
+                throw ValidationException::withMessages([
+                    'conversa' => 'Não é possível iniciar uma conversa com este usuário.',
+                ]);
+            }
 
             $existente = Conversa::where('id_usuario_1', $idUsuario1)
                 ->where('id_usuario_2', $idUsuario2)
@@ -145,6 +170,7 @@ class ConversaController extends Controller
     private function dadosDaTela(User $usuario, ?Conversa $conversaAtual = null): array
     {
         $idUsuario = $usuario->id_usuario;
+        $idsBloqueados = $this->idsBloqueados($usuario);
 
         $solicitacoes = Amizade::with(['usuario1', 'usuario2'])
             ->where('status_amizade', 'pendente')
@@ -153,6 +179,11 @@ class ConversaController extends Controller
                 $query
                     ->where('id_usuario_1', $idUsuario)
                     ->orWhere('id_usuario_2', $idUsuario);
+            })
+            ->when($idsBloqueados, function ($query) use ($idsBloqueados) {
+                $query
+                    ->whereNotIn('id_usuario_1', $idsBloqueados)
+                    ->whereNotIn('id_usuario_2', $idsBloqueados);
             })
             ->orderByDesc('data_solicitacao')
             ->get()
@@ -203,6 +234,11 @@ class ConversaController extends Controller
                             });
                     });
             })
+            ->when($idsBloqueados, function ($query) use ($idsBloqueados) {
+                $query
+                    ->whereNotIn('id_usuario_1', $idsBloqueados)
+                    ->whereNotIn('id_usuario_2', $idsBloqueados);
+            })
             ->orderByRaw('ultima_mensagem_em IS NULL')
             ->orderByDesc('ultima_mensagem_em')
             ->orderByDesc('data_criacao')
@@ -229,6 +265,11 @@ class ConversaController extends Controller
                 $query
                     ->where('id_usuario_1', $idUsuario)
                     ->orWhere('id_usuario_2', $idUsuario);
+            })
+            ->when($idsBloqueados, function ($query) use ($idsBloqueados) {
+                $query
+                    ->whereNotIn('id_usuario_1', $idsBloqueados)
+                    ->whereNotIn('id_usuario_2', $idsBloqueados);
             })
             ->get()
             ->map(function (Amizade $amizade) use ($idUsuario) {
@@ -320,6 +361,7 @@ class ConversaController extends Controller
             $idUsuario2 = max($idUsuario, $outroUsuarioAtual->id_usuario);
 
             $podeEnviar = $outroUsuarioAtual->status_conta === 'ativo'
+                && ! $usuario->temBloqueioCom($outroUsuarioAtual)
                 && Amizade::where('id_usuario_1', $idUsuario1)
                     ->where('id_usuario_2', $idUsuario2)
                     ->where('status_amizade', 'aceita')
@@ -336,6 +378,22 @@ class ConversaController extends Controller
             'podeEnviar' => $podeEnviar,
             'dica' => $dica,
         ];
+    }
+
+    private function idsBloqueados(User $usuario): array
+    {
+        return UsuarioBloqueio::where('id_bloqueador', $usuario->id_usuario)
+            ->orWhere('id_bloqueado', $usuario->id_usuario)
+            ->get(['id_bloqueador', 'id_bloqueado'])
+            ->map(function (UsuarioBloqueio $bloqueio) use ($usuario) {
+                return (int) $bloqueio->id_bloqueador === (int) $usuario->id_usuario
+                    ? $bloqueio->id_bloqueado
+                    : $bloqueio->id_bloqueador;
+            })
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function ordenarUsuarios(User $usuario1, User $usuario2): array

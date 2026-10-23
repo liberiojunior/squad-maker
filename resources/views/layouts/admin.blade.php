@@ -32,7 +32,7 @@
 
     <link
         rel="stylesheet"
-        href="{{ asset('css/admin.css') }}"
+        href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}"
     >
 
 </head>
@@ -132,7 +132,7 @@
 
             <a
                 href="{{ route('admin.noticias') }}"
-                class="{{ request()->routeIs('admin.noticias') ? 'active' : '' }}"
+                class="{{ request()->routeIs('admin.noticias*') ? 'active' : '' }}"
             >
                 Notícias
             </a>

@@ -51,7 +51,11 @@
             <i class="bi bi-person-circle"></i>
         </a>
 
-        <a href="#" class="sidebar-item" title="Notícias">
+        <a
+            href="{{ route('noticias.index') }}"
+            class="sidebar-item {{ request()->routeIs('noticias.*') ? 'active' : '' }}"
+            title="Notícias"
+        >
             <i class="bi bi-newspaper"></i>
         </a>
 
@@ -121,6 +125,16 @@
 
                     <button
                         type="button"
+                        class="dropdown-item sidebar-password"
+                        data-bs-toggle="modal"
+                        data-bs-target="#changePasswordModal"
+                    >
+                        <i class="bi bi-key-fill"></i>
+                        Trocar senha
+                    </button>
+
+                    <button
+                        type="button"
                         class="dropdown-item sidebar-delete-account"
                         data-bs-toggle="modal"
                         data-bs-target="#deleteAccountModal"
@@ -144,8 +158,116 @@
 </aside>
 
 <main class="internal-content">
+    @if (session('settings_success'))
+        <div class="alert alert-success">
+            {{ session('settings_success') }}
+        </div>
+    @endif
+
     @yield('content')
 </main>
+
+<div
+    class="modal fade"
+    id="changePasswordModal"
+    tabindex="-1"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content squad-modal account-delete-modal">
+            <form method="POST" action="{{ route('senha.update') }}">
+                @csrf
+                @method('PATCH')
+
+                <div class="modal-header">
+                    <h2 class="modal-title">Trocar senha</h2>
+
+                    <button
+                        type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                        aria-label="Fechar"
+                    ></button>
+                </div>
+
+                <div class="modal-body settings-password-body">
+                    <div>
+                        <label for="currentPassword" class="form-label">
+                            Senha atual
+                        </label>
+
+                        <input
+                            type="password"
+                            name="current_password"
+                            id="currentPassword"
+                            class="form-control"
+                            autocomplete="current-password"
+                            required
+                        >
+
+                        @error('current_password', 'updatePassword')
+                            <span class="settings-password-error">
+                                {{ $message }}
+                            </span>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="newPassword" class="form-label">
+                            Nova senha
+                        </label>
+
+                        <input
+                            type="password"
+                            name="password"
+                            id="newPassword"
+                            class="form-control"
+                            autocomplete="new-password"
+                            minlength="8"
+                            required
+                        >
+
+                        @error('password', 'updatePassword')
+                            <span class="settings-password-error">
+                                {{ $message }}
+                            </span>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="newPasswordConfirmation" class="form-label">
+                            Confirmar nova senha
+                        </label>
+
+                        <input
+                            type="password"
+                            name="password_confirmation"
+                            id="newPasswordConfirmation"
+                            class="form-control"
+                            autocomplete="new-password"
+                            minlength="8"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button type="submit" class="btn squad-primary-button">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <div
     class="modal fade"
@@ -227,6 +349,16 @@
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js">
 </script>
+
+@if ($errors->updatePassword->any())
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        bootstrap.Modal.getOrCreateInstance(
+            document.getElementById('changePasswordModal')
+        ).show();
+    });
+</script>
+@endif
 
 @vite('resources/js/realtime.js')
 <script src="{{ asset('js/app.js') }}"></script>

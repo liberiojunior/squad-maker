@@ -32,6 +32,7 @@ class MensagemEnviada implements ShouldBroadcastNow
             'id_destinatario' => $mensagem->id_destinatario,
             'data_envio' => $mensagem->data_envio->toIso8601String(),
             'hora' => $mensagem->data_envio->format('H:i'),
+            'removida_em' => null,
         ];
         $this->remetente = [
             'id_usuario' => $remetente->id_usuario,

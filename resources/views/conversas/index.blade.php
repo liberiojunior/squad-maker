@@ -100,6 +100,7 @@
                                 data-chat-search="{{ mb_strtolower($item['usuario']->nickname) }}"
                                 data-chat-conversation-user="{{ $item['usuario']->id_usuario }}"
                                 data-conversation-id="{{ $item['conversa']->id_conversa }}"
+                                data-last-message-id="{{ $item['ultima_mensagem']?->id_mensagem }}"
                             >
                                 <span class="chat-avatar-wrap">
                                     <img
@@ -115,7 +116,13 @@
 
                                 <span class="chat-conversation-copy">
                                     <strong>{{ $item['usuario']->nickname }}</strong>
-                                    <small class="chat-conversation-preview">{{ $item['ultima_mensagem']?->mensagem ?: 'Conversa iniciada' }}</small>
+                                    <small class="chat-conversation-preview">
+                                        @if ($item['ultima_mensagem']?->removida_em)
+                                            Mensagem removida
+                                        @else
+                                            {{ $item['ultima_mensagem']?->mensagem ?: 'Conversa iniciada' }}
+                                        @endif
+                                    </small>
                                 </span>
 
                                 @if ($item['nao_lidas'] > 0)
@@ -256,14 +263,31 @@
                     <div class="chat-messages-content" id="chatMessagesContent">
                     @forelse ($conversaAtual->mensagens as $mensagem)
                         <div
-                            class="chat-message-row {{ $mensagem->id_remetente === auth()->id() ? 'mine' : 'theirs' }}"
+                            class="chat-message-row {{ $mensagem->id_remetente === auth()->id() ? 'mine' : 'theirs' }} {{ $mensagem->removida_em ? 'is-removed' : '' }}"
                             data-message-id="{{ $mensagem->id_mensagem }}"
                         >
                             <div class="chat-message-bubble">
-                                <p>{{ $mensagem->mensagem }}</p>
-                                <time datetime="{{ $mensagem->data_envio->toIso8601String() }}">
-                                    {{ $mensagem->data_envio->format('H:i') }}
-                                </time>
+                                <p>{{ $mensagem->removida_em ? 'Mensagem removida' : $mensagem->mensagem }}</p>
+
+                                <div class="chat-message-meta">
+                                    <time datetime="{{ $mensagem->data_envio->toIso8601String() }}">
+                                        {{ $mensagem->data_envio->format('H:i') }}
+                                    </time>
+
+                                    @if ($mensagem->id_remetente === auth()->id() && $mensagem->podeCancelarEnvio())
+                                        <button
+                                            type="button"
+                                            class="chat-message-delete"
+                                            data-message-delete
+                                            data-delete-url="{{ route('mensagens.destroy', $mensagem) }}"
+                                            data-delete-expires-at="{{ $mensagem->cancelamentoExpiraEm()?->toIso8601String() }}"
+                                            title="Cancelar envio"
+                                            aria-label="Cancelar envio"
+                                        >
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     @empty
@@ -402,6 +426,53 @@
     @endif
 
     @if ($conversaAtual && $outroUsuarioAtual)
+        <div class="modal fade" id="deleteMessageModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content squad-modal chat-report-modal">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Cancelar envio</h2>
+
+                        <button
+                            type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"
+                            aria-label="Fechar"
+                        ></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <p class="mb-0">
+                            Você pode cancelar o envio por até 3 minutos. A mensagem continuará registrada para fins de segurança e moderação.
+                        </p>
+
+                        <div
+                            class="chat-message-delete-error"
+                            id="deleteMessageError"
+                            hidden
+                        ></div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                        >
+                            Continuar conversa
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn btn-danger"
+                            id="deleteMessageConfirm"
+                        >
+                            Cancelar envio
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="modal fade" id="reportConversationModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content squad-modal chat-report-modal">

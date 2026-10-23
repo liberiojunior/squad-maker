@@ -7,10 +7,14 @@ use App\Models\Genero;
 use App\Models\Jogo;
 use App\Models\Plataforma;
 use App\Models\User;
+use App\Models\UsuarioBloqueio;
 use App\Support\NivelProficiencia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -545,6 +549,47 @@ class ProfileController extends Controller
             );
     }
 
+    public function updatePassword(Request $request)
+    {
+        $user = $request->user();
+
+        $validator = Validator::make($request->all(), [
+            'current_password' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) use ($user) {
+                    if (! Hash::check($value, $user->senha)) {
+                        $fail('A senha atual está incorreta.');
+                    }
+                },
+            ],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'different:current_password',
+            ],
+        ], [
+            'current_password.required' => 'Informe sua senha atual.',
+            'password.required' => 'Informe a nova senha.',
+            'password.min' => 'A nova senha deve ter pelo menos 8 caracteres.',
+            'password.confirmed' => 'As novas senhas não coincidem.',
+            'password.different' => 'A nova senha deve ser diferente da senha atual.',
+        ]);
+
+        $data = $validator->validateWithBag('updatePassword');
+
+        $user->senha = Hash::make($data['password']);
+        $user->remember_token = Str::random(60);
+        $user->save();
+
+        return back()->with(
+            'settings_success',
+            'Senha alterada com sucesso.'
+        );
+    }
+
     public function destroy(Request $request)
     {
         $user = $request->user();
@@ -710,13 +755,37 @@ class ProfileController extends Controller
         $idUsuario1 = min($usuarioAtual->id_usuario, $user->id_usuario);
         $idUsuario2 = max($usuarioAtual->id_usuario, $user->id_usuario);
 
+        $bloqueios = UsuarioBloqueio::where(function ($query) use ($usuarioAtual, $user) {
+            $query
+                ->where('id_bloqueador', $usuarioAtual->id_usuario)
+                ->where('id_bloqueado', $user->id_usuario);
+        })
+            ->orWhere(function ($query) use ($usuarioAtual, $user) {
+                $query
+                    ->where('id_bloqueador', $user->id_usuario)
+                    ->where('id_bloqueado', $usuarioAtual->id_usuario);
+            })
+            ->get();
+
+        $bloqueadoPorMim = $bloqueios->contains(
+            fn (UsuarioBloqueio $bloqueio) =>
+                (int) $bloqueio->id_bloqueador === (int) $usuarioAtual->id_usuario
+        );
+
+        $bloqueadoPorEle = $bloqueios->contains(
+            fn (UsuarioBloqueio $bloqueio) =>
+                (int) $bloqueio->id_bloqueador === (int) $user->id_usuario
+        );
+
         $amizade = Amizade::where('id_usuario_1', $idUsuario1)
             ->where('id_usuario_2', $idUsuario2)
             ->first();
 
         $estadoAmizade = 'nenhuma';
 
-        if ($amizade?->status_amizade === 'aceita') {
+        if ($bloqueadoPorMim || $bloqueadoPorEle) {
+            $estadoAmizade = 'bloqueada';
+        } elseif ($amizade?->status_amizade === 'aceita') {
             $estadoAmizade = 'amigos';
         } elseif ($amizade?->status_amizade === 'pendente') {
             $estadoAmizade = $amizade->id_solicitante === $usuarioAtual->id_usuario
@@ -776,6 +845,8 @@ class ProfileController extends Controller
             'contaSuspensa' => false,
             'amizade' => $amizade,
             'estadoAmizade' => $estadoAmizade,
+            'bloqueadoPorMim' => $bloqueadoPorMim,
+            'bloqueadoPorEle' => $bloqueadoPorEle,
             'posts' => $posts,
             'totalPosts' => $totalPosts,
             'podeReagir' => $podeReagir,

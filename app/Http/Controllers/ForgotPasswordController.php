@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Symfony\Component\Mailer\Exception\UnsupportedSchemeException;
 
 class ForgotPasswordController extends Controller
 {
@@ -21,20 +23,43 @@ class ForgotPasswordController extends Controller
             'email.email' => 'Informe um e-mail válido.',
         ]);
 
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        try {
+            $status = Password::sendResetLink(
+                $request->only('email')
+            );
+        } catch (TransportExceptionInterface|UnsupportedSchemeException $exception) {
+            report($exception);
+
+            return back()
+                ->withErrors([
+                    'email' => 'Não foi possível enviar o e-mail agora. Tente novamente em alguns instantes.',
+                ])
+                ->onlyInput('email');
+        }
 
         if ($status === Password::RESET_LINK_SENT) {
-            return back()->with(
-                'status',
-                'Enviamos um link de recuperação para o seu e-mail.'
-            );
+            return redirect()->route('password.sent');
+        }
+
+        if ($status === Password::INVALID_USER) {
+            return back()
+                ->withErrors([
+                    'email' => 'Esse e-mail não está em nosso cadastro.',
+                ])
+                ->onlyInput('email');
+        }
+
+        if ($status === Password::RESET_THROTTLED) {
+            return back()
+                ->withErrors([
+                    'email' => 'Aguarde um pouco antes de solicitar outro link.',
+                ])
+                ->onlyInput('email');
         }
 
         return back()
             ->withErrors([
-                'email' => 'Não foi possível enviar o link para este e-mail.',
+                'email' => 'Não foi possível enviar o link de recuperação agora.',
             ])
             ->onlyInput('email');
     }

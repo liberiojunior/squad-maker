@@ -71,75 +71,114 @@
 
                 <div class="profile-main-info">
                     <section class="profile-info-card profile-public-info-card">
-                        <div class="profile-social-actions" aria-label="Ações de amizade">
-                            @if ($estadoAmizade === 'nenhuma')
-                                <form method="POST" action="{{ route('amizades.enviar', $user) }}" data-profile-friendship-form>
-                                    @csrf
-
-                                    <button type="submit" class="profile-social-action" title="Adicionar amigo"
-                                            aria-label="Adicionar amigo">
-                                        <i class="bi bi-person-plus-fill"></i>
-                                    </button>
-                                </form>
-                            @elseif ($estadoAmizade === 'enviada')
-                                <span class="profile-social-action profile-social-status" title="Solicitação enviada"
-                                      aria-label="Solicitação enviada">
-                                    <i class="bi bi-clock-fill"></i>
-                                </span>
-
-                                <form method="POST" action="{{ route('amizades.cancelar', $amizade) }}" data-profile-friendship-form>
+                        <div class="profile-social-actions" aria-label="Ações do perfil">
+                            @if ($bloqueadoPorMim)
+                                <form
+                                    method="POST"
+                                    action="{{ route('usuarios.desbloquear', $user) }}"
+                                    data-profile-friendship-form
+                                >
                                     @csrf
                                     @method('DELETE')
 
-                                    <button type="submit" class="profile-social-action profile-social-action-danger"
-                                            title="Cancelar solicitação" aria-label="Cancelar solicitação">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </form>
-                            @elseif ($estadoAmizade === 'recebida')
-                                <form method="POST" action="{{ route('amizades.aceitar', $amizade) }}" data-profile-friendship-form>
-                                    @csrf
-                                    @method('PATCH')
-
-                                    <button type="submit" class="profile-social-action profile-social-action-success"
-                                            title="Aceitar solicitação" aria-label="Aceitar solicitação">
+                                    <button
+                                        type="submit"
+                                        class="profile-social-action profile-social-action-block"
+                                        title="Desbloquear usuário"
+                                        aria-label="Desbloquear usuário"
+                                    >
                                         <i class="bi bi-person-check-fill"></i>
                                     </button>
                                 </form>
-
-                                <form method="POST" action="{{ route('amizades.recusar', $amizade) }}" data-profile-friendship-form>
-                                    @csrf
-                                    @method('DELETE')
-
-                                    <button type="submit" class="profile-social-action profile-social-action-danger"
-                                            title="Recusar solicitação" aria-label="Recusar solicitação">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </form>
-                            @elseif ($estadoAmizade === 'amigos')
-                                <form method="POST" action="{{ route('conversas.iniciar', $user) }}">
-                                    @csrf
-
-                                    <button type="submit" class="profile-social-action profile-social-action-chat"
-                                            title="Conversar" aria-label="Conversar">
-                                        <i class="bi bi-chat-dots-fill"></i>
-                                    </button>
-                                </form>
-
-                                <span class="profile-social-action profile-social-status profile-social-status-friends"
-                                      title="Amigos" aria-label="Amigos">
-                                    <i class="bi bi-people-fill"></i>
+                            @elseif ($bloqueadoPorEle)
+                                <span
+                                    class="profile-social-action profile-social-status profile-social-action-block"
+                                    title="Interações indisponíveis"
+                                    aria-label="Interações indisponíveis"
+                                >
+                                    <i class="bi bi-person-slash"></i>
                                 </span>
+                            @else
+                                @if ($estadoAmizade === 'nenhuma')
+                                    <form method="POST" action="{{ route('amizades.enviar', $user) }}" data-profile-friendship-form>
+                                        @csrf
 
-                                <form method="POST" action="{{ route('amizades.remover', $amizade) }}" data-profile-friendship-form>
-                                    @csrf
-                                    @method('DELETE')
+                                        <button type="submit" class="profile-social-action" title="Adicionar amigo"
+                                                aria-label="Adicionar amigo">
+                                            <i class="bi bi-person-plus-fill"></i>
+                                        </button>
+                                    </form>
+                                @elseif ($estadoAmizade === 'enviada')
+                                    <span class="profile-social-action profile-social-status" title="Solicitação enviada"
+                                          aria-label="Solicitação enviada">
+                                        <i class="bi bi-clock-fill"></i>
+                                    </span>
 
-                                    <button type="submit" class="profile-social-action profile-social-action-danger"
-                                            title="Remover amizade" aria-label="Remover amizade">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </form>
+                                    <form method="POST" action="{{ route('amizades.cancelar', $amizade) }}" data-profile-friendship-form>
+                                        @csrf
+                                        @method('DELETE')
+
+                                        <button type="submit" class="profile-social-action profile-social-action-danger"
+                                                title="Cancelar solicitação" aria-label="Cancelar solicitação">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
+                                @elseif ($estadoAmizade === 'recebida')
+                                    <form method="POST" action="{{ route('amizades.aceitar', $amizade) }}" data-profile-friendship-form>
+                                        @csrf
+                                        @method('PATCH')
+
+                                        <button type="submit" class="profile-social-action profile-social-action-success"
+                                                title="Aceitar solicitação" aria-label="Aceitar solicitação">
+                                            <i class="bi bi-person-check-fill"></i>
+                                        </button>
+                                    </form>
+
+                                    <form method="POST" action="{{ route('amizades.recusar', $amizade) }}" data-profile-friendship-form>
+                                        @csrf
+                                        @method('DELETE')
+
+                                        <button type="submit" class="profile-social-action profile-social-action-danger"
+                                                title="Recusar solicitação" aria-label="Recusar solicitação">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
+                                @elseif ($estadoAmizade === 'amigos')
+                                    <form method="POST" action="{{ route('conversas.iniciar', $user) }}">
+                                        @csrf
+
+                                        <button type="submit" class="profile-social-action profile-social-action-chat"
+                                                title="Conversar" aria-label="Conversar">
+                                            <i class="bi bi-chat-dots-fill"></i>
+                                        </button>
+                                    </form>
+
+                                    <span class="profile-social-action profile-social-status profile-social-status-friends"
+                                          title="Amigos" aria-label="Amigos">
+                                        <i class="bi bi-people-fill"></i>
+                                    </span>
+
+                                    <form method="POST" action="{{ route('amizades.remover', $amizade) }}" data-profile-friendship-form>
+                                        @csrf
+                                        @method('DELETE')
+
+                                        <button type="submit" class="profile-social-action profile-social-action-danger"
+                                                title="Remover amizade" aria-label="Remover amizade">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
+                                @endif
+
+                                <button
+                                    type="button"
+                                    class="profile-social-action profile-social-action-block"
+                                    title="Bloquear usuário"
+                                    aria-label="Bloquear usuário"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#blockUserModal"
+                                >
+                                    <i class="bi bi-person-slash"></i>
+                                </button>
                             @endif
 
                             <button type="button" class="profile-social-action profile-social-action-report" title="Denunciar perfil" aria-label="Denunciar perfil" data-bs-toggle="modal" data-bs-target="#reportProfileModal">
@@ -289,6 +328,53 @@
     </div>
 
     @if (! $contaSuspensa)
+        @if (! $bloqueadoPorMim && ! $bloqueadoPorEle)
+            <div class="modal fade" id="blockUserModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content squad-modal profile-report-modal">
+                        <form
+                            method="POST"
+                            action="{{ route('usuarios.bloquear', $user) }}"
+                            data-profile-friendship-form
+                        >
+                            @csrf
+
+                            <div class="modal-header">
+                                <h2 class="modal-title">Bloquear usuário</h2>
+
+                                <button
+                                    type="button"
+                                    class="btn-close btn-close-white"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Fechar"
+                                ></button>
+                            </div>
+
+                            <div class="modal-body">
+                                <p class="mb-0">
+                                    {{ $user->nickname }} não poderá enviar solicitações de amizade nem mensagens para você. Uma amizade existente será removida.
+                                </p>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    data-bs-dismiss="modal"
+                                >
+                                    Cancelar
+                                </button>
+
+                                <button type="submit" class="btn btn-danger">
+                                    Bloquear
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="modal fade" id="reportProfileModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content squad-modal profile-report-modal">

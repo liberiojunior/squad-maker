@@ -4720,3 +4720,12 @@ button.profile-post-modal-reaction:focus-visible,
     color: white;
     border-color: var(--squad-primary-hover);
 }
+
+.profile-social-action-block {
+    color: #ff9aa5;
+}
+
+button.profile-social-action-block:hover,
+button.profile-social-action-block:focus {
+    color: #ffb5bd;
+}

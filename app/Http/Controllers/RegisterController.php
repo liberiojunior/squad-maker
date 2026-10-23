@@ -157,10 +157,24 @@ class RegisterController extends Controller
         $user->status_conta = 'ativo';
 
         $user->save();
+
         Auth::login($user);
 
         $request->session()->regenerate();
 
-        return redirect()->route('cadastro.jogos');
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->route('verification.notice')
+                ->with(
+                    'error',
+                    'Não foi possível enviar o e-mail agora. Use a opção de reenviar em alguns instantes.'
+                );
+        }
+
+        return redirect()->route('verification.notice');
     }
 }

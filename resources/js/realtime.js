@@ -73,6 +73,18 @@ if (idUsuario > 0 && key) {
                 detail: evento,
             }));
         })
+        .listen('.mensagem.removida', function(evento) {
+            if (
+                Number(evento.id_destinatario) === idUsuario
+                && evento.notificacoes_destinatario !== undefined
+            ) {
+                atualizarBadgeChat(evento.notificacoes_destinatario);
+            }
+
+            window.dispatchEvent(new CustomEvent('squad:mensagem-removida', {
+                detail: evento,
+            }));
+        })
         .listen('.amizade.solicitada', function(evento) {
             atualizarBadgeChat(evento.notificacoes);
 

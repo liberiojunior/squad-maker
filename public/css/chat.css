@@ -553,7 +553,10 @@
 }
 
 .chat-message-bubble {
-    max-width: min(72%, 680px);
+    width: fit-content;
+    min-width: 0;
+    max-width: min(62%, 560px);
+    flex: 0 1 auto;
     padding: 9px 11px 6px;
     background-color: #f1edf2;
     color: #1e1622;
@@ -571,9 +574,16 @@
     overflow-wrap: anywhere;
 }
 
+.chat-message-meta {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 3px;
+    margin-top: 4px;
+}
+
 .chat-message-bubble time {
     display: block;
-    margin-top: 4px;
     color: #716776;
     font-size: 10px;
     text-align: right;
@@ -945,5 +955,59 @@
     .chat-send-button {
         width: 42px;
         height: 42px;
+    }
+}
+
+.chat-message-delete {
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background: transparent;
+    color: #8b7f90;
+    border: none;
+    border-radius: 50%;
+    opacity: 0;
+    font-size: 10px;
+    line-height: 1;
+    transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.chat-message-row.mine:hover .chat-message-delete,
+.chat-message-delete:focus-visible {
+    opacity: 1;
+}
+
+.chat-message-delete:hover,
+.chat-message-delete:focus-visible {
+    background-color: rgba(95, 83, 101, 0.12);
+    color: #c6384f;
+    outline: none;
+}
+
+.chat-message-row.is-removed .chat-message-bubble {
+    background-color: rgba(217, 196, 229, 0.72);
+    color: #5f5365;
+    font-style: italic;
+}
+
+.chat-message-row.theirs.is-removed .chat-message-bubble {
+    background-color: rgba(241, 237, 242, 0.82);
+}
+
+.chat-message-delete-error {
+    margin-top: 12px;
+    padding: 8px 10px;
+    background-color: rgba(220, 53, 69, 0.14);
+    color: #ffb2ba;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+@media (max-width: 700px) {
+    .chat-message-delete {
+        opacity: 0.72;
     }
 }
