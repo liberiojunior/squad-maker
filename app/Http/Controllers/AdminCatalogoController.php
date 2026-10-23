@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Genero;
 use App\Models\Plataforma;
+use App\Support\CloudinaryMedia;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
 use App\Models\Jogo;
 use App\Models\User;
@@ -258,40 +258,17 @@ class AdminCatalogoController extends Controller
         );
     }
 
-    private function salvarIcone(
-        UploadedFile $file
-    ): string {
-        $nome =
-            'plataforma_'
-            . uniqid()
-            . '.'
-            . $file->getClientOriginalExtension();
-
-        $file->move(
-            public_path('uploads/plataformas'),
-            $nome
+    private function salvarIcone(UploadedFile $file): string
+    {
+        return CloudinaryMedia::upload(
+            $file,
+            'squadmaker/plataformas',
+            'plataforma'
         );
-
-        return '/uploads/plataformas/' . $nome;
     }
 
-    private function excluirIcone(
-        ?string $icone
-    ): void {
-        if (
-            ! $icone
-            || ! str_starts_with(
-                $icone,
-                '/uploads/plataformas/'
-            )
-        ) {
-            return;
-        }
-
-        File::delete(
-            public_path(
-                ltrim($icone, '/')
-            )
-        );
+    private function excluirIcone(?string $icone): void
+    {
+        CloudinaryMedia::delete($icone);
     }
 }

@@ -4,6 +4,7 @@
 <head>
 
     <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/daqcpj88/image/upload/v1792785349/favicon.ico">
 
     <meta
         name="viewport"

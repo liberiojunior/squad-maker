@@ -1,0 +1,16 @@
+.git
+.github
+.idea
+.env
+.env.*
+node_modules
+vendor
+public/build
+public/uploads
+storage/logs/*
+storage/inertia-devtools
+bootstrap/cache/*
+tests
+*.zip
+*.sql
+*.log

@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Amizade;
 use App\Models\Post;
 use App\Models\User;
+use App\Support\CloudinaryMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Throwable;
 
 class PostController extends Controller
@@ -132,16 +132,11 @@ class PostController extends Controller
         }
 
         if ($arquivo) {
-            $pasta = public_path('uploads/posts');
-
-            if (! is_dir($pasta)) {
-                mkdir($pasta, 0755, true);
-            }
-
-            $extensao = strtolower($arquivo->extension());
-            $nomeArquivo = Str::uuid() . '.' . $extensao;
-            $arquivo->move($pasta, $nomeArquivo);
-            $caminho = '/uploads/posts/' . $nomeArquivo;
+            $caminho = CloudinaryMedia::upload(
+                $arquivo,
+                'squadmaker/posts',
+                'usuario_' . $usuario->id_usuario
+            );
         }
 
         try {
@@ -351,14 +346,6 @@ class PostController extends Controller
 
     private function removerArquivoPublico(?string $caminho): void
     {
-        if (! $caminho || ! str_starts_with($caminho, '/uploads/posts/')) {
-            return;
-        }
-
-        $arquivo = public_path(ltrim($caminho, '/'));
-
-        if (is_file($arquivo)) {
-            unlink($arquivo);
-        }
+        CloudinaryMedia::delete($caminho);
     }
 }

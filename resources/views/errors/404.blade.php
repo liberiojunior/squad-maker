@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/daqcpj88/image/upload/v1792785349/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Página não encontrada - Squad Maker</title>

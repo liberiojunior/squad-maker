@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Denuncia;
+use App\Support\CloudinaryMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -88,7 +89,15 @@ class AdminDenunciaController extends Controller
             default => null,
         };
 
-        if (! $caminho || ! Storage::disk('local')->exists($caminho)) {
+        if (! $caminho) {
+            abort(404);
+        }
+
+        if (CloudinaryMedia::isManagedUrl($caminho)) {
+            return redirect()->away($caminho);
+        }
+
+        if (! Storage::disk('local')->exists($caminho)) {
             abort(404);
         }
 

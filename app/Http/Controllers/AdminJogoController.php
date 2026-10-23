@@ -6,10 +6,10 @@ use App\Models\Genero;
 use App\Models\Jogo;
 use App\Models\ModoJogo;
 use App\Services\SteamService;
+use App\Support\CloudinaryMedia;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 
 class AdminJogoController extends Controller
 {
@@ -283,7 +283,7 @@ class AdminJogoController extends Controller
                 'Informe a data de lançamento.',
         ]);
 
-        $capa = $this->salvarCapaLocal(
+        $capa = $this->salvarCapa(
             $request->file('capa')
         );
 
@@ -479,11 +479,11 @@ class AdminJogoController extends Controller
         if ($request->hasFile('capa')) {
             $capaAnterior = $jogo->capa;
 
-            $jogo->capa = $this->salvarCapaLocal(
+            $jogo->capa = $this->salvarCapa(
                 $request->file('capa')
             );
 
-            $this->excluirCapaLocal($capaAnterior);
+            $this->excluirCapa($capaAnterior);
         }
 
         DB::transaction(
@@ -521,7 +521,7 @@ class AdminJogoController extends Controller
             $jogo->delete();
         });
 
-        $this->excluirCapaLocal($capa);
+        $this->excluirCapa($capa);
 
         return back()->with(
             'success',
@@ -529,43 +529,18 @@ class AdminJogoController extends Controller
         );
     }
 
-    private function salvarCapaLocal(
-        UploadedFile $file
-    ): string
+    private function salvarCapa(UploadedFile $file): string
     {
-        $fileName =
-            'jogo_'
-            . uniqid()
-            . '.'
-            . $file->getClientOriginalExtension();
-
-        $file->move(
-            public_path('uploads/jogos'),
-            $fileName
+        return CloudinaryMedia::upload(
+            $file,
+            'squadmaker/jogos',
+            'jogo'
         );
-
-        return '/uploads/jogos/' . $fileName;
     }
 
-    private function excluirCapaLocal(
-        ?string $capa
-    ): void
+    private function excluirCapa(?string $capa): void
     {
-        if (
-            !$capa
-            || !str_starts_with(
-                $capa,
-                '/uploads/jogos/'
-            )
-        ) {
-            return;
-        }
-
-        File::delete(
-            public_path(
-                ltrim($capa, '/')
-            )
-        );
+        CloudinaryMedia::delete($capa);
     }
 
     private function importarJogoSteam(

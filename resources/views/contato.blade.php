@@ -18,9 +18,14 @@
                         <h1>Contato</h1>
 
                         <p>
-                            Tem alguma sugestão ou crítica sobre o projeto?
-                            Entre em contato com a equipe do Squad Maker e envie
-                            sua mensagem para a equipe através do formulário ao lado.
+                            Tem alguma sugestão, dúvida ou crítica sobre o projeto?
+                            Envie uma mensagem para a equipe do Squad Maker.
+                            A resposta será enviada para o e-mail informado no formulário.
+                        </p>
+
+                        <p>
+                            Você também pode falar com a equipe pelo e-mail
+                            <strong>suportesquadmaker@gmail.com</strong>.
                         </p>
                     </div>
 
@@ -30,7 +35,24 @@
                             Envie-nos uma mensagem!
                         </h2>
 
-                        <form class="contact-form">
+                        @if (session('status'))
+                            <div class="alert alert-success" role="status">
+                                {{ session('status') }}
+                            </div>
+                        @endif
+
+                        @if ($errors->has('contato'))
+                            <div class="alert alert-danger" role="alert">
+                                {{ $errors->first('contato') }}
+                            </div>
+                        @endif
+
+                        <form
+                            class="contact-form"
+                            method="POST"
+                            action="{{ route('contato.enviar') }}"
+                        >
+                            @csrf
 
                             <div>
                                 <label for="nome" class="form-label">
@@ -41,8 +63,17 @@
                                     type="text"
                                     id="nome"
                                     name="nome"
-                                    class="form-control"
+                                    class="form-control @error('nome') is-invalid @enderror"
+                                    value="{{ old('nome') }}"
+                                    maxlength="100"
+                                    required
                                 >
+
+                                @error('nome')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
                             </div>
 
                             <div>
@@ -54,8 +85,17 @@
                                     type="email"
                                     id="email"
                                     name="email"
-                                    class="form-control"
+                                    class="form-control @error('email') is-invalid @enderror"
+                                    value="{{ old('email') }}"
+                                    maxlength="150"
+                                    required
                                 >
+
+                                @error('email')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
                             </div>
 
                             <div>
@@ -66,13 +106,21 @@
                                 <textarea
                                     id="mensagem"
                                     name="mensagem"
-                                    class="form-control"
+                                    class="form-control @error('mensagem') is-invalid @enderror"
                                     rows="5"
-                                ></textarea>
+                                    maxlength="3000"
+                                    required
+                                >{{ old('mensagem') }}</textarea>
+
+                                @error('mensagem')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
                             </div>
 
                             <button
-                                type="button"
+                                type="submit"
                                 class="btn contact-button"
                             >
                                 Enviar

@@ -8,6 +8,7 @@ use App\Models\Jogo;
 use App\Models\Plataforma;
 use App\Models\User;
 use App\Models\UsuarioBloqueio;
+use App\Support\CloudinaryMedia;
 use App\Support\NivelProficiencia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -132,27 +133,15 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
-        $file = $request->file('avatar');
-        $pasta = public_path('uploads/avatars');
         $avatarAnterior = $user->avatar;
-
-        if (!is_dir($pasta)) {
-            mkdir($pasta, 0755, true);
-        }
-
-        $fileName = 'avatar_' . $user->id_usuario . '_' . time() . '.' . $file->getClientOriginalExtension();
-        $file->move($pasta, $fileName);
-
-        $user->avatar = '/uploads/avatars/' . $fileName;
+        $user->avatar = CloudinaryMedia::upload(
+            $request->file('avatar'),
+            'squadmaker/avatars',
+            'usuario_' . $user->id_usuario
+        );
         $user->save();
 
-        if ($avatarAnterior && str_starts_with($avatarAnterior, '/uploads/avatars/')) {
-            $arquivoAnterior = public_path(ltrim($avatarAnterior, '/'));
-
-            if (is_file($arquivoAnterior)) {
-                unlink($arquivoAnterior);
-            }
-        }
+        CloudinaryMedia::delete($avatarAnterior);
 
         return redirect()->route('perfil')->with('success', 'Foto atualizada.');
     }

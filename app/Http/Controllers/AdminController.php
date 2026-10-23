@@ -6,12 +6,12 @@ use App\Models\Banimento;
 use App\Models\Denuncia;
 use App\Models\Noticia;
 use App\Models\User;
+use App\Support\CloudinaryMedia;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -432,9 +432,10 @@ class AdminController extends Controller
 
                 if ($tag === 'img') {
                     $src = trim($this->atributoHtmlNoticia($atributos, 'src'));
-                    $caminho = parse_url($src, PHP_URL_PATH) ?: '';
+                    $imagemPermitida = CloudinaryMedia::isManagedUrl($src)
+                        || str_starts_with($src, '/uploads/noticias/conteudo/');
 
-                    if (! str_starts_with($caminho, '/uploads/noticias/conteudo/')) {
+                    if (! $imagemPermitida) {
                         return '';
                     }
 
@@ -446,7 +447,7 @@ class AdminController extends Controller
                     }
 
                     return '<img src="'
-                        . htmlspecialchars($caminho, ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                        . htmlspecialchars($src, ENT_QUOTES | ENT_HTML5, 'UTF-8')
                         . '" alt="'
                         . htmlspecialchars($alt, ENT_QUOTES | ENT_HTML5, 'UTF-8')
                         . '" data-size="'
@@ -533,24 +534,20 @@ class AdminController extends Controller
 
     private function salvarImagemNoticia(UploadedFile $imagem): string
     {
-        $pasta = public_path('uploads/noticias');
-        File::ensureDirectoryExists($pasta);
-
-        $nome = 'noticia_' . uniqid() . '.' . $imagem->getClientOriginalExtension();
-        $imagem->move($pasta, $nome);
-
-        return '/uploads/noticias/' . $nome;
+        return CloudinaryMedia::upload(
+            $imagem,
+            'squadmaker/noticias/capas',
+            'noticia'
+        );
     }
 
     private function salvarImagemConteudoNoticia(UploadedFile $imagem): string
     {
-        $pasta = public_path('uploads/noticias/conteudo');
-        File::ensureDirectoryExists($pasta);
-
-        $nome = 'conteudo_' . uniqid() . '.' . $imagem->getClientOriginalExtension();
-        $imagem->move($pasta, $nome);
-
-        return '/uploads/noticias/conteudo/' . $nome;
+        return CloudinaryMedia::upload(
+            $imagem,
+            'squadmaker/noticias/conteudo',
+            'conteudo'
+        );
     }
 
     private function imagensConteudoNoticia(?string $conteudo): array
@@ -560,32 +557,29 @@ class AdminController extends Controller
         }
 
         preg_match_all(
-            '~<img[^>]+src=["\'](/uploads/noticias/conteudo/[^"\']+)["\']~i',
+            '~<img[^>]+src=["\']([^"\']+)["\']~i',
             $conteudo,
             $matches
         );
 
-        return array_values(array_unique($matches[1] ?? []));
+        $imagens = array_filter($matches[1] ?? [], function ($imagem) {
+            return CloudinaryMedia::isManagedUrl($imagem)
+                || str_starts_with($imagem, '/uploads/noticias/conteudo/');
+        });
+
+        return array_values(array_unique($imagens));
     }
 
     private function excluirImagensConteudoNoticia(array $imagens): void
     {
         foreach ($imagens as $imagem) {
-            if (! str_starts_with($imagem, '/uploads/noticias/conteudo/')) {
-                continue;
-            }
-
-            File::delete(public_path(ltrim($imagem, '/')));
+            CloudinaryMedia::delete($imagem);
         }
     }
 
     private function excluirImagemNoticia(?string $imagem): void
     {
-        if (! $imagem || ! str_starts_with($imagem, '/uploads/noticias/')) {
-            return;
-        }
-
-        File::delete(public_path(ltrim($imagem, '/')));
+        CloudinaryMedia::delete($imagem);
     }
 
     public function banir(Request $request, User $user)

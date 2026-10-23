@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/daqcpj88/image/upload/v1792785349/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -26,9 +27,9 @@
     data-user-id="{{ auth()->id() }}"
     data-chat-updates-url="{{ route('mensagens.atualizacoes') }}"
     data-reverb-key="{{ config('broadcasting.connections.reverb.key') }}"
-    data-reverb-host="{{ config('broadcasting.connections.reverb.options.host') }}"
-    data-reverb-port="{{ config('broadcasting.connections.reverb.options.port') }}"
-    data-reverb-scheme="{{ config('broadcasting.connections.reverb.options.scheme') }}"
+    data-reverb-host="{{ app()->isProduction() ? (parse_url(config('app.url'), PHP_URL_HOST) ?: request()->getHost()) : config('broadcasting.connections.reverb.options.host') }}"
+    data-reverb-port="{{ app()->isProduction() ? 443 : config('broadcasting.connections.reverb.options.port') }}"
+    data-reverb-scheme="{{ app()->isProduction() ? 'https' : config('broadcasting.connections.reverb.options.scheme') }}"
 >
 
 <aside class="internal-sidebar">

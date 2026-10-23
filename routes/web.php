@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminJogoController;
 use App\Http\Controllers\AmizadeController;
 use App\Http\Controllers\ConversaController;
+use App\Http\Controllers\ContatoController;
 use App\Http\Controllers\DenunciaController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\GoogleAuthController;
@@ -40,6 +41,10 @@ Route::view('/equipe', 'equipe')
 
 Route::view('/contato', 'contato')
     ->name('contato');
+
+Route::post('/contato', [ContatoController::class, 'send'])
+    ->middleware('throttle:3,1')
+    ->name('contato.enviar');
 
 Route::get('/cadastro', [RegisterController::class, 'show'])
     ->name('cadastro');

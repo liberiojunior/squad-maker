@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
-use App\Notifications\ResetPasswordNotification;
+use App\Support\BrevoMailer;
+use App\Support\CloudinaryMedia;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -60,7 +62,49 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function sendPasswordResetNotification($token): void
     {
-        $this->notify(new ResetPasswordNotification($token));
+        $url = route('password.reset', [
+            'token' => $token,
+            'email' => $this->getEmailForPasswordReset(),
+        ]);
+
+        $expiracao = config(
+            'auth.passwords.'.config('auth.defaults.passwords').'.expire'
+        );
+
+        BrevoMailer::send(
+            $this->email,
+            $this->nickname,
+            'Redefina sua senha - Squad Maker',
+            view('emails.reset-password', [
+                'usuario' => $this,
+                'url' => $url,
+                'expiracao' => $expiracao,
+            ])->render()
+        );
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $expiracao = (int) config('auth.verification.expire', 60);
+        $url = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes($expiracao),
+            [
+                'id' => $this->getKey(),
+                'hash' => sha1($this->getEmailForVerification()),
+            ]
+        );
+
+        BrevoMailer::send(
+            $this->email,
+            $this->nickname,
+            'Confirme seu e-mail - Squad Maker',
+            view('emails.verificacao', [
+                'usuario' => $this,
+                'url' => $url,
+                'expiracao' => $expiracao,
+            ])->render()
+        );
     }
 
     public function generos()
@@ -261,19 +305,7 @@ class User extends Authenticatable implements MustVerifyEmail
             ->get(['id_post', 'foto']);
 
         foreach ($posts as $post) {
-            if (! $post->foto) {
-                continue;
-            }
-
-            $relativo = ltrim(str_replace('\\', '/', $post->foto), '/');
-
-            if (str_starts_with($relativo, 'uploads/posts/')) {
-                $arquivo = public_path($relativo);
-
-                if (is_file($arquivo)) {
-                    unlink($arquivo);
-                }
-            }
+            CloudinaryMedia::delete($post->foto);
         }
 
         if ($posts->isNotEmpty()) {
@@ -293,6 +325,8 @@ class User extends Authenticatable implements MustVerifyEmail
             . '_'
             . time()
             . '@squadmaker.local';
+
+        CloudinaryMedia::delete($this->avatar);
 
         $this->senha = Hash::make(Str::random(40));
         $this->google_id = null;

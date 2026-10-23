@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
-use Symfony\Component\Mailer\Exception\UnsupportedSchemeException;
 
 class ForgotPasswordController extends Controller
 {
@@ -27,7 +25,7 @@ class ForgotPasswordController extends Controller
             $status = Password::sendResetLink(
                 $request->only('email')
             );
-        } catch (TransportExceptionInterface|UnsupportedSchemeException $exception) {
+        } catch (\Throwable $exception) {
             report($exception);
 
             return back()

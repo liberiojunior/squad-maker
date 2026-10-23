@@ -6,9 +6,8 @@ use App\Models\Conversa;
 use App\Models\Denuncia;
 use App\Models\Post;
 use App\Models\User;
+use App\Support\CloudinaryMedia;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Throwable;
 
@@ -84,7 +83,7 @@ class DenunciaController extends Controller
             ]);
         } catch (Throwable $exception) {
             if ($anexo) {
-                Storage::disk('local')->delete($anexo);
+                CloudinaryMedia::delete($anexo);
             }
 
             throw $exception;
@@ -152,7 +151,9 @@ class DenunciaController extends Controller
             $arquivos = array_filter([$anexo, $avatarEvidencia]);
 
             if ($arquivos) {
-                Storage::disk('local')->delete($arquivos);
+                foreach ($arquivos as $arquivo) {
+                    CloudinaryMedia::delete($arquivo);
+                }
             }
 
             throw $exception;
@@ -200,7 +201,7 @@ class DenunciaController extends Controller
         ]);
 
         $anexo = $this->salvarAnexo($request);
-        $fotoEvidencia = $this->salvarImagemPublica($post->foto, 'denuncias/posts');
+        $fotoEvidencia = $this->salvarImagemPublica($post->foto, 'squadmaker/denuncias/posts');
 
         try {
             Denuncia::create([
@@ -227,7 +228,9 @@ class DenunciaController extends Controller
             $arquivos = array_filter([$anexo, $fotoEvidencia]);
 
             if ($arquivos) {
-                Storage::disk('local')->delete($arquivos);
+                foreach ($arquivos as $arquivo) {
+                    CloudinaryMedia::delete($arquivo);
+                }
             }
 
             throw $exception;
@@ -253,37 +256,20 @@ class DenunciaController extends Controller
             return null;
         }
 
-        return $request->file('anexo')->store('denuncias/anexos', 'local');
+        return CloudinaryMedia::upload(
+            $request->file('anexo'),
+            'squadmaker/denuncias/anexos',
+            'anexo'
+        );
     }
 
     private function salvarAvatarAtual(User $user): ?string
     {
-        return $this->salvarImagemPublica($user->avatar, 'denuncias/perfis');
+        return $this->salvarImagemPublica($user->avatar, 'squadmaker/denuncias/perfis');
     }
 
     private function salvarImagemPublica(?string $caminho, string $pasta): ?string
     {
-        if (! $caminho || str_contains($caminho, '://')) {
-            return null;
-        }
-
-        $relativo = ltrim(str_replace('\\', '/', $caminho), '/');
-        $origem = realpath(public_path($relativo));
-        $publico = realpath(public_path());
-
-        if (! $origem || ! $publico || ! str_starts_with($origem, $publico . DIRECTORY_SEPARATOR) || ! is_file($origem)) {
-            return null;
-        }
-
-        $extensao = strtolower(pathinfo($origem, PATHINFO_EXTENSION));
-
-        if (! in_array($extensao, ['jpg', 'jpeg', 'png', 'webp'], true)) {
-            return null;
-        }
-
-        $destino = $pasta . '/' . Str::uuid() . '.' . $extensao;
-        Storage::disk('local')->put($destino, file_get_contents($origem));
-
-        return $destino;
+        return CloudinaryMedia::duplicate($caminho, $pasta);
     }
 }
