@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     iniciarPrazoCancelamentoMensagens();
     iniciarTempoRealChat();
     iniciarPosicaoConversa();
+    ajustarHorariosChat();
 });
 
 function iniciarBuscaChat() {
@@ -340,7 +341,7 @@ function adicionarMensagemNaConversa(mensagem) {
     meta.className = 'chat-message-meta';
 
     horario.dateTime = mensagem.data_envio;
-    horario.textContent = mensagem.hora;
+    horario.textContent = formatarHorarioChat(mensagem.data_envio) || mensagem.hora;
     meta.appendChild(horario);
 
     if (
@@ -675,4 +676,33 @@ async function marcarConversaComoLida() {
     } catch (error) {
         return;
     }
+}
+
+function formatarHorarioChat(dataIso) {
+    if (!dataIso) {
+        return null;
+    }
+
+    const data = new Date(dataIso);
+
+    if (Number.isNaN(data.getTime())) {
+        return null;
+    }
+
+    return new Intl.DateTimeFormat('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    }).format(data);
+}
+
+function ajustarHorariosChat() {
+    document.querySelectorAll('#chatMessages time[datetime]').forEach(function(horario) {
+        const horaBrasil = formatarHorarioChat(horario.dateTime);
+
+        if (horaBrasil) {
+            horario.textContent = horaBrasil;
+        }
+    });
 }

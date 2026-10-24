@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -267,20 +268,31 @@ class SteamService
                 $responses = [];
             }
 
+            $falhasLote = [];
+
             foreach ($lote as $appId) {
                 $response = $responses[(string) $appId] ?? null;
                 $quantidade = null;
+                $motivo = null;
 
-                if (
-                    $response
-                    && !($response instanceof Throwable)
-                    && $response->successful()
-                ) {
+                if ($response instanceof Throwable) {
+                    $motivo = 'conexao_ou_timeout';
+                } elseif (!$response) {
+                    $motivo = 'sem_resposta';
+                } elseif (!$response->successful()) {
+                    $motivo = 'http_' . $response->status();
+                } else {
                     $valor = $response->json('response.player_count');
 
                     if (is_numeric($valor)) {
                         $quantidade = (int) $valor;
+                    } else {
+                        $motivo = 'resposta_sem_contagem';
                     }
+                }
+
+                if ($motivo !== null) {
+                    $falhasLote[$motivo] = ($falhasLote[$motivo] ?? 0) + 1;
                 }
 
                 $expiracao = $quantidade === null
@@ -294,6 +306,13 @@ class SteamService
                 );
 
                 $resultados[$appId] = $quantidade;
+            }
+
+            if ($falhasLote) {
+                Log::warning('Steam: falhas ao consultar jogadores', [
+                    'consultados' => count($lote),
+                    'motivos' => $falhasLote,
+                ]);
             }
         }
 
