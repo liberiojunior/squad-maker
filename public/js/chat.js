@@ -690,7 +690,6 @@ function formatarHorarioChat(dataIso) {
     }
 
     return new Intl.DateTimeFormat('pt-BR', {
-        timeZone: 'America/Sao_Paulo',
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
@@ -699,10 +698,10 @@ function formatarHorarioChat(dataIso) {
 
 function ajustarHorariosChat() {
     document.querySelectorAll('#chatMessages time[datetime]').forEach(function(horario) {
-        const horaBrasil = formatarHorarioChat(horario.dateTime);
+        const horaLocal = formatarHorarioChat(horario.dateTime);
 
-        if (horaBrasil) {
-            horario.textContent = horaBrasil;
+        if (horaLocal) {
+            horario.textContent = horaLocal;
         }
     });
 }

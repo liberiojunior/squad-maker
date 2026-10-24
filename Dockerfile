@@ -45,7 +45,8 @@ COPY docker/www.conf /usr/local/etc/php-fpm.d/zz-squadmaker.conf
 COPY docker/start.sh /usr/local/bin/start-container
 
 RUN chmod +x /usr/local/bin/start-container \
-    && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+    && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+    && rm -f bootstrap/cache/config.php \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R ug+rwX storage bootstrap/cache
 
