@@ -113,13 +113,20 @@
                 type="button"
                 class="sidebar-item sidebar-settings-button"
                 data-bs-toggle="dropdown"
+                data-bs-display="static"
                 aria-expanded="false"
+                aria-label="Configurações"
                 title="Configurações"
             >
                 <i class="bi bi-gear-fill"></i>
             </button>
 
             <div class="dropdown-menu sidebar-settings-menu">
+
+                <a href="{{ route('ajuda') }}" class="dropdown-item sidebar-settings-help {{ request()->routeIs('ajuda') ? 'active' : '' }}">
+                    <i class="bi bi-question-circle-fill"></i>
+                    Central de Ajuda
+                </a>
 
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
