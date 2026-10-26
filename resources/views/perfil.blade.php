@@ -84,7 +84,7 @@
                         type="file"
                         name="avatar"
                         id="avatarInput"
-                        accept="image/png,image/jpeg,image/webp"
+                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
                         hidden
                     >
                 </form>

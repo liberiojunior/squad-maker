@@ -5205,10 +5205,16 @@ body {
     }
 
     .sidebar-settings-menu {
-        right: 0;
-        left: auto;
-        min-width: 190px;
-        margin-bottom: 8px;
+        position: fixed !important;
+        top: auto !important;
+        right: 8px !important;
+        bottom: 74px !important;
+        left: auto !important;
+        width: min(240px, calc(100vw - 16px));
+        max-height: calc(100dvh - 90px);
+        margin: 0 !important;
+        overflow-y: auto;
+        transform: none !important;
     }
 
     .sidebar-settings-help {
@@ -5327,6 +5333,9 @@ body {
 
     .admin-header-user {
         display: flex;
+        order: 1;
+        align-self: flex-start;
+        margin-left: auto;
         gap: 8px;
     }
 
@@ -5340,6 +5349,7 @@ body {
     }
 
     .admin-nav-wrapper {
+        order: 2;
         width: 100%;
         display: flex;
         flex-direction: column;

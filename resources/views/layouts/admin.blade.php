@@ -28,7 +28,7 @@
 
     <link
         rel="stylesheet"
-        href="{{ asset('css/app.css') }}"
+        href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}"
     >
 
     <link
@@ -214,7 +214,7 @@
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
 ></script>
 
-<script src="{{ asset('js/app.js') }}"></script>
+<script src="{{ asset('js/app.js') }}?v={{ filemtime(public_path('js/app.js')) }}"></script>
 
 @stack('scripts')
 

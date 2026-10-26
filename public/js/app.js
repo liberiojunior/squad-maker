@@ -2,6 +2,7 @@ iniciarAvisos();
 
 document.addEventListener('DOMContentLoaded', function() {
     iniciarAvisos();
+    iniciarValidacaoCapasJogos();
     iniciarBioPublica();
     iniciarAcoesAmizadePerfil();
     iniciarAtualizacaoAmizadeTempoReal();
@@ -1286,6 +1287,57 @@ function iniciarBioPublica() {
     atualizar();
 }
 
+function iniciarValidacaoCapasJogos() {
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+    const tamanhoMaximo = 5 * 1024 * 1024;
+
+    function validar(input) {
+        const arquivo = input.files?.[0];
+
+        if (!arquivo) {
+            return true;
+        }
+
+        const formatoValido = tiposPermitidos.includes(arquivo.type)
+            || (arquivo.type === '' && /\.(jpe?g|png|webp)$/i.test(arquivo.name));
+
+        if (!formatoValido) {
+            input.value = '';
+            mostrarAviso('danger', 'Formato inválido. Envie uma imagem JPG, PNG ou WebP.');
+            return false;
+        }
+
+        if (arquivo.size > tamanhoMaximo) {
+            input.value = '';
+            mostrarAviso('danger', 'A imagem deve ter no máximo 5 MB.');
+            return false;
+        }
+
+        return true;
+    }
+
+    document.addEventListener('change', function(event) {
+        const input = event.target;
+
+        if (input.matches?.('input[type="file"][name="capa"]')) {
+            validar(input);
+        }
+    }, true);
+
+    document.addEventListener('submit', function(event) {
+        const formulario = event.target;
+        const inputs = formulario.querySelectorAll('input[type="file"][name="capa"]');
+
+        for (const input of inputs) {
+            if (!validar(input)) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                break;
+            }
+        }
+    }, true);
+}
+
 function iniciarAvatarPerfil() {
     const form = document.getElementById('avatarForm');
     const input = document.getElementById('avatarInput');
@@ -1377,36 +1429,22 @@ function iniciarAvatarPerfil() {
     }
 
     function openCrop(file) {
-        const allowedTypes = [
-            'image/jpeg',
-            'image/png',
-            'image/webp'
-        ];
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+        const knownExtension = /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name);
 
-        if (!allowedTypes.includes(file.type)) {
-            mostrarAviso(
-                'danger',
-                'Escolha uma imagem JPG, PNG ou WEBP.'
-            );
-
+        if (!allowedTypes.includes(file.type) && !(file.type === '' && knownExtension)) {
+            mostrarAviso('danger', 'Escolha uma imagem JPG, PNG, WEBP ou HEIC.');
             input.value = '';
-
             return;
         }
 
-        if (file.size > 5 * 1024 * 1024) {
-            mostrarAviso(
-                'danger',
-                'A imagem deve ter no máximo 5 MB.'
-            );
-
+        if (file.size > 15 * 1024 * 1024) {
+            mostrarAviso('danger', 'A foto original deve ter no máximo 15 MB.');
             input.value = '';
-
             return;
         }
 
         clearCrop();
-
         objectUrl = URL.createObjectURL(file);
         image = new Image();
 
@@ -1419,7 +1457,6 @@ function iniciarAvatarPerfil() {
             zoom = 1;
             offsetX = 0;
             offsetY = 0;
-
             zoomInput.value = '1';
 
             renderCrop();
@@ -1428,13 +1465,8 @@ function iniciarAvatarPerfil() {
 
         image.onerror = function() {
             clearCrop();
-
             input.value = '';
-
-            mostrarAviso(
-                'danger',
-                'Não foi possível carregar essa imagem.'
-            );
+            mostrarAviso('danger', 'Não foi possível abrir a foto. Tente salvá-la em JPG ou PNG.');
         };
 
         image.src = objectUrl;
@@ -1445,42 +1477,49 @@ function iniciarAvatarPerfil() {
             return;
         }
 
+        saving = true;
         saveButton.disabled = true;
         saveButton.textContent = 'Salvando...';
-
         atualizarErro(errorElement);
 
-        canvas.toBlob(
-            function(blob) {
-                if (!blob) {
-                    saveButton.disabled = false;
-                    saveButton.textContent = 'Salvar foto';
+        canvas.toBlob(async function(blob) {
+            if (!blob || blob.type !== 'image/jpeg') {
+                saving = false;
+                saveButton.disabled = false;
+                saveButton.textContent = 'Salvar foto';
+                atualizarErro(errorElement, 'Não foi possível preparar a imagem. Tente novamente.');
+                return;
+            }
 
-                    atualizarErro(errorElement, 'Não foi possível preparar a imagem. Tente novamente.');
+            const dados = new FormData(form);
+            dados.set('avatar', blob, 'avatar.jpg');
 
-                    return;
+            try {
+                const resposta = await fetch(form.action, {
+                    method: 'POST',
+                    body: dados,
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!resposta.ok) {
+                    const resultado = await resposta.json().catch(function() {
+                        return {};
+                    });
+                    throw new Error(mensagemDaResposta(resultado, 'Não foi possível salvar a foto.'));
                 }
 
-                const file = new File(
-                    [blob],
-                    'avatar.webp',
-                    {
-                        type: 'image/webp'
-                    }
-                );
-
-                const transfer = new DataTransfer();
-
-                transfer.items.add(file);
-
-                input.files = transfer.files;
-                saving = true;
-
-                form.requestSubmit();
-            },
-            'image/webp',
-            0.92
-        );
+                window.location.reload();
+            } catch (error) {
+                saving = false;
+                saveButton.disabled = false;
+                saveButton.textContent = 'Salvar foto';
+                atualizarErro(errorElement, error.message || 'Não foi possível salvar a foto.');
+            }
+        }, 'image/jpeg', 0.9);
     }
 
     input.addEventListener('change', function() {
