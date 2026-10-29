@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Admin;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -32,13 +33,33 @@ class GoogleAuthController extends Controller
                 ->with('error', 'Não foi possível obter os dados necessários da sua conta Google.');
         }
 
+        $dadosGoogle = $googleUser->getRaw();
+        $emailConfirmado = filter_var(
+            $dadosGoogle['email_verified'] ?? $dadosGoogle['verified_email'] ?? false,
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        if (! $emailConfirmado) {
+            return redirect()->route('login')
+                ->with('error', 'Confirme o e-mail da sua conta Google para continuar.');
+        }
+
+        if (Admin::where('email', $email)->exists()) {
+            return redirect()->route('login')
+                ->with('error', 'Este e-mail não está disponível para contas comuns.');
+        }
+
         $user = User::where('google_id', $googleId)->first();
+
+        if ($user && strcasecmp($user->email, $email) !== 0) {
+            return redirect()->route('login')
+                ->with('error', 'O e-mail da conta Google não corresponde à conta vinculada.');
+        }
 
         if (!$user) {
             $user = User::where('email', $email)->first();
         }
 
-        $novoUsuario = !$user;
 
         if ($user) {
             $user->sincronizarStatusBanimento();
@@ -73,11 +94,16 @@ class GoogleAuthController extends Controller
             ]);
         }
 
+        Auth::guard('admin')->logout();
         Auth::login($user, true);
 
         $request->session()->regenerate();
 
-        if ($novoUsuario) {
+        if (! $user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+
+        if (! $user->cadastro_jogos_concluido_em) {
             return redirect()->route('cadastro.jogos');
         }
 

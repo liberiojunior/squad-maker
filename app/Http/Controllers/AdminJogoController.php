@@ -10,6 +10,7 @@ use App\Support\CloudinaryMedia;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class AdminJogoController extends Controller
 {
@@ -635,6 +636,19 @@ class AdminJogoController extends Controller
                 return $jogo;
             }
         );
+
+        try {
+            $jogadores = $steam->buscarJogadoresOnline($appId);
+
+            if (is_int($jogadores)) {
+                $jogo->update([
+                    'jogadores_online' => $jogadores,
+                    'jogadores_online_atualizado_em' => now(),
+                ]);
+            }
+        } catch (Throwable $exception) {
+            report($exception);
+        }
 
         return [
             'success' => true,

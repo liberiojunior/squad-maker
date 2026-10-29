@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Admin;
 use App\Models\User;
 use App\Rules\Cpf;
 use App\Services\ApiCpfService;
@@ -38,6 +39,11 @@ class RegisterController extends Controller
                 'email',
                 'max:150',
                 'unique:tb_usuario,email',
+                function ($attribute, $value, $fail) {
+                    if (Admin::where('email', $value)->exists()) {
+                        $fail('Este e-mail não está disponível para cadastro.');
+                    }
+                },
             ],
 
             'cpf' => [

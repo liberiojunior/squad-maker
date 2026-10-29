@@ -11,7 +11,7 @@ use Throwable;
 
 class SteamService
 {
-    private const JOGADORES_POR_LOTE = 20;
+    private const JOGADORES_POR_LOTE = 5;
 
     private const GENEROS_ACEITOS = [
         'Ação',
@@ -227,6 +227,10 @@ class SteamService
             ->values()
             ->all();
 
+        if (Cache::has('steam_popularidade_pausa')) {
+            return [];
+        }
+
         $resultados = [];
         $faltantes = [];
 
@@ -246,7 +250,11 @@ class SteamService
             $faltantes[] = $appId;
         }
 
-        foreach (array_chunk($faltantes, self::JOGADORES_POR_LOTE) as $lote) {
+        foreach (array_chunk($faltantes, self::JOGADORES_POR_LOTE) as $indice => $lote) {
+            if ($indice > 0) {
+                usleep(200000);
+            }
+
             try {
                 $responses = Http::pool(function (Pool $pool) use ($lote) {
                     $requests = [];
@@ -255,7 +263,7 @@ class SteamService
                         $requests[] = $pool
                             ->as((string) $appId)
                             ->connectTimeout(2)
-                            ->timeout(4)
+                            ->timeout(3)
                             ->get(
                                 'https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/',
                                 ['appid' => $appId]
@@ -269,6 +277,8 @@ class SteamService
             }
 
             $falhasLote = [];
+            $respostas403 = 0;
+            $resposta429 = false;
 
             foreach ($lote as $appId) {
                 $response = $responses[(string) $appId] ?? null;
@@ -281,6 +291,14 @@ class SteamService
                     $motivo = 'sem_resposta';
                 } elseif (!$response->successful()) {
                     $motivo = 'http_' . $response->status();
+
+                    if ($response->status() === 403) {
+                        $respostas403++;
+                    }
+
+                    if ($response->status() === 429) {
+                        $resposta429 = true;
+                    }
                 } else {
                     $valor = $response->json('response.player_count');
 
@@ -313,6 +331,12 @@ class SteamService
                     'consultados' => count($lote),
                     'motivos' => $falhasLote,
                 ]);
+            }
+
+            if ($resposta429 || $respostas403 >= 2) {
+                Cache::put('steam_popularidade_pausa', true, now()->addMinutes(30));
+                Log::warning('Steam: consultas pausadas temporariamente por restrição da API.');
+                break;
             }
         }
 

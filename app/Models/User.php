@@ -53,6 +53,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'ultima_atividade' => 'datetime',
         'data_exclusao' => 'datetime',
         'email_verified_at' => 'datetime',
+        'cadastro_jogos_concluido_em' => 'datetime',
     ];
 
     public function getAuthPassword()

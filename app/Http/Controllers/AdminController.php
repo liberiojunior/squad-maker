@@ -20,7 +20,10 @@ class AdminController extends Controller
     public function geral()
     {
         $totalUsuarios = User::where('status_conta', '!=', 'excluido')->count();
-        $usuariosAtivos = User::where('status_conta', 'ativo')->count();
+        $usuariosAtivos = User::where('status_conta', 'ativo')
+            ->whereNotNull('email_verified_at')
+            ->whereNotNull('cadastro_jogos_concluido_em')
+            ->count();
         $usuariosBanidos = User::where('status_conta', 'banido')->count();
         $denunciasPendentes = Denuncia::where('status_denuncia', 'pendente')->count();
 
@@ -63,6 +66,17 @@ class AdminController extends Controller
             ->when($inicio, fn($query) => $query->where('data_adicao', '>=', $inicio))
             ->count();
 
+        $catalogo = DB::table('tb_jogo')
+            ->selectRaw('COUNT(*) as total, COUNT(steam_app_id) as steam')
+            ->first();
+
+        $totalJogos = (int) $catalogo->total;
+        $totalJogosSteam = (int) $catalogo->steam;
+        $totalJogosManuais = $totalJogos - $totalJogosSteam;
+        $totalNoticiasPublicadas = Noticia::query()
+            ->when($inicio, fn($query) => $query->where('data_noticia', '>=', $inicio))
+            ->count();
+
         if ($periodo === 'todos') {
             $cadastros = User::query()
                 ->selectRaw("DATE_FORMAT(data_criacao, '%Y-%m') as periodo, COUNT(*) as total")
@@ -77,7 +91,7 @@ class AdminController extends Controller
 
             $cadastrosValores = $cadastros
                 ->pluck('total')
-                ->map(fn($total) => (int) $total)
+                ->map(fn($total) => (int)$total)
                 ->values();
         } else {
             $cadastros = User::query()
@@ -95,7 +109,7 @@ class AdminController extends Controller
             foreach (CarbonPeriod::create($inicio, now()->startOfDay()) as $dia) {
                 $chave = $dia->format('Y-m-d');
                 $cadastrosLabels->push($dia->format('d/m'));
-                $cadastrosValores->push((int) ($cadastros[$chave]->total ?? 0));
+                $cadastrosValores->push((int)($cadastros[$chave]->total ?? 0));
             }
         }
 
@@ -127,6 +141,10 @@ class AdminController extends Controller
             'mensagensEnviadas' => $mensagensEnviadas,
             'postsPublicados' => $postsPublicados,
             'jogosAdicionados' => $jogosAdicionados,
+            'totalJogos' => $totalJogos,
+            'totalJogosSteam' => $totalJogosSteam,
+            'totalJogosManuais' => $totalJogosManuais,
+            'totalNoticiasPublicadas' => $totalNoticiasPublicadas,
             'cadastrosLabels' => $cadastrosLabels,
             'cadastrosValores' => $cadastrosValores,
             'jogosPopulares' => $jogosPopulares,
@@ -138,7 +156,7 @@ class AdminController extends Controller
     {
         $data = $request->validate([
             'q' => ['nullable', 'string', 'max:150'],
-            'status' => ['nullable', 'in:ativo,banido'],
+            'status' => ['nullable', 'in:ativo,pendente,banido'],
             'ordem' => ['nullable', 'in:recentes,antigos,az,za'],
             'data_inicio' => ['nullable', 'date'],
             'data_fim' => ['nullable', 'date', 'after_or_equal:data_inicio'],
@@ -156,7 +174,22 @@ class AdminController extends Controller
             });
         }
 
-        if (!empty($data['status'])) {
+        if (($data['status'] ?? null) === 'pendente') {
+            $query->where(function ($query) {
+                $query->where('status_conta', 'pendente')
+                    ->orWhere(function ($query) {
+                        $query->where('status_conta', 'ativo')
+                            ->where(function ($query) {
+                                $query->whereNull('email_verified_at')
+                                    ->orWhereNull('cadastro_jogos_concluido_em');
+                            });
+                    });
+            });
+        } elseif (($data['status'] ?? null) === 'ativo') {
+            $query->where('status_conta', 'ativo')
+                ->whereNotNull('email_verified_at')
+                ->whereNotNull('cadastro_jogos_concluido_em');
+        } elseif (!empty($data['status'])) {
             $query->where('status_conta', $data['status']);
         }
 
@@ -287,7 +320,7 @@ class AdminController extends Controller
     private function validarNoticia(Request $request, bool $imagemObrigatoria): array
     {
         $request->merge([
-            'conteudo' => $this->sanitizarConteudoNoticia((string) $request->input('conteudo', '')),
+            'conteudo' => $this->sanitizarConteudoNoticia((string)$request->input('conteudo', '')),
         ]);
 
         $regrasImagem = $imagemObrigatoria
@@ -333,7 +366,7 @@ class AdminController extends Controller
             return '';
         }
 
-        if (! str_contains($html, '<')) {
+        if (!str_contains($html, '<')) {
             $paragrafos = preg_split('/\r\n|\r|\n/', $html);
             $saida = [];
 
@@ -356,7 +389,7 @@ class AdminController extends Controller
                 $src = trim($this->atributoHtmlNoticia($match[1] ?? '', 'src'));
                 $youtubeId = $this->youtubeIdDoEmbed($src);
 
-                if (! $youtubeId) {
+                if (!$youtubeId) {
                     return '';
                 }
 
@@ -386,7 +419,7 @@ class AdminController extends Controller
                 if ($tag === 'a') {
                     $href = trim($this->atributoHtmlNoticia($atributos, 'href'));
 
-                    if (! preg_match('~^https?://~i', $href)) {
+                    if (!preg_match('~^https?://~i', $href)) {
                         return '<a>';
                     }
 
@@ -395,7 +428,7 @@ class AdminController extends Controller
                     $atributosPermitidos = '';
 
                     if ($classe === 'news-image-link') {
-                        if (! in_array($tamanho, ['small', 'medium', 'large', 'full'], true)) {
+                        if (!in_array($tamanho, ['small', 'medium', 'large', 'full'], true)) {
                             $tamanho = 'medium';
                         }
 
@@ -413,7 +446,7 @@ class AdminController extends Controller
                     $src = trim($this->atributoHtmlNoticia($atributos, 'src'));
                     $youtubeId = $this->youtubeIdDoEmbed($src);
 
-                    if (! $youtubeId) {
+                    if (!$youtubeId) {
                         return '';
                     }
 
@@ -435,14 +468,14 @@ class AdminController extends Controller
                     $imagemPermitida = CloudinaryMedia::isManagedUrl($src)
                         || str_starts_with($src, '/uploads/noticias/conteudo/');
 
-                    if (! $imagemPermitida) {
+                    if (!$imagemPermitida) {
                         return '';
                     }
 
                     $alt = mb_substr(trim($this->atributoHtmlNoticia($atributos, 'alt')), 0, 180);
                     $tamanho = strtolower($this->atributoHtmlNoticia($atributos, 'data-size'));
 
-                    if (! in_array($tamanho, ['small', 'medium', 'large', 'full'], true)) {
+                    if (!in_array($tamanho, ['small', 'medium', 'large', 'full'], true)) {
                         $tamanho = 'medium';
                     }
 
@@ -488,7 +521,7 @@ class AdminController extends Controller
                     $estilo = $this->atributoHtmlNoticia($atributos, 'style');
 
                     if (preg_match('/font-size\s*:\s*(\d{1,2})px/i', $estilo, $tamanhoEncontrado)) {
-                        $tamanho = (int) $tamanhoEncontrado[1];
+                        $tamanho = (int)$tamanhoEncontrado[1];
 
                         if ($tamanho >= 10 && $tamanho <= 48) {
                             return '<span style="font-size: ' . $tamanho . 'px;">';
@@ -506,7 +539,7 @@ class AdminController extends Controller
 
     private function youtubeIdDoEmbed(string $url): ?string
     {
-        if (! preg_match(
+        if (!preg_match(
             '~^https://(?:www\.)?(?:youtube-nocookie\.com|youtube\.com)/embed/([A-Za-z0-9_-]{11})(?:[?&/#].*)?$~i',
             $url,
             $match
@@ -521,7 +554,7 @@ class AdminController extends Controller
     {
         $nome = preg_quote($nome, '~');
 
-        if (! preg_match(
+        if (!preg_match(
             '~\b' . $nome . '\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))~i',
             $atributos,
             $match
@@ -552,7 +585,7 @@ class AdminController extends Controller
 
     private function imagensConteudoNoticia(?string $conteudo): array
     {
-        if (! $conteudo) {
+        if (!$conteudo) {
             return [];
         }
 
@@ -620,7 +653,7 @@ class AdminController extends Controller
 
             $denuncia = null;
 
-            if (! empty($data['id_denuncia'])) {
+            if (!empty($data['id_denuncia'])) {
                 $denuncia = Denuncia::where('id_denuncia', $data['id_denuncia'])->lockForUpdate()->firstOrFail();
 
                 if ($denuncia->id_denunciado !== $usuario->id_usuario || $denuncia->status_denuncia !== 'pendente') {
@@ -650,7 +683,7 @@ class AdminController extends Controller
             }
         });
 
-        if (! empty($data['id_denuncia'])) {
+        if (!empty($data['id_denuncia'])) {
             return redirect()->route('admin.denuncias.show', $data['id_denuncia'])->with('success', 'Usuário banido e denúncia concluída.');
         }
 

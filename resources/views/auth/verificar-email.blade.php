@@ -5,7 +5,7 @@
 @endpush
 
 @section('content')
-    <main class="password-page">
+    <main class="password-page" id="verificacaoEmail" data-status-url="{{ route('verification.status') }}">
         <div class="password-card email-verification-card">
             <i class="bi bi-envelope-check email-verification-icon"></i>
 
@@ -60,4 +60,42 @@
             </form>
         </div>
     </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const page = document.getElementById('verificacaoEmail');
+            let consultando = false;
+
+            async function conferirVerificacao() {
+                if (document.hidden || consultando) {
+                    return;
+                }
+
+                consultando = true;
+
+                try {
+                    const response = await fetch(page.dataset.statusUrl, {
+                        headers: { 'Accept': 'application/json' },
+                        cache: 'no-store'
+                    });
+
+                    if (response.ok) {
+                        const status = await response.json();
+
+                        if (status.verified && status.redirect) {
+                            window.location.replace(status.redirect);
+                        }
+                    }
+                } catch (error) {
+                    return;
+                } finally {
+                    consultando = false;
+                }
+            }
+
+            document.addEventListener('visibilitychange', conferirVerificacao);
+            window.addEventListener('focus', conferirVerificacao);
+            setInterval(conferirVerificacao, 4000);
+            conferirVerificacao();
+        });
+    </script>
 @endsection

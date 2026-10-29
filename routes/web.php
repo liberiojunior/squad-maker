@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Admin;
+use App\Models\User;
 use App\Http\Controllers\AdminCatalogoController;
 use App\Http\Controllers\AdminDenunciaController;
 use App\Http\Controllers\AdminController;
@@ -20,7 +22,7 @@ use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\RegisterJogosController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Middleware\VerificarStatusUsuario;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -93,34 +95,57 @@ Route::post(
 
 // Verificação de e-mail
 
+Route::get('/email/verificar/{id}/{hash}', function (Request $request, int $id, string $hash) {
+    $user = User::findOrFail($id);
+
+    if (! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+        abort(403);
+    }
+
+    $user->sincronizarStatusBanimento();
+
+    if ($user->status_conta !== 'ativo' || Admin::where('email', $user->email)->exists()) {
+        abort(403);
+    }
+
+    if (! $user->hasVerifiedEmail() && $user->markEmailAsVerified()) {
+        event(new Verified($user));
+    }
+
+    if (Auth::id() === $user->getKey()) {
+        return redirect()->route($user->cadastro_jogos_concluido_em ? 'perfil' : 'cadastro.jogos')
+            ->with('success', 'E-mail confirmado com sucesso.');
+    }
+
+    return redirect()->route('login');
+})->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+
 Route::middleware([
     'auth',
     VerificarStatusUsuario::class,
 ])->group(function () {
     Route::get('/email/verificar', function (Request $request) {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('perfil');
+            return redirect()->route($request->user()->cadastro_jogos_concluido_em ? 'perfil' : 'cadastro.jogos');
         }
 
         return view('auth.verificar-email');
     })->name('verification.notice');
 
-    Route::get(
-        '/email/verificar/{id}/{hash}',
-        function (EmailVerificationRequest $request) {
-            $request->fulfill();
+    Route::get('/email/verificar/status', function (Request $request) {
+        $user = $request->user()->fresh();
 
-            return redirect()
-                ->route('cadastro.jogos')
-                ->with('success', 'E-mail confirmado com sucesso.');
-        }
-    )
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
+        return response()->json([
+            'verified' => $user->hasVerifiedEmail(),
+            'redirect' => $user->hasVerifiedEmail()
+                ? route($user->cadastro_jogos_concluido_em ? 'perfil' : 'cadastro.jogos')
+                : null,
+        ])->header('Cache-Control', 'no-store, private');
+    })->name('verification.status');
 
     Route::post('/email/verificacao-notificacao', function (Request $request) {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('perfil');
+            return redirect()->route($request->user()->cadastro_jogos_concluido_em ? 'perfil' : 'cadastro.jogos');
         }
 
         try {
@@ -133,13 +158,8 @@ Route::middleware([
             ]);
         }
 
-        return back()->with(
-            'status',
-            'Enviamos um novo link de confirmação para o seu e-mail.'
-        );
-    })
-        ->middleware('throttle:6,1')
-        ->name('verification.send');
+        return back()->with('status', 'Enviamos um novo link de confirmação para o seu e-mail.');
+    })->middleware('throttle:6,1')->name('verification.send');
 });
 
 // Rotas do usuário autenticado

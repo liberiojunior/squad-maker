@@ -145,15 +145,25 @@ class JogoController extends Controller
 
     private function solicitarAtualizacaoPopularidade(): void
     {
+        if (config('queue.default') === 'sync') {
+            return;
+        }
+
+        if (Jogo::query()->whereNotNull('steam_app_id')
+            ->whereBetween('jogadores_online_atualizado_em', [now()->subHour(), now()])
+            ->exists()) {
+            return;
+        }
+
         $cacheKey = 'steam_popularidade_fila';
 
-        if (!Cache::add($cacheKey, true, now()->addMinutes(2))) {
+        if (!Cache::add($cacheKey, true, now()->addHour())) {
             return;
         }
 
         try {
             Artisan::queue('steam:atualizar-popularidade', [
-                '--limit' => 200,
+                '--limit' => 100,
             ]);
         } catch (Throwable $exception) {
             Cache::forget($cacheKey);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Admin;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,6 +23,13 @@ class VerificarStatusUsuario
             return $next($request);
         }
 
+        if (Admin::where('email', $user->email)->exists()) {
+            return $this->encerrarSessao(
+                $request,
+                'Este e-mail está reservado para acesso administrativo.'
+            );
+        }
+
         $user->sincronizarStatusBanimento();
 
         if ($user->status_conta === 'excluido') {
@@ -38,9 +46,11 @@ class VerificarStatusUsuario
             );
         }
 
-        if ($user->status_conta === 'ativo') {
-            $this->registrarAtividade($request, $user);
+        if ($user->status_conta !== 'ativo') {
+            return $this->encerrarSessao($request, 'Sua conta ainda não está liberada para acesso.');
         }
+
+        $this->registrarAtividade($request, $user);
 
         return $next($request);
     }

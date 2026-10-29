@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Middleware\VerificarEtapasCadastro;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -18,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             AddLinkHeadersForPreloadedAssets::class,
+            VerificarEtapasCadastro::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -26,6 +29,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 $request->is('api/*')
                 || $request->expectsJson(),
         );
+
+        $exceptions->render(function (InvalidSignatureException $exception, Request $request) {
+            if ($request->routeIs('verification.verify')) {
+                return redirect()->route($request->user() ? 'verification.notice' : 'login')
+                    ->withErrors(['email' => 'O link de confirmação expirou ou é inválido. Solicite um novo e-mail.']);
+            }
+        });
 
         $exceptions->dontFlash('cpf');
     })->create();

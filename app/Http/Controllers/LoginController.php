@@ -30,6 +30,7 @@ class LoginController extends Controller
                     ->onlyInput('email');
             }
 
+            Auth::guard('web')->logout();
             Auth::guard('admin')->login($admin);
 
             $request->session()->regenerate();
@@ -55,10 +56,15 @@ class LoginController extends Controller
                 ->onlyInput('email');
         }
 
+        Auth::guard('admin')->logout();
         $request->session()->regenerate();
 
         if (! $request->user()->hasVerifiedEmail()) {
             return redirect()->route('verification.notice');
+        }
+
+        if (! $request->user()->cadastro_jogos_concluido_em) {
+            return redirect()->route('cadastro.jogos');
         }
 
         return redirect()->route('perfil');
